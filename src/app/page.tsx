@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { BookOpen, Music, Star, Settings, Eye, Users, ClipboardCheck, Sparkles, BarChart3 } from "lucide-react";
+import { BookOpen, Music, Star, Settings, Eye, Users, ClipboardCheck, Sparkles, BarChart3, Rocket, Map } from "lucide-react";
 import { useState } from "react";
 import { HelpModal } from "@/components/ui/HelpModal";
 import { InstallButton } from "@/components/InstallButton";
+import { useLevelProgress } from "@/hooks/use-level-progress";
 
 export default function Home() {
+    const { getTotalProgress, currentLevel } = useLevelProgress();
     return (
         <main className="min-h-screen bg-[#FFF9F0] flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 relative overflow-hidden">
             {/* Background decorations */}
@@ -26,6 +28,62 @@ export default function Home() {
                     Little <span className="text-primary drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">Learner</span>
                 </h1>
                 <p className="text-lg sm:text-xl text-gray-500 font-medium">Let's play and learn!</p>
+            </motion.div>
+
+            {/* Featured Learning Journey Card */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="w-full max-w-4xl mb-6 sm:mb-8 relative z-10"
+            >
+                <Link href="/levels" className="group block">
+                    <div className="relative bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 rounded-2xl sm:rounded-[2rem] p-6 sm:p-8 shadow-2xl border-b-6 sm:border-b-8 border-blue-800 group-hover:scale-[1.02] transition-all overflow-hidden">
+                        {/* Animated background pattern */}
+                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20" />
+
+                        {/* Progress Badge */}
+                        {currentLevel && (
+                            <motion.div
+                                animate={{ scale: [1, 1.05, 1] }}
+                                transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+                                className="absolute top-4 right-4 bg-green-400 text-green-900 px-4 py-2 rounded-full font-black text-sm flex items-center gap-2 shadow-lg"
+                            >
+                                <Rocket className="w-4 h-4" />
+                                LEVEL {currentLevel}
+                            </motion.div>
+                        )}
+
+                        <div className="relative flex flex-col sm:flex-row items-center gap-6">
+                            <div className="bg-white/20 backdrop-blur-sm p-6 rounded-2xl">
+                                <Map className="w-12 h-12 sm:w-16 sm:h-16 text-white" />
+                            </div>
+
+                            <div className="flex-1 text-center sm:text-left">
+                                <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-2">
+                                    {currentLevel ? 'Continue Your Journey' : 'Start Your Learning Adventure'}
+                                </h2>
+                                <p className="text-white/90 text-base sm:text-lg font-medium mb-4">
+                                    {currentLevel
+                                        ? `Keep learning with 10 exciting levels! You're ${getTotalProgress()}% complete`
+                                        : 'Explore 10 magical levels filled with reading activities and stories'
+                                    }
+                                </p>
+                                <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                                    <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full text-white font-bold text-sm">
+                                        <span>✓ 10 Themed Levels</span>
+                                    </div>
+                                    <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full text-white font-bold text-sm">
+                                        <span>✓ Earn Stars</span>
+                                    </div>
+                                    <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full text-white font-bold text-sm">
+                                        <span>✓ Unlock Stories</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </Link>
             </motion.div>
 
             {/* Featured Assessment Card */}
