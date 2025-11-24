@@ -268,10 +268,16 @@ This document tracks the progress of implementing research-based reading instruc
 - `/word-families` - Existing word families (needs Phase 7 enhancement)
 
 ### Known Issues:
-1. ~~**Audio files needed**: 14 phoneme sounds for pre-reading activities~~ ✅ COMPLETE
-2. ~~**"car" word audio**: Missing from word pronunciations~~ ✅ COMPLETE
-3. **Viewport warnings**: Non-critical Next.js deprecation warnings
-4. **Audio quality note**: Phoneme sounds are computer-generated (TTS). For production, consider recording with human voice for better quality.
+1. **Audio quality mismatch**: Phoneme sounds generated with macOS TTS (basic quality) while letter sounds use Google Cloud Neural TTS (high quality). To fix: Run `npx tsx scripts/generate-phonemes-google-tts.ts` after setting up Google Cloud credentials (see GOOGLE_TTS_SETUP.md)
+2. **Viewport warnings**: Non-critical Next.js deprecation warnings
+
+### Audio Status:
+- ✅ Letter sounds (26 letters × 3 = 78 files): High-quality Google Cloud Neural TTS
+- ✅ Word pronunciations (100+ files): High-quality Google Cloud Neural TTS
+- ⚠️ Phoneme sounds (14 files): Basic macOS TTS (functional but lower quality)
+- ✅ Sentence audio: High-quality Google Cloud Neural TTS
+
+**Recommendation**: Regenerate phoneme sounds with Google Cloud TTS for consistent quality across the app.
 
 ---
 
