@@ -229,7 +229,6 @@ export function SoundSegmenting({
                   state="idle"
                   size="md"
                   isVowel={vowels.includes(letter)}
-                  draggable
                 />
               </div>
             ))}
