@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { BookOpen, Music, Star, Settings, Eye, Users, ClipboardCheck, Sparkles, BarChart3, Rocket, Map } from "lucide-react";
+import { BookOpen, Music, Star, Settings, Eye, Users, ClipboardCheck, Sparkles, BarChart3, Rocket, Map, Book } from "lucide-react";
 import { useState } from "react";
 import { HelpModal } from "@/components/ui/HelpModal";
 import { InstallButton } from "@/components/InstallButton";
@@ -202,6 +202,21 @@ export default function Home() {
                         </div>
                         <span className="text-2xl sm:text-3xl font-black text-gray-800 group-hover:text-blue-600 transition-colors">Word Families</span>
                         <span className="text-sm sm:text-base text-gray-400 mt-1 sm:mt-2 font-medium">Rhyming patterns</span>
+                    </motion.div>
+                </Link>
+
+                <Link href="/stories" className="group">
+                    <motion.div
+                        whileHover={{ scale: 1.03, rotate: -2 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="bg-white rounded-2xl sm:rounded-[2rem] md:rounded-[2.5rem] p-6 sm:p-8 flex flex-col items-center justify-center shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] border-b-4 sm:border-b-6 md:border-b-8 border-gray-100 group-hover:border-orange-400/30 transition-all h-52 sm:h-60 md:h-64 relative overflow-hidden"
+                    >
+                        <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-transparent opacity-50" />
+                        <div className="bg-orange-100 p-4 sm:p-5 md:p-6 rounded-full mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+                            <Book className="w-10 h-10 sm:w-12 sm:h-12 text-orange-500 fill-orange-500" />
+                        </div>
+                        <span className="text-2xl sm:text-3xl font-black text-gray-800 group-hover:text-orange-600 transition-colors">Story Books</span>
+                        <span className="text-sm sm:text-base text-gray-400 mt-1 sm:mt-2 font-medium">Read & learn</span>
                     </motion.div>
                 </Link>
             </div>
