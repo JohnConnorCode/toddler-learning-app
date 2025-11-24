@@ -4,13 +4,28 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 export type LetterOrder = "alphabetical" | "phonics-first";
+export type WordDifficulty = "easy" | "medium" | "hard";
 
 export type Settings = {
+    // Letter Learning
     letterOrder: LetterOrder;
+
+    // Audio
     isMuted: boolean;
     volume: number; // 0-1
+
+    // Gameplay
     autoAdvance: boolean;
     showHints: boolean;
+    wordDifficulty: WordDifficulty;
+    showWordFamilies: boolean;
+    delayBetweenWords: number; // milliseconds
+
+    // Progression
+    lockProgression: boolean; // NEW: Control whether units/activities are locked
+
+    // Accessibility
+    autoPlaySuccess: boolean;
 };
 
 type SettingsStore = Settings & {
@@ -19,6 +34,11 @@ type SettingsStore = Settings & {
     setVolume: (volume: number) => void;
     toggleAutoAdvance: () => void;
     toggleShowHints: () => void;
+    setWordDifficulty: (difficulty: WordDifficulty) => void;
+    toggleShowWordFamilies: () => void;
+    setDelayBetweenWords: (delay: number) => void;
+    toggleLockProgression: () => void;
+    toggleAutoPlaySuccess: () => void;
     resetSettings: () => void;
 };
 
@@ -28,6 +48,11 @@ const defaultSettings: Settings = {
     volume: 1.0,
     autoAdvance: true,
     showHints: true,
+    wordDifficulty: "easy",
+    showWordFamilies: false,
+    delayBetweenWords: 3000,
+    lockProgression: false, // Default: All units unlocked for parent control
+    autoPlaySuccess: true,
 };
 
 export const useSettings = create<SettingsStore>()(
@@ -44,6 +69,16 @@ export const useSettings = create<SettingsStore>()(
             toggleAutoAdvance: () => set((state) => ({ autoAdvance: !state.autoAdvance })),
 
             toggleShowHints: () => set((state) => ({ showHints: !state.showHints })),
+
+            setWordDifficulty: (difficulty) => set({ wordDifficulty: difficulty }),
+
+            toggleShowWordFamilies: () => set((state) => ({ showWordFamilies: !state.showWordFamilies })),
+
+            setDelayBetweenWords: (delay) => set({ delayBetweenWords: Math.max(1000, Math.min(10000, delay)) }),
+
+            toggleLockProgression: () => set((state) => ({ lockProgression: !state.lockProgression })),
+
+            toggleAutoPlaySuccess: () => set((state) => ({ autoPlaySuccess: !state.autoPlaySuccess })),
 
             resetSettings: () => set(defaultSettings),
         }),

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { WORDS_DATA, WordCategory } from "@/lib/words-data";
 import { WordBuilder } from "@/components/game/WordBuilder";
+import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 import Link from "next/link";
 import { ArrowLeft, ChevronRight, ChevronLeft, Filter } from "lucide-react";
 
@@ -86,10 +87,11 @@ export default function WordsPage() {
                         animate={{ scale: 1, opacity: 1 }}
                         className="w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 bg-white rounded-2xl sm:rounded-3xl shadow-lg mx-auto overflow-hidden border-4 sm:border-6 md:border-8 border-white"
                     >
-                        <img
+                        <ImageWithFallback
                             src={filteredWords[currentIndex].image}
                             alt={filteredWords[currentIndex].word}
-                            className="w-full h-full object-cover"
+                            fallbackText={filteredWords[currentIndex].word}
+                            className="w-full h-full"
                         />
                     </motion.div>
                 </div>

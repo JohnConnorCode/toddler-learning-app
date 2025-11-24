@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { usePhonicsProgress } from "@/hooks/use-phonics-progress";
+import { useSettings } from "@/hooks/use-settings";
 import { SoundBlendingGame } from "./SoundBlendingGame";
 import { WordSegmentingGame } from "./WordSegmentingGame";
 import { Combine, Scissors, ArrowLeft, Lock, CheckCircle } from "lucide-react";
@@ -18,6 +19,7 @@ interface ActivityProgress {
 
 export function BlendingHub() {
   const { completedUnits, isLoaded } = usePhonicsProgress();
+  const { lockProgression } = useSettings();
   const [currentActivity, setCurrentActivity] = useState<ActivityType>(null);
   const [progress, setProgress] = useState<ActivityProgress>({
     blending: null,
@@ -32,7 +34,8 @@ export function BlendingHub() {
     setCurrentActivity(null);
   };
 
-  const hasCompletedUnits = completedUnits.length > 0;
+  // Only check prerequisites if lockProgression is enabled
+  const hasCompletedUnits = lockProgression ? completedUnits.length > 0 : true;
 
   // If activity is active, show that activity
   if (currentActivity === "blending") {

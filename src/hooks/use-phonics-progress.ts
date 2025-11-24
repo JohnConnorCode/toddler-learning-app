@@ -6,10 +6,11 @@ import {
   PHONICS_UNITS,
   UnitProgress,
   LetterProgress,
-  isUnitUnlocked,
+  isUnitUnlocked as baseIsUnitUnlocked,
   getNextUnit,
   calculateOverallProgress,
 } from "@/lib/systematic-phonics-data";
+import { useSettings } from "@/hooks/use-settings";
 
 const STORAGE_KEY = "phonics-progress";
 
@@ -32,6 +33,7 @@ const DEFAULT_STATE: PhonicsProgressState = {
 export function usePhonicsProgress() {
   const [state, setState] = useState<PhonicsProgressState>(DEFAULT_STATE);
   const [isLoaded, setIsLoaded] = useState(false);
+  const { lockProgression } = useSettings();
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -142,7 +144,7 @@ export function usePhonicsProgress() {
       PHONICS_UNITS.forEach((unit) => {
         if (
           !newCompletedUnits.includes(unit.id) &&
-          isUnitUnlocked(unit.id, newCompletedUnits)
+          baseIsUnitUnlocked(unit.id, newCompletedUnits)
         ) {
           newUnitProgress[unit.id] = {
             unitId: unit.id,
@@ -207,12 +209,16 @@ export function usePhonicsProgress() {
     [state.letterProgress]
   );
 
-  // Check if unit is unlocked
+  // Check if unit is unlocked (respects lockProgression setting)
   const isUnitUnlockedCheck = useCallback(
     (unitId: number): boolean => {
-      return isUnitUnlocked(unitId, state.completedUnits);
+      // If lockProgression is disabled, all units are unlocked
+      if (!lockProgression) return true;
+
+      // Otherwise, check prerequisites
+      return baseIsUnitUnlocked(unitId, state.completedUnits);
     },
-    [state.completedUnits]
+    [state.completedUnits, lockProgression]
   );
 
   // Get next recommended unit
@@ -227,7 +233,7 @@ export function usePhonicsProgress() {
 
   // Get all unlocked units
   const getUnlockedUnits = useCallback((): PhonicsUnit[] => {
-    return PHONICS_UNITS.filter((unit) => isUnitUnlocked(unit.id, state.completedUnits));
+    return PHONICS_UNITS.filter((unit) => baseIsUnitUnlocked(unit.id, state.completedUnits));
   }, [state.completedUnits]);
 
   // Update letter completion count for a unit

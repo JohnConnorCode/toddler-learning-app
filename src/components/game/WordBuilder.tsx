@@ -8,10 +8,41 @@ import { Check, RefreshCw, Sparkles, Lightbulb } from "lucide-react";
 import { useAudio } from "@/hooks/use-audio";
 import { triggerConfetti } from "@/lib/confetti";
 import { usePhonicsStore } from "@/hooks/use-phonics-store";
+import { useSettings, WordDifficulty } from "@/hooks/use-settings";
 
 interface WordBuilderProps {
     item: WordItem;
     onComplete: () => void;
+}
+
+// Helper function to generate distractor letters based on difficulty
+function generateLettersWithDistractors(
+    wordLetters: string[],
+    difficulty: WordDifficulty
+): string[] {
+    const letters = [...wordLetters];
+
+    if (difficulty === "easy") {
+        // Easy: Just shuffle the exact letters
+        return letters.sort(() => Math.random() - 0.5);
+    }
+
+    const distractorCount = difficulty === "medium" ? 3 : 6;
+    const allLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const usedLetters = new Set(letters);
+    const distractors: string[] = [];
+
+    // Generate unique distractor letters
+    while (distractors.length < distractorCount) {
+        const randomLetter = allLetters[Math.floor(Math.random() * allLetters.length)];
+        if (!usedLetters.has(randomLetter) && !distractors.includes(randomLetter)) {
+            distractors.push(randomLetter);
+            usedLetters.add(randomLetter);
+        }
+    }
+
+    // Combine and shuffle
+    return [...letters, ...distractors].sort(() => Math.random() - 0.5);
 }
 
 export function WordBuilder({ item, onComplete }: WordBuilderProps) {
@@ -23,16 +54,26 @@ export function WordBuilder({ item, onComplete }: WordBuilderProps) {
     const [showSentence, setShowSentence] = useState(false);
     const { playLetterSound, playWordSound, playSentenceSound, playSequence} = useAudio();
     const { mode } = usePhonicsStore();
+    const {
+        wordDifficulty,
+        showWordFamilies,
+        delayBetweenWords,
+        showHints,
+        autoPlaySuccess
+    } = useSettings();
 
     useEffect(() => {
-        // Shuffle letters but keep track of original indices if needed (simple string shuffle here)
-        const shuffled = [...item.letters].sort(() => Math.random() - 0.5);
-        setShuffledLetters(shuffled);
+        // Generate letters with appropriate difficulty
+        const lettersWithDistractors = generateLettersWithDistractors(
+            item.letters,
+            wordDifficulty
+        );
+        setShuffledLetters(lettersWithDistractors);
         setPlacedLetters(new Array(item.letters.length).fill(null));
         setUsedIndices(new Set());
         setIsComplete(false);
         setShowSentence(false);
-    }, [item]);
+    }, [item, wordDifficulty]);
 
     const handleLetterClick = (letter: string, index: number) => {
         if (isComplete) return;
@@ -80,29 +121,33 @@ export function WordBuilder({ item, onComplete }: WordBuilderProps) {
         // Wait a beat
         await delay(500);
 
-        // Build sequence of sounds to play
-        const soundType: "letter-phonics" | "letter-name" = mode === "phonics" ? "letter-phonics" : "letter-name";
-        const letterSounds = letters.map(letter => ({
-            type: soundType,
-            value: letter
-        }));
-        const sequence = [
-            ...letterSounds,
-            { type: "word" as const, value: word },
-        ];
+        // Build sequence of sounds to play (only if autoPlaySuccess is enabled)
+        if (autoPlaySuccess) {
+            const soundType: "letter-phonics" | "letter-name" = mode === "phonics" ? "letter-phonics" : "letter-name";
+            const letterSounds = letters.map(letter => ({
+                type: soundType,
+                value: letter
+            }));
+            const sequence = [
+                ...letterSounds,
+                { type: "word" as const, value: word },
+            ];
 
-        // Play the sequence (C... A... T... CAT!)
-        await playSequence(sequence, 800);
+            // Play the sequence (C... A... T... CAT!)
+            await playSequence(sequence, 800);
 
-        // Wait before showing sentence
-        await delay(1500);
+            // Wait before showing sentence
+            await delay(1500);
+        } else {
+            // If not auto-playing, just wait a bit
+            await delay(800);
+        }
 
         // Show sentence context (visual only - no auto-play)
-        // User can see the sentence but it won't play confusing audio
         setShowSentence(true);
 
-        // Wait a bit before moving to next word
-        await delay(2500);
+        // Wait based on user's delay setting before moving to next word
+        await delay(delayBetweenWords);
 
         // Move to next word
         onComplete();
@@ -201,7 +246,7 @@ export function WordBuilder({ item, onComplete }: WordBuilderProps) {
                             <p className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-700 text-center">
                                 {item.sentence}
                             </p>
-                            {item.relatedWords && item.relatedWords.length > 0 && (
+                            {showWordFamilies && item.relatedWords && item.relatedWords.length > 0 && (
                                 <div className="mt-3 flex flex-col items-center gap-2">
                                     <span className="text-xs text-gray-400 font-semibold uppercase tracking-widest">
                                         Word Family
@@ -225,13 +270,15 @@ export function WordBuilder({ item, onComplete }: WordBuilderProps) {
 
             {/* Available Letters Bank */}
             <div className="bg-white/30 p-4 sm:p-5 md:p-6 rounded-2xl md:rounded-[2rem] w-full max-w-lg backdrop-blur-sm relative">
-                <button
-                    onClick={handleHint}
-                    className="absolute -top-4 sm:-top-5 md:-top-6 right-4 sm:right-6 bg-yellow-400 text-white p-2 sm:p-2.5 md:p-3 rounded-full shadow-lg hover:scale-110 transition-transform"
-                    aria-label="Hint"
-                >
-                    <Lightbulb className="w-5 h-5 sm:w-6 sm:h-6 fill-white" />
-                </button>
+                {showHints && (
+                    <button
+                        onClick={handleHint}
+                        className="absolute -top-4 sm:-top-5 md:-top-6 right-4 sm:right-6 bg-yellow-400 text-white p-2 sm:p-2.5 md:p-3 rounded-full shadow-lg hover:scale-110 transition-transform"
+                        aria-label="Hint"
+                    >
+                        <Lightbulb className="w-5 h-5 sm:w-6 sm:h-6 fill-white" />
+                    </button>
+                )}
 
                 <div className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4">
                     {shuffledLetters.map((letter, i) => {
