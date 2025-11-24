@@ -268,9 +268,10 @@ This document tracks the progress of implementing research-based reading instruc
 - `/word-families` - Existing word families (needs Phase 7 enhancement)
 
 ### Known Issues:
-1. **Audio files needed**: 14 phoneme sounds for pre-reading activities
-2. **"car" word audio**: Missing from word pronunciations
+1. ~~**Audio files needed**: 14 phoneme sounds for pre-reading activities~~ ✅ COMPLETE
+2. ~~**"car" word audio**: Missing from word pronunciations~~ ✅ COMPLETE
 3. **Viewport warnings**: Non-critical Next.js deprecation warnings
+4. **Audio quality note**: Phoneme sounds are computer-generated (TTS). For production, consider recording with human voice for better quality.
 
 ---
 
