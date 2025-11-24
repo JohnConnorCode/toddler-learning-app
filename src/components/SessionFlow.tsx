@@ -311,9 +311,21 @@ export function SessionFlow({ onExit }: SessionFlowProps) {
           <div className="bg-white shadow-sm p-4">
             <div className="max-w-4xl mx-auto">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-semibold text-gray-600">
-                  Session Progress
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-semibold text-gray-600">
+                    Session Progress
+                  </span>
+                  {currentActivity !== "sentence" && currentWord && (
+                    <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-bold uppercase">
+                      {currentWord}
+                    </span>
+                  )}
+                  {currentActivity === "sentence" && (
+                    <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-bold">
+                      📖 Sentence
+                    </span>
+                  )}
+                </div>
                 <span className="text-sm font-bold text-purple-600">
                   {progress.completed} / {progress.total}
                 </span>
