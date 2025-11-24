@@ -4,8 +4,9 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LetterBlock } from "./LetterBlock";
 import { useSpeech } from "@/hooks/use-speech";
-import { triggerConfetti } from "@/lib/confetti";
-import { Sparkles, RotateCcw, Volume2 } from "lucide-react";
+import { celebrateStars, celebrateMedium, celebrateSmall } from "@/lib/confetti";
+import { playFeedback, playSound } from "@/lib/sound-effects";
+import { Sparkles, RotateCcw, Volume2, Star } from "lucide-react";
 
 interface TapToBlendProps {
   word: string;
@@ -58,6 +59,9 @@ export function TapToBlend({
 
     const now = Date.now();
 
+    // Play tap sound + haptic feedback
+    playFeedback('pop', 'light');
+
     // First tap - start timing
     if (tappedIndices.length === 0) {
       startTimeRef.current = now;
@@ -76,6 +80,11 @@ export function TapToBlend({
     speak(letter);
     setTappedIndices([...tappedIndices, index]);
     setTapTimings([...tapTimings, timeSinceLastTap]);
+
+    // Mini celebration for each letter
+    if (tappedIndices.length < letters.length - 1) {
+      celebrateSmall();
+    }
 
     // If this was the last letter, evaluate
     if (tappedIndices.length === letters.length - 1) {
@@ -118,17 +127,22 @@ export function TapToBlend({
     setIsSmooth(smooth);
     setTapState("complete");
 
-    // Generate feedback
+    // Generate feedback - ALWAYS POSITIVE!
     if (smooth) {
-      setFeedback("Super smooth! Those blocks snapped together perfectly! 🎉");
-      triggerConfetti();
+      setFeedback("Amazing! You're So Fast! ⚡");
+      celebrateStars();
+      playSound('celebrate');
       setTimeout(() => speak(word), 300);
     } else if (score >= 0.5) {
-      setFeedback("Good try! Let's make the blocks snap together even faster!");
+      setFeedback("Great Job! Try Even Faster!");
+      celebrateMedium();
+      playSound('success');
       setTimeout(() => speak(word), 300);
     } else {
-      setFeedback("That was a bit slow. Try tapping quickly without pausing!");
-      setTimeout(() => speak("Try again"), 300);
+      setFeedback("You Did It! Tap Super Fast!");
+      celebrateSmall();
+      playSound('chime');
+      setTimeout(() => speak(word), 300);
     }
 
     // Call completion callback after a delay
@@ -147,19 +161,32 @@ export function TapToBlend({
 
   return (
     <div className="flex flex-col items-center gap-6 w-full max-w-2xl mx-auto p-4">
-      {/* Instructions */}
+      {/* Instructions - SIMPLE! */}
       {tapState === "waiting" && (
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: "spring", bounce: 0.5 }}
           className="text-center"
         >
-          <h3 className="text-2xl sm:text-3xl font-bold text-gray-700 mb-2">
-            Tap the blocks fast to snap them together!
-          </h3>
-          <p className="text-lg text-gray-500">
-            Tap each letter quickly—don't pause!
-          </p>
+          <motion.h3
+            animate={{ scale: [1, 1.05, 1] }}
+            transition={{ repeat: Infinity, duration: 1.5 }}
+            className="text-5xl sm:text-6xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mb-4"
+          >
+            Tap Fast! 👆
+          </motion.h3>
+          <div className="flex items-center justify-center gap-2">
+            {[...Array(3)].map((_, i) => (
+              <motion.div
+                key={i}
+                animate={{ y: [0, -10, 0] }}
+                transition={{ repeat: Infinity, duration: 0.8, delay: i * 0.2 }}
+              >
+                <Star className="w-8 h-8 text-yellow-400 fill-yellow-400" />
+              </motion.div>
+            ))}
+          </div>
         </motion.div>
       )}
 
@@ -199,30 +226,32 @@ export function TapToBlend({
         })}
       </div>
 
-      {/* Timing Visualization */}
-      {tapState === "tapping" && tapTimings.length > 0 && (
+      {/* Progress Stars - Show how many letters tapped */}
+      {tapState === "tapping" && (
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="flex gap-2 items-center"
+          className="flex gap-3 items-center"
         >
-          {tapTimings.slice(1).map((timing, index) => {
-            const isSmooth = timing < SMOOTH_THRESHOLD_MS;
-            return (
-              <motion.div
-                key={index}
-                initial={{ width: 0 }}
-                animate={{ width: "auto" }}
-                className={`px-3 py-1 rounded-full text-sm font-bold ${
-                  isSmooth
-                    ? "bg-green-100 text-green-700"
-                    : "bg-orange-100 text-orange-700"
+          {letters.map((_, index) => (
+            <motion.div
+              key={index}
+              initial={{ scale: 0 }}
+              animate={{
+                scale: tappedIndices.includes(index) ? [0, 1.3, 1] : 1,
+                rotate: tappedIndices.includes(index) ? [0, 360] : 0,
+              }}
+              transition={{ type: "spring", bounce: 0.6 }}
+            >
+              <Star
+                className={`w-10 h-10 sm:w-12 sm:h-12 ${
+                  tappedIndices.includes(index)
+                    ? "text-yellow-400 fill-yellow-400"
+                    : "text-gray-300"
                 }`}
-              >
-                {timing}ms
-              </motion.div>
-            );
-          })}
+              />
+            </motion.div>
+          ))}
         </motion.div>
       )}
 
@@ -235,53 +264,69 @@ export function TapToBlend({
             exit={{ opacity: 0, scale: 0.8 }}
             className="text-center space-y-4"
           >
-            {/* Feedback Message */}
-            <div
-              className={`px-6 py-4 rounded-2xl ${
+            {/* Feedback Message - BIG AND EXCITING! */}
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: [0, 1.2, 1] }}
+              transition={{ type: "spring", bounce: 0.6 }}
+              className={`px-8 py-8 rounded-3xl border-4 ${
                 isSmooth
-                  ? "bg-green-100 border-2 border-green-400"
-                  : "bg-orange-100 border-2 border-orange-400"
+                  ? "bg-gradient-to-br from-green-100 to-emerald-100 border-green-400"
+                  : "bg-gradient-to-br from-yellow-100 to-orange-100 border-yellow-400"
               }`}
             >
-              <p className={`text-xl font-bold ${
-                isSmooth ? "text-green-700" : "text-orange-700"
-              }`}>
+              <motion.p
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ repeat: 3, duration: 0.5 }}
+                className={`text-3xl sm:text-4xl md:text-5xl font-black text-center ${
+                  isSmooth ? "text-green-700" : "text-orange-700"
+                }`}
+              >
                 {feedback}
-              </p>
+              </motion.p>
 
-              {/* Smoothness Score Bar */}
-              <div className="mt-3 bg-white/50 rounded-full h-3 overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${smoothnessScore * 100}%` }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                  className={`h-full ${
-                    isSmooth ? "bg-green-500" : "bg-orange-500"
-                  }`}
-                />
+              {/* Show stars instead of score */}
+              <div className="flex items-center justify-center gap-2 mt-4">
+                {[...Array(5)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ delay: 0.1 * i, type: "spring", bounce: 0.7 }}
+                  >
+                    <Star
+                      className={`w-8 h-8 sm:w-10 sm:h-10 ${
+                        i < Math.round(smoothnessScore * 5)
+                          ? "text-yellow-400 fill-yellow-400"
+                          : "text-gray-300"
+                      }`}
+                    />
+                  </motion.div>
+                ))}
               </div>
-              <p className="text-sm text-gray-600 mt-1">
-                Smoothness: {Math.round(smoothnessScore * 100)}%
-              </p>
-            </div>
+            </motion.div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-3 justify-center">
-              <button
+            {/* Action Buttons - BIGGER! */}
+            <div className="flex gap-4 justify-center flex-wrap">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={handleStartAgain}
-                className="flex items-center gap-2 px-5 py-3 bg-blue-500 text-white font-bold rounded-xl hover:bg-blue-600 transition-colors shadow-lg"
+                className="flex items-center gap-3 px-8 py-5 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xl font-black rounded-2xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-xl border-b-4 border-blue-700"
               >
-                <RotateCcw className="w-5 h-5" />
+                <RotateCcw className="w-7 h-7" />
                 Try Again
-              </button>
+              </motion.button>
 
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={handleHearWord}
-                className="flex items-center gap-2 px-5 py-3 bg-purple-500 text-white font-bold rounded-xl hover:bg-purple-600 transition-colors shadow-lg"
+                className="flex items-center gap-3 px-8 py-5 bg-gradient-to-r from-purple-500 to-purple-600 text-white text-xl font-black rounded-2xl hover:from-purple-600 hover:to-purple-700 transition-all shadow-xl border-b-4 border-purple-700"
               >
-                <Volume2 className="w-5 h-5" />
+                <Volume2 className="w-7 h-7" />
                 Hear Word
-              </button>
+              </motion.button>
             </div>
           </motion.div>
         )}

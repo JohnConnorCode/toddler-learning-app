@@ -22,7 +22,7 @@ export default function Home() {
                 className="mb-8 sm:mb-12 md:mb-16 text-center relative z-10"
             >
                 <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-gray-800 tracking-tight mb-2 drop-shadow-sm">
-                    Little <span className="text-primary">Learner</span>
+                    Little <span className="text-primary drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">Learner</span>
                 </h1>
                 <p className="text-lg sm:text-xl text-gray-500 font-medium">Let's play and learn!</p>
             </motion.div>
@@ -41,8 +41,8 @@ export default function Home() {
 
                         {/* Badge */}
                         <motion.div
-                            animate={{ rotate: [0, -5, 5, -5, 0] }}
-                            transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                            animate={{ scale: [1, 1.05, 1] }}
+                            transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
                             className="absolute top-4 right-4 bg-yellow-400 text-yellow-900 px-4 py-2 rounded-full font-black text-sm flex items-center gap-2 shadow-lg"
                         >
                             <Sparkles className="w-4 h-4" />
