@@ -7,8 +7,6 @@ import { useState } from "react";
 import { HelpModal } from "@/components/ui/HelpModal";
 
 export default function Home() {
-    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-
     return (
         <main className="min-h-screen bg-[#FFF9F0] flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 relative overflow-hidden">
             {/* Background decorations */}
@@ -140,15 +138,13 @@ export default function Home() {
                 transition={{ delay: 0.5 }}
                 className="mt-8 sm:mt-12 md:mt-16 flex gap-3 sm:gap-4"
             >
-                <button
-                    onClick={() => setIsSettingsOpen(true)}
-                    className="p-3 sm:p-4 rounded-full bg-white shadow-md text-gray-400 hover:text-gray-600 hover:scale-110 transition-all"
+                <Link
+                    href="/settings"
+                    className="p-3 sm:p-4 rounded-full bg-white shadow-md text-gray-400 hover:text-gray-600 hover:scale-110 transition-all group"
                 >
-                    <Settings className="w-5 h-5 sm:w-6 sm:h-6" />
-                </button>
+                    <Settings className="w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-90 transition-transform duration-300" />
+                </Link>
             </motion.div>
-
-            <HelpModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
         </main>
     );
 }
