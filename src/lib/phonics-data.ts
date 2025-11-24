@@ -152,7 +152,7 @@ export const PHONICS_DATA: PhonicsItem[] = [
         soundVariant: "oh", // long 'o' as in 'open'
         phonemeSpelling: "ahhh",
         isVowel: true,
-        image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1535591273668-578e31182c4f?w=400&h=400&fit=crop"
     },
     {
         letter: "P",

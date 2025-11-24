@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { BookOpen, Music, Star, Settings, Eye, Users } from "lucide-react";
+import { BookOpen, Music, Star, Settings, Eye, Users, ClipboardCheck, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { HelpModal } from "@/components/ui/HelpModal";
 
@@ -27,6 +27,49 @@ export default function Home() {
                     Little <span className="text-primary">Learner</span>
                 </h1>
                 <p className="text-lg sm:text-xl text-gray-500 font-medium">Let's play and learn!</p>
+            </motion.div>
+
+            {/* Featured Assessment Card */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="w-full max-w-4xl mb-6 sm:mb-8 relative z-10"
+            >
+                <Link href="/assessment" className="group block">
+                    <div className="relative bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 rounded-2xl sm:rounded-[2rem] p-6 sm:p-8 shadow-2xl border-b-6 sm:border-b-8 border-purple-700 group-hover:scale-[1.02] transition-all overflow-hidden">
+                        {/* Animated background */}
+                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
+
+                        {/* Badge */}
+                        <motion.div
+                            animate={{ rotate: [0, -5, 5, -5, 0] }}
+                            transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                            className="absolute top-4 right-4 bg-yellow-400 text-yellow-900 px-4 py-2 rounded-full font-black text-sm flex items-center gap-2 shadow-lg"
+                        >
+                            <Sparkles className="w-4 h-4" />
+                            START HERE
+                        </motion.div>
+
+                        <div className="relative flex flex-col sm:flex-row items-center gap-6">
+                            <div className="bg-white/20 backdrop-blur-sm p-6 rounded-2xl">
+                                <ClipboardCheck className="w-12 h-12 sm:w-16 sm:h-16 text-white" />
+                            </div>
+
+                            <div className="flex-1 text-center sm:text-left">
+                                <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-2">
+                                    Find Your Perfect Path
+                                </h2>
+                                <p className="text-white/90 text-base sm:text-lg font-medium mb-4">
+                                    Take a quick 10-minute assessment to get personalized recommendations
+                                </p>
+                                <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full text-white font-bold text-sm">
+                                    <span>✓ Personalized learning path</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </Link>
             </motion.div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 w-full max-w-4xl relative z-10">

@@ -17,9 +17,11 @@ interface WordBuilderProps {
 export function WordBuilder({ item, onComplete }: WordBuilderProps) {
     const [shuffledLetters, setShuffledLetters] = useState<string[]>([]);
     const [placedLetters, setPlacedLetters] = useState<(string | null)[]>([]);
+    const [usedIndices, setUsedIndices] = useState<Set<number>>(new Set());
+    const [hintLetterIndex, setHintLetterIndex] = useState<number | null>(null);
     const [isComplete, setIsComplete] = useState(false);
     const [showSentence, setShowSentence] = useState(false);
-    const { playLetterSound, playWordSound, playSentenceSound, playSequence } = useAudio();
+    const { playLetterSound, playWordSound, playSentenceSound, playSequence} = useAudio();
     const { mode } = usePhonicsStore();
 
     useEffect(() => {
@@ -27,12 +29,16 @@ export function WordBuilder({ item, onComplete }: WordBuilderProps) {
         const shuffled = [...item.letters].sort(() => Math.random() - 0.5);
         setShuffledLetters(shuffled);
         setPlacedLetters(new Array(item.letters.length).fill(null));
+        setUsedIndices(new Set());
         setIsComplete(false);
         setShowSentence(false);
     }, [item]);
 
     const handleLetterClick = (letter: string, index: number) => {
         if (isComplete) return;
+
+        // Prevent clicking already-used letters
+        if (usedIndices.has(index)) return;
 
         // Play sound based on mode
         const type = mode === "phonics" ? "phonics" : "name";
@@ -46,6 +52,9 @@ export function WordBuilder({ item, onComplete }: WordBuilderProps) {
         newPlaced[firstEmptyIndex] = letter;
         setPlacedLetters(newPlaced);
 
+        // Mark this letter as used
+        setUsedIndices(prev => new Set(prev).add(index));
+
         // Check if full
         if (firstEmptyIndex === item.letters.length - 1) {
             const formedWord = newPlaced.join("");
@@ -56,6 +65,7 @@ export function WordBuilder({ item, onComplete }: WordBuilderProps) {
                 playWordSound("oops");
                 setTimeout(() => {
                     setPlacedLetters(new Array(item.letters.length).fill(null));
+                    setUsedIndices(new Set());
                 }, 800);
             }
         }
@@ -100,7 +110,7 @@ export function WordBuilder({ item, onComplete }: WordBuilderProps) {
 
     const handleReset = () => {
         setPlacedLetters(new Array(item.letters.length).fill(null));
-        // TODO: Add "tryagain" audio file
+        setUsedIndices(new Set());
         playWordSound("tryagain");
     };
 
@@ -108,6 +118,21 @@ export function WordBuilder({ item, onComplete }: WordBuilderProps) {
         const firstEmptyIndex = placedLetters.findIndex((l) => l === null);
         if (firstEmptyIndex !== -1) {
             const correctLetter = item.letters[firstEmptyIndex];
+
+            // Find the index of the correct letter in shuffled letters that hasn't been used
+            const correctLetterIndexInShuffled = shuffledLetters.findIndex(
+                (letter, idx) => letter === correctLetter && !usedIndices.has(idx)
+            );
+
+            if (correctLetterIndexInShuffled !== -1) {
+                // Highlight the correct letter
+                setHintLetterIndex(correctLetterIndexInShuffled);
+
+                // Clear highlight after 2 seconds
+                setTimeout(() => {
+                    setHintLetterIndex(null);
+                }, 2000);
+            }
 
             // Play hint sound
             const type = mode === "phonics" ? "phonics" : "name";
@@ -210,18 +235,32 @@ export function WordBuilder({ item, onComplete }: WordBuilderProps) {
 
                 <div className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4">
                     {shuffledLetters.map((letter, i) => {
-                        // Simple logic: count how many times this letter appears in placed vs shuffled
-                        // This is a bit tricky with duplicates.
-                        // Simplified: Just show all, and if they click, it goes up.
-                        // If we want to hide used ones, we need to track indices.
-                        // Let's just keep it simple: Always clickable, but maybe visually dim if "used" logic was added.
+                        const isUsed = usedIndices.has(i);
+                        const isHinted = hintLetterIndex === i;
                         return (
                             <motion.button
                                 key={`${letter}-${i}`}
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
+                                whileHover={!isUsed ? { scale: 1.1 } : {}}
+                                whileTap={!isUsed ? { scale: 0.9 } : {}}
+                                animate={isHinted ? {
+                                    scale: [1, 1.15, 1, 1.15, 1],
+                                    boxShadow: [
+                                        "0 0 0 0 rgba(250, 204, 21, 0)",
+                                        "0 0 0 8px rgba(250, 204, 21, 0.4)",
+                                        "0 0 0 0 rgba(250, 204, 21, 0)",
+                                        "0 0 0 8px rgba(250, 204, 21, 0.4)",
+                                        "0 0 0 0 rgba(250, 204, 21, 0)"
+                                    ]
+                                } : {}}
+                                transition={isHinted ? { duration: 2, ease: "easeInOut" } : {}}
                                 onClick={() => handleLetterClick(letter, i)}
-                                className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-white rounded-xl sm:rounded-2xl shadow-[0_3px_0_rgba(0,0,0,0.1)] sm:shadow-[0_4px_0_rgba(0,0,0,0.1)] flex items-center justify-center text-2xl sm:text-3xl font-bold text-gray-700 border-b-3 sm:border-b-4 border-gray-200 active:border-b-0 active:translate-y-1 active:shadow-none transition-all"
+                                disabled={isUsed}
+                                className={cn(
+                                    "w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-white rounded-xl sm:rounded-2xl shadow-[0_3px_0_rgba(0,0,0,0.1)] sm:shadow-[0_4px_0_rgba(0,0,0,0.1)] flex items-center justify-center text-2xl sm:text-3xl font-bold border-b-3 sm:border-b-4 transition-all",
+                                    !isUsed && !isHinted && "text-gray-700 border-gray-200 hover:shadow-lg cursor-pointer active:border-b-0 active:translate-y-1 active:shadow-none",
+                                    isUsed && "text-gray-300 opacity-40 cursor-not-allowed border-gray-200",
+                                    isHinted && "text-yellow-600 border-yellow-400 bg-yellow-50"
+                                )}
                             >
                                 {letter}
                             </motion.button>

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { WordFamily } from "@/lib/word-families-data";
 import { cn } from "@/lib/utils";
 import { Volume2, Sparkles } from "lucide-react";
-import { useSpeech } from "@/hooks/use-speech";
+import { useAudio } from "@/hooks/use-audio";
 import { triggerConfetti } from "@/lib/confetti";
 
 interface WordFamilyCardProps {
@@ -16,7 +16,7 @@ interface WordFamilyCardProps {
 export function WordFamilyCard({ family, onComplete }: WordFamilyCardProps) {
     const [revealedWords, setRevealedWords] = useState<number[]>([]);
     const [isComplete, setIsComplete] = useState(false);
-    const { speak } = useSpeech();
+    const { playWordSound } = useAudio();
 
     useEffect(() => {
         setRevealedWords([]);
@@ -27,25 +27,29 @@ export function WordFamilyCard({ family, onComplete }: WordFamilyCardProps) {
         if (revealedWords.length < family.words.length) {
             const nextIndex = revealedWords.length;
             setRevealedWords([...revealedWords, nextIndex]);
-            speak(family.words[nextIndex]);
+            playWordSound(family.words[nextIndex].toLowerCase());
 
             if (nextIndex === family.words.length - 1) {
                 setTimeout(() => {
                     setIsComplete(true);
                     triggerConfetti();
-                    if (onComplete) setTimeout(onComplete, 3000);
+                    // Increased from 3s to 6s for better review time
+                    if (onComplete) setTimeout(onComplete, 6000);
                 }, 800);
             }
         }
     };
 
     const handlePatternClick = () => {
-        speak(`The ${family.name} pattern`);
+        // Play first word as example of pattern
+        if (family.words.length > 0) {
+            playWordSound(family.words[0].toLowerCase());
+        }
     };
 
     const handleWordClick = (word: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        speak(word);
+        playWordSound(word.toLowerCase());
     };
 
     const difficultyStars = "⭐".repeat(family.difficulty);

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SightWord } from "@/lib/sight-words-data";
 import { cn } from "@/lib/utils";
 import { Volume2, Eye, CheckCircle } from "lucide-react";
-import { useSpeech } from "@/hooks/use-speech";
+import { useAudio } from "@/hooks/use-audio";
 import { triggerConfetti } from "@/lib/confetti";
 
 interface SightWordCardProps {
@@ -16,7 +16,7 @@ interface SightWordCardProps {
 export function SightWordCard({ item, onComplete }: SightWordCardProps) {
     const [isRevealed, setIsRevealed] = useState(false);
     const [showSentence, setShowSentence] = useState(false);
-    const { speak } = useSpeech();
+    const { playWordSound, playSentenceSound } = useAudio();
 
     useEffect(() => {
         setIsRevealed(false);
@@ -26,11 +26,11 @@ export function SightWordCard({ item, onComplete }: SightWordCardProps) {
     const handleReveal = () => {
         if (!isRevealed) {
             setIsRevealed(true);
-            speak(item.word);
+            playWordSound(item.word.toLowerCase());
 
             setTimeout(() => {
                 setShowSentence(true);
-                speak(item.sentence);
+                // Don't auto-play sentence to avoid confusion (like WordBuilder fix)
             }, 1200);
 
             setTimeout(() => {
@@ -42,7 +42,11 @@ export function SightWordCard({ item, onComplete }: SightWordCardProps) {
 
     const handleRepeat = (e: React.MouseEvent) => {
         e.stopPropagation();
-        speak(isRevealed ? item.sentence : item.word);
+        if (isRevealed && showSentence) {
+            playSentenceSound(item.word.toLowerCase());
+        } else {
+            playWordSound(item.word.toLowerCase());
+        }
     };
 
     const difficultyColors = {
