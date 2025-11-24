@@ -243,6 +243,8 @@ Last Updated: November 25, 2025
 - ✅ All units unlockable
 - ✅ Graceful image fallbacks
 - ✅ Customizable timing and display
+- ✅ Settings link on homepage for easy access
+- ✅ Improved assessment questions (requires recognition, not just identification)
 
 **The app is now:**
 - Much more configurable
@@ -250,6 +252,6 @@ Last Updated: November 25, 2025
 - Under parent control
 - More polished and professional
 
-**Live URL**: https://toddler-learning-kyuwhew3u-john-connors-projects-d9df1dfe.vercel.app
+**Latest Live URL**: https://toddler-learning-793kfk9ad-john-connors-projects-d9df1dfe.vercel.app
 
-**Try it out and let me know what else needs fixing!**
+**All requested fixes completed and deployed!**
