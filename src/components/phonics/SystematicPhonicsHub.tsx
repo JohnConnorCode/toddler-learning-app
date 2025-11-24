@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { usePhonicsProgress } from "@/hooks/use-phonics-progress";
 import { PHONICS_UNITS, PhonicsUnit } from "@/lib/systematic-phonics-data";
 import { Lock, CheckCircle, Star, ArrowLeft, BookOpen, Award, Play } from "lucide-react";
@@ -10,6 +11,11 @@ import Link from "next/link";
 import { UnitPractice } from "./UnitPractice";
 
 export function SystematicPhonicsHub() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const letter = searchParams.get("letter");
+  const returnTo = searchParams.get("returnTo");
+
   const {
     isLoaded,
     completedUnits,
@@ -22,13 +28,45 @@ export function SystematicPhonicsHub() {
 
   const [activeUnitId, setActiveUnitId] = useState<number | null>(null);
 
+  // Auto-start unit if letter is specified in query params
+  useEffect(() => {
+    if (letter && isLoaded) {
+      // Find the unit that contains this letter
+      const targetUnit = PHONICS_UNITS.find((unit) =>
+        unit.letters.includes(letter.toUpperCase())
+      );
+
+      if (targetUnit && isUnitUnlocked(targetUnit.id)) {
+        startUnit(targetUnit.id);
+        setActiveUnitId(targetUnit.id);
+      }
+    }
+  }, [letter, isLoaded, isUnitUnlocked, startUnit]);
+
+  // Handle completion/exit from unit practice
+  const handleUnitExit = () => {
+    if (returnTo === "lesson") {
+      router.back();
+    } else {
+      setActiveUnitId(null);
+    }
+  };
+
+  const handleUnitComplete = () => {
+    if (returnTo === "lesson") {
+      router.back();
+    } else {
+      setActiveUnitId(null);
+    }
+  };
+
   // If a unit is active, show the unit practice
   if (activeUnitId) {
     return (
       <UnitPractice
         unitId={activeUnitId}
-        onExit={() => setActiveUnitId(null)}
-        onComplete={() => setActiveUnitId(null)}
+        onExit={handleUnitExit}
+        onComplete={handleUnitComplete}
       />
     );
   }
@@ -50,13 +88,23 @@ export function SystematicPhonicsHub() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 py-8 px-4">
       {/* Header */}
       <div className="max-w-6xl mx-auto mb-8">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-800 font-bold mb-6"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span>Back to Home</span>
-        </Link>
+        {returnTo === "lesson" ? (
+          <button
+            onClick={() => router.back()}
+            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-800 font-bold mb-6"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span>Back to Lesson</span>
+          </button>
+        ) : (
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-800 font-bold mb-6"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span>Back to Home</span>
+          </Link>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: -20 }}
