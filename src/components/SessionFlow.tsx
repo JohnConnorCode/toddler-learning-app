@@ -107,7 +107,15 @@ export function SessionFlow({ onExit }: SessionFlowProps) {
 
     if (nextStep.activityType === "sentence") {
       const sentence = getRandomSentence(maxUnit);
-      setCurrentSentence(sentence?.sentence || "");
+      if (!sentence) {
+        // No sentences available, skip to next step
+        const updatedSession = advanceStep(currentSession);
+        setSession(updatedSession);
+        saveSession(updatedSession);
+        loadNextActivity(updatedSession);
+        return;
+      }
+      setCurrentSentence(sentence.sentence);
     } else {
       setCurrentWord(nextStep.word || "cat");
     }
@@ -151,15 +159,24 @@ export function SessionFlow({ onExit }: SessionFlowProps) {
   const handleMenuSelect = (activity: ActivityType) => {
     if (!session) return;
 
-    setCurrentActivity(activity);
-
     if (activity === "sentence") {
       const sentence = getRandomSentence(maxUnit);
-      setCurrentSentence(sentence?.sentence || "");
+      if (!sentence) {
+        // No sentences available for this unit yet
+        return;
+      }
+      setCurrentSentence(sentence.sentence);
+      setCurrentActivity(activity);
     } else {
       const availableWords = getAllBlendingWordStrings(maxUnit);
       const sessionWords = getSessionWords(availableWords, maxUnit, 1);
-      setCurrentWord(sessionWords[0] || "cat");
+      const word = sessionWords[0];
+      if (!word) {
+        // No words available (shouldn't happen, but safety check)
+        return;
+      }
+      setCurrentWord(word);
+      setCurrentActivity(activity);
     }
   };
 
