@@ -28,6 +28,8 @@ import { BlendingSlider } from "@/components/blending/BlendingSlider";
 import { DecodableSentence } from "@/components/blending/DecodableSentence";
 import { usePhonicsProgress } from "@/hooks/use-phonics-progress";
 import { recordReview, getOverallBlendingStats } from "@/lib/word-scheduler";
+import { celebrateSmall, celebrateMega } from "@/lib/confetti";
+import { playSound } from "@/lib/sound-effects";
 import {
   Play,
   List,
@@ -35,6 +37,7 @@ import {
   CheckCircle,
   Sparkles,
   RotateCcw,
+  Star,
 } from "lucide-react";
 
 interface SessionFlowProps {
@@ -134,16 +137,20 @@ export function SessionFlow({ onExit }: SessionFlowProps) {
       // Sentences don't use word scheduler - they're just practice
     }
 
+    // CELEBRATE after each activity!
+    celebrateSmall();
+    playSound('success');
+
     // Advance session
     if (session.mode === "auto") {
       const updatedSession = advanceStep(session);
       setSession(updatedSession);
       saveSession(updatedSession);
 
-      // Small delay before loading next activity
+      // Longer delay for 3-year-olds (3s instead of 1.5s)
       setTimeout(() => {
         loadNextActivity(updatedSession);
-      }, 1500);
+      }, 3000);
     } else {
       // Menu mode - return to hub
       setCurrentActivity(null);
@@ -197,14 +204,25 @@ export function SessionFlow({ onExit }: SessionFlowProps) {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <h1 className="text-4xl sm:text-5xl font-black text-gray-800 mb-4">
-            Start Your Practice
-          </h1>
-          <p className="text-xl text-gray-600">Choose your session style</p>
+          <motion.h1
+            animate={{ scale: [1, 1.05, 1] }}
+            transition={{ repeat: Infinity, duration: 2 }}
+            className="text-6xl sm:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mb-6"
+          >
+            Let's Play! 🎉
+          </motion.h1>
           {recommendedMode === "auto" && (
-            <p className="text-sm text-purple-600 mt-2 font-semibold">
-              💡 We recommend Guided Mode for now!
-            </p>
+            <div className="flex items-center justify-center gap-2 mb-4">
+              {[...Array(3)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  animate={{ rotate: [0, 360] }}
+                  transition={{ repeat: Infinity, duration: 2, delay: i * 0.2 }}
+                >
+                  <Star className="w-8 h-8 text-yellow-400 fill-yellow-400" />
+                </motion.div>
+              ))}
+            </div>
           )}
         </motion.div>
 
@@ -223,17 +241,16 @@ export function SessionFlow({ onExit }: SessionFlowProps) {
                 : "border-gray-200"
             }`}
           >
-            <div className="text-6xl mb-4">🎯</div>
-            <h3 className="text-3xl font-black text-gray-800 mb-3">
-              Guided Mode
+            <div className="text-7xl mb-6">🎯</div>
+            <h3 className="text-4xl font-black text-gray-800 mb-4">
+              Follow Along!
             </h3>
-            <p className="text-gray-600 mb-4">
-              Follow a carefully designed sequence. Perfect for building strong
-              foundations!
+            <p className="text-2xl text-gray-600 mb-6 font-bold">
+              We'll show you what to do!
             </p>
-            <div className="flex items-center justify-center gap-2 text-purple-600 font-bold">
-              <Play className="w-5 h-5" />
-              <span>Auto-guided session</span>
+            <div className="flex items-center justify-center gap-3 text-purple-600 font-black text-xl">
+              <Play className="w-7 h-7" />
+              <span>5 Fun Activities</span>
             </div>
           </motion.button>
 
@@ -251,16 +268,16 @@ export function SessionFlow({ onExit }: SessionFlowProps) {
                 : "border-gray-200"
             }`}
           >
-            <div className="text-6xl mb-4">🎨</div>
-            <h3 className="text-3xl font-black text-gray-800 mb-3">
-              Free Choice
+            <div className="text-7xl mb-6">🎨</div>
+            <h3 className="text-4xl font-black text-gray-800 mb-4">
+              Pick What You Want!
             </h3>
-            <p className="text-gray-600 mb-4">
-              Pick any activity you want! Great for independent learners.
+            <p className="text-2xl text-gray-600 mb-6 font-bold">
+              You choose!
             </p>
-            <div className="flex items-center justify-center gap-2 text-green-600 font-bold">
-              <List className="w-5 h-5" />
-              <span>Choose your own</span>
+            <div className="flex items-center justify-center gap-3 text-green-600 font-black text-xl">
+              <List className="w-7 h-7" />
+              <span>Your Choice</span>
             </div>
           </motion.button>
         </div>
@@ -279,11 +296,15 @@ export function SessionFlow({ onExit }: SessionFlowProps) {
           className="text-center space-y-6 max-w-2xl"
         >
           <div className="text-8xl mb-4">🎉</div>
-          <h1 className="text-5xl font-black text-gray-800">
-            Session Complete!
-          </h1>
-          <p className="text-2xl text-gray-600">
-            Amazing work! You completed {progress.completed} activities!
+          <motion.h1
+            animate={{ scale: [1, 1.1, 1] }}
+            transition={{ repeat: 3, duration: 0.5 }}
+            className="text-6xl sm:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600"
+          >
+            You Did It! ⭐
+          </motion.h1>
+          <p className="text-3xl sm:text-4xl font-black text-gray-700">
+            Amazing!
           </p>
 
           <div className="bg-white rounded-3xl p-8 shadow-xl">

@@ -35,24 +35,24 @@ export function createAutoFlowSession(
 ): SessionPlan {
   const steps: SessionStep[] = [];
 
-  // Session structure for auto-flow (10-12 minutes):
-  // 1. Warm-up: 2 tap-to-blend words (easiest)
-  // 2. Practice: 3 sound segmenting words
-  // 3. Challenge: 2 blending slider words
+  // Session structure for auto-flow (5 activities = 3-5 minutes):
+  // Perfect for 3-year-old attention span!
+  // 1. Warm-up: 1 tap-to-blend word
+  // 2. Practice: 2 sound segmenting words
+  // 3. Challenge: 1 blending slider word
   // 4. Application: 1 sentence (if unit >= 2)
-  // 5. Cool-down: 2 tap-to-blend words (review)
 
-  // Warm-up (2 words)
-  for (let i = 0; i < 2 && i < words.length; i++) {
+  // Warm-up (1 word)
+  if (words.length > 0) {
     steps.push({
       activityType: "tap",
-      word: words[i],
+      word: words[0],
       difficulty: 1,
     });
   }
 
-  // Practice (3 words)
-  for (let i = 2; i < 5 && i < words.length; i++) {
+  // Practice (2 words)
+  for (let i = 1; i < 3 && i < words.length; i++) {
     steps.push({
       activityType: "segment",
       word: words[i],
@@ -60,11 +60,11 @@ export function createAutoFlowSession(
     });
   }
 
-  // Challenge (2 words)
-  for (let i = 5; i < 7 && i < words.length; i++) {
+  // Challenge (1 word)
+  if (words.length > 3) {
     steps.push({
       activityType: "slider",
-      word: words[i],
+      word: words[3],
       difficulty: 2,
     });
   }
@@ -73,15 +73,6 @@ export function createAutoFlowSession(
   if (currentUnit >= 2) {
     steps.push({
       activityType: "sentence",
-      difficulty: 1,
-    });
-  }
-
-  // Cool-down (2 words)
-  for (let i = 7; i < 9 && i < words.length; i++) {
-    steps.push({
-      activityType: "tap",
-      word: words[i],
       difficulty: 1,
     });
   }
