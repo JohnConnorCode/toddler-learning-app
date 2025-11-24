@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { BookOpen, Music, Star, Settings, Eye, Users, ClipboardCheck, Sparkles, BarChart3 } from "lucide-react";
 import { useState } from "react";
 import { HelpModal } from "@/components/ui/HelpModal";
+import { InstallButton } from "@/components/InstallButton";
 
 export default function Home() {
     return (
@@ -151,22 +152,28 @@ export default function Home() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="mt-8 sm:mt-12 md:mt-16 flex gap-3 sm:gap-4"
+                className="mt-8 sm:mt-12 md:mt-16 flex flex-col items-center gap-4"
             >
-                <Link
-                    href="/parent-dashboard"
-                    className="p-3 sm:p-4 rounded-full bg-white shadow-md text-purple-400 hover:text-purple-600 hover:scale-110 transition-all group"
-                    title="Parent Dashboard"
-                >
-                    <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 group-hover:scale-110 transition-transform duration-300" />
-                </Link>
-                <Link
-                    href="/settings"
-                    className="p-3 sm:p-4 rounded-full bg-white shadow-md text-gray-400 hover:text-gray-600 hover:scale-110 transition-all group"
-                    title="Settings"
-                >
-                    <Settings className="w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-90 transition-transform duration-300" />
-                </Link>
+                {/* Install App Button */}
+                <InstallButton />
+
+                {/* Icon Buttons */}
+                <div className="flex gap-3 sm:gap-4">
+                    <Link
+                        href="/parent-dashboard"
+                        className="p-3 sm:p-4 rounded-full bg-white shadow-md text-purple-400 hover:text-purple-600 hover:scale-110 transition-all group"
+                        title="Parent Dashboard"
+                    >
+                        <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 group-hover:scale-110 transition-transform duration-300" />
+                    </Link>
+                    <Link
+                        href="/settings"
+                        className="p-3 sm:p-4 rounded-full bg-white shadow-md text-gray-400 hover:text-gray-600 hover:scale-110 transition-all group"
+                        title="Settings"
+                    >
+                        <Settings className="w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-90 transition-transform duration-300" />
+                    </Link>
+                </div>
             </motion.div>
         </main>
     );
