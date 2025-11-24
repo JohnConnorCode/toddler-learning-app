@@ -154,7 +154,7 @@ export const WORDS_DATA: WordItem[] = [
         hint: "Soft bread roll",
         difficulty: 1,
         relatedWords: ["RUN", "SUN", "FUN"],
-        image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1606890737921-7e1f23f292de?w=400&h=400&fit=crop"
     },
     {
         id: "25",
@@ -240,7 +240,7 @@ export const WORDS_DATA: WordItem[] = [
         hint: "You carry things in this",
         difficulty: 1,
         relatedWords: ["TAG", "RAG", "WAG"],
-        image: "https://images.unsplash.com/photo-1544816565-aa8a0f2ab1ec?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=400&fit=crop"
     },
     {
         id: "47",
@@ -283,7 +283,7 @@ export const WORDS_DATA: WordItem[] = [
         sentence: "The sky is blue.",
         hint: "Look up to see this",
         difficulty: 1,
-        image: "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=400&h=400&fit=crop"
     },
     {
         id: "62",
@@ -305,7 +305,7 @@ export const WORDS_DATA: WordItem[] = [
         hint: "A piece of wood from a tree",
         difficulty: 1,
         relatedWords: ["DOG", "FOG", "HOG"],
-        image: "https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1610894258635-d3e9f0c23c68?w=400&h=400&fit=crop"
     },
 
     // Actions (Difficulty 1)
@@ -341,7 +341,7 @@ export const WORDS_DATA: WordItem[] = [
         hint: "To jump on one foot",
         difficulty: 1,
         relatedWords: ["TOP", "MOP", "POP"],
-        image: "https://images.unsplash.com/photo-1535223289827-42f1e9919769?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop"
     },
 
     // ========== DIFFICULTY 2: 4-letter words ==========
@@ -596,7 +596,7 @@ export const WORDS_DATA: WordItem[] = [
         sentence: "Stars twinkle in the sky.",
         hint: "Tiny lights in the night sky",
         difficulty: 2,
-        image: "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?w=400&h=400&fit=crop"
     },
     {
         id: "164",
@@ -683,7 +683,7 @@ export const WORDS_DATA: WordItem[] = [
         sentence: "Clap your hands together.",
         hint: "To hit your hands together",
         difficulty: 2,
-        image: "https://images.unsplash.com/photo-1516450137517-162bfbeb8dba?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1504805572947-34fad45aed93?w=400&h=400&fit=crop"
     },
     {
         id: "184",
@@ -888,7 +888,7 @@ export const WORDS_DATA: WordItem[] = [
         sentence: "I see clouds in the sky.",
         hint: "White fluffy things in the sky",
         difficulty: 3,
-        image: "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1513002749550-c59d786b8e6c?w=400&h=400&fit=crop"
     },
     {
         id: "361",
@@ -918,7 +918,7 @@ export const WORDS_DATA: WordItem[] = [
         sentence: "We play at the beach.",
         hint: "Sandy place by the ocean",
         difficulty: 3,
-        image: "https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1520454974749-611b7248ffdb?w=400&h=400&fit=crop"
     },
 
     // Places (Difficulty 3)
