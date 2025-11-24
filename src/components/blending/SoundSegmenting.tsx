@@ -10,7 +10,7 @@ import { Lightbulb, Volume2, RotateCcw, Sparkles } from "lucide-react";
 interface SoundSegmentingProps {
   word: string;
   image?: string;
-  onComplete?: () => void;
+  onComplete?: (smoothnessScore: number) => void;
 }
 
 export function SoundSegmenting({
@@ -108,14 +108,21 @@ export function SoundSegmenting({
     setIsComplete(true);
     triggerConfetti();
 
+    // Calculate smoothness score based on mistakes
+    // 0 mistakes = 1.0, 1 mistake = 0.85, 2 mistakes = 0.7, 3+ = 0.5
+    let score = 1.0;
+    if (mistakes === 1) score = 0.85;
+    else if (mistakes === 2) score = 0.7;
+    else if (mistakes >= 3) score = 0.5;
+
     // Play the full word
     setTimeout(() => {
       speak(word);
     }, 500);
 
-    // Call completion callback
+    // Call completion callback with smoothness score
     if (onComplete) {
-      setTimeout(onComplete, 3000);
+      setTimeout(() => onComplete(score), 3000);
     }
   };
 

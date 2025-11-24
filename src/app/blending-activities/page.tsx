@@ -8,6 +8,8 @@ import { BlendingSlider } from "@/components/blending/BlendingSlider";
 import { DecodableSentence } from "@/components/blending/DecodableSentence";
 import { getRandomSentence } from "@/lib/decodable-sentences-data";
 import { usePhonicsProgress } from "@/hooks/use-phonics-progress";
+import { getSessionWords, recordReview } from "@/lib/word-scheduler";
+import { getAllBlendingWordStrings, getRandomBlendingWord } from "@/lib/blending-words-data";
 import Link from "next/link";
 import { ArrowLeft, Zap, MousePointer, SlidersHorizontal, BookOpen, CheckCircle, Lock } from "lucide-react";
 
@@ -16,6 +18,8 @@ type ActivityType = "tap" | "segment" | "slider" | "sentence" | null;
 export default function BlendingActivitiesPage() {
   const [currentActivity, setCurrentActivity] = useState<ActivityType>(null);
   const [currentWord, setCurrentWord] = useState("cat");
+  const [sessionWords, setSessionWords] = useState<string[]>([]);
+  const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const { getOverallProgress, state } = usePhonicsProgress();
 
   const progress = getOverallProgress();
@@ -66,6 +70,7 @@ export default function BlendingActivitiesPage() {
 
   const handleActivitySelect = (activity: ActivityType) => {
     setCurrentActivity(activity);
+
     // Generate a new word/sentence when starting activity
     if (activity === "sentence") {
       const sentence = getRandomSentence(maxUnit);
@@ -73,17 +78,37 @@ export default function BlendingActivitiesPage() {
         setCurrentWord(sentence.sentence);
       }
     } else {
-      // For now, use a simple word - later this will use word scheduler
-      setCurrentWord("cat");
+      // Get words for blending practice using word scheduler
+      const availableWords = getAllBlendingWordStrings(maxUnit);
+      const words = getSessionWords(availableWords, maxUnit, 10);
+      setSessionWords(words);
+      setCurrentWordIndex(0);
+      setCurrentWord(words[0] || "cat");
     }
   };
 
   const handleActivityComplete = (score?: number | boolean) => {
-    console.log("Activity complete with score:", score);
-    // Return to hub after short delay
-    setTimeout(() => {
-      setCurrentActivity(null);
-    }, 2000);
+    // Record review for word-based activities (not sentences)
+    if (currentActivity !== "sentence" && typeof score === "number") {
+      const smoothnessScore = score;
+      const wasIndependent = smoothnessScore >= 0.7;
+      recordReview(currentWord, maxUnit, smoothnessScore, wasIndependent);
+    }
+
+    // Move to next word or return to hub
+    if (currentActivity !== "sentence" && currentWordIndex < sessionWords.length - 1) {
+      // Move to next word in session
+      const nextIndex = currentWordIndex + 1;
+      setCurrentWordIndex(nextIndex);
+      setCurrentWord(sessionWords[nextIndex]);
+    } else {
+      // Session complete or sentence activity - return to hub
+      setTimeout(() => {
+        setCurrentActivity(null);
+        setSessionWords([]);
+        setCurrentWordIndex(0);
+      }, 2000);
+    }
   };
 
   const handleBackToHub = () => {
