@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { BookOpen, Music, Star, Settings, Eye, Users, ClipboardCheck, Sparkles } from "lucide-react";
+import { BookOpen, Music, Star, Settings, Eye, Users, ClipboardCheck, Sparkles, BarChart3 } from "lucide-react";
 import { useState } from "react";
 import { HelpModal } from "@/components/ui/HelpModal";
 
@@ -86,6 +86,21 @@ export default function Home() {
                     </motion.div>
                 </Link>
 
+                <Link href="/blending-activities" className="group">
+                    <motion.div
+                        whileHover={{ scale: 1.03, rotate: 2 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="bg-white rounded-2xl sm:rounded-[2rem] md:rounded-[2.5rem] p-6 sm:p-8 flex flex-col items-center justify-center shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] border-b-4 sm:border-b-6 md:border-b-8 border-gray-100 group-hover:border-green-400/30 transition-all h-52 sm:h-60 md:h-64 relative overflow-hidden"
+                    >
+                        <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-transparent opacity-50" />
+                        <div className="bg-green-100 p-4 sm:p-5 md:p-6 rounded-full mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+                            <Sparkles className="w-10 h-10 sm:w-12 sm:h-12 text-green-500" />
+                        </div>
+                        <span className="text-2xl sm:text-3xl font-black text-gray-800 group-hover:text-green-600 transition-colors">Blending Practice</span>
+                        <span className="text-sm sm:text-base text-gray-400 mt-1 sm:mt-2 font-medium">Connect sounds to read!</span>
+                    </motion.div>
+                </Link>
+
                 <Link href="/words" className="group">
                     <motion.div
                         whileHover={{ scale: 1.03, rotate: 2 }}
@@ -139,8 +154,16 @@ export default function Home() {
                 className="mt-8 sm:mt-12 md:mt-16 flex gap-3 sm:gap-4"
             >
                 <Link
+                    href="/parent-dashboard"
+                    className="p-3 sm:p-4 rounded-full bg-white shadow-md text-purple-400 hover:text-purple-600 hover:scale-110 transition-all group"
+                    title="Parent Dashboard"
+                >
+                    <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 group-hover:scale-110 transition-transform duration-300" />
+                </Link>
+                <Link
                     href="/settings"
                     className="p-3 sm:p-4 rounded-full bg-white shadow-md text-gray-400 hover:text-gray-600 hover:scale-110 transition-all group"
+                    title="Settings"
                 >
                     <Settings className="w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-90 transition-transform duration-300" />
                 </Link>

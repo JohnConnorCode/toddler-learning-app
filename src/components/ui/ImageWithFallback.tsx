@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ImageOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +19,20 @@ export function ImageWithFallback({
 }: ImageWithFallbackProps) {
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
+
+  // Add timeout to prevent infinite loading
+  useEffect(() => {
+    setImageLoading(true);
+    setImageError(false);
+
+    const timeout = setTimeout(() => {
+      // If still loading after 5 seconds, treat as error
+      setImageError(true);
+      setImageLoading(false);
+    }, 5000);
+
+    return () => clearTimeout(timeout);
+  }, [src]);
 
   const handleError = () => {
     setImageError(true);
@@ -53,6 +67,7 @@ export function ImageWithFallback({
       <img
         src={src}
         alt={alt}
+        crossOrigin="anonymous"
         className={cn(
           "w-full h-full object-cover transition-opacity duration-300",
           imageLoading ? "opacity-0" : "opacity-100"

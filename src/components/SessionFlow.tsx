@@ -113,12 +113,17 @@ export function SessionFlow({ onExit }: SessionFlowProps) {
     }
   };
 
-  const handleActivityComplete = (score?: number | boolean) => {
+  const handleActivityComplete = (score?: number) => {
     if (!session) return;
 
-    // Record review if it's a word activity with smoothness score
-    if (currentActivity !== "sentence" && typeof score === "number") {
-      recordReview(currentWord, maxUnit, score, score >= 0.7);
+    // Record review for all activities with smoothness scores
+    if (typeof score === "number") {
+      // For word activities, record with the word
+      // For sentence activities, we could track differently or skip
+      if (currentActivity !== "sentence") {
+        recordReview(currentWord, maxUnit, score, score >= 0.7);
+      }
+      // Sentences don't use word scheduler - they're just practice
     }
 
     // Advance session

@@ -9,7 +9,7 @@ import { Volume2, CheckCircle, Sparkles, ArrowRight } from "lucide-react";
 interface DecodableSentenceProps {
   sentence: string;
   image?: string;
-  onComplete?: (wasIndependent: boolean) => void;
+  onComplete?: (smoothnessScore: number) => void;
   showImage?: boolean;
 }
 
@@ -53,6 +53,12 @@ export function DecodableSentence({
     const independent = clickedWords.size === 0;
     setWasIndependent(independent);
 
+    // Calculate smoothness score based on independence
+    // 100% independent = 1.0, each word clicked reduces score
+    const wordsClicked = clickedWords.size;
+    const totalWords = words.length;
+    const smoothnessScore = Math.max(0.5, 1.0 - (wordsClicked / totalWords) * 0.5);
+
     if (independent) {
       triggerConfetti();
     }
@@ -62,9 +68,9 @@ export function DecodableSentence({
       speak(sentence);
     }, independent ? 500 : 300);
 
-    // Call completion callback
+    // Call completion callback with smoothness score
     if (onComplete) {
-      setTimeout(() => onComplete(independent), 3000);
+      setTimeout(() => onComplete(smoothnessScore), 3000);
     }
   };
 
