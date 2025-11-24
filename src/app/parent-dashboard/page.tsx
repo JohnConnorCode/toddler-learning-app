@@ -28,7 +28,7 @@ export default function ParentDashboardPage() {
   const [showExportSuccess, setShowExportSuccess] = useState(false);
 
   const completedUnits = state.completedUnits;
-  const maxUnit = Math.max(...completedUnits, 1);
+  const maxUnit = completedUnits.length > 0 ? Math.max(...completedUnits) : 1;
   const phonicsProgress = getOverallProgress();
 
   // Get blending statistics

@@ -44,7 +44,7 @@ interface SessionFlowProps {
 export function SessionFlow({ onExit }: SessionFlowProps) {
   const { state } = usePhonicsProgress();
   const completedUnits = state.completedUnits;
-  const maxUnit = Math.max(...completedUnits, 1);
+  const maxUnit = completedUnits.length > 0 ? Math.max(...completedUnits) : 1;
 
   const [session, setSession] = useState<SessionPlan | null>(null);
   const [currentActivity, setCurrentActivity] = useState<ActivityType | null>(
