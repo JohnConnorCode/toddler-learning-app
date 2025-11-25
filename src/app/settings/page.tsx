@@ -253,19 +253,22 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              {/* Avatar Selection */}
+              {/* Avatar Selection - Clean Grid */}
               <div>
-                <h3 className="font-bold text-gray-800 mb-3">Change Avatar</h3>
-                <div className="flex flex-wrap gap-2">
-                  {AVATAR_EMOJIS.map((emoji) => (
+                <h3 className="font-bold text-gray-800 mb-3">Choose Your Avatar</h3>
+                <p className="text-sm text-gray-500 mb-3">🤖 Robots & 🦕 Dinosaurs are featured first!</p>
+                <div className="grid grid-cols-6 sm:grid-cols-8 gap-2">
+                  {AVATAR_EMOJIS.map((emoji, index) => (
                     <button
                       key={emoji}
                       onClick={() => updateChildProfile({ avatarEmoji: emoji })}
                       className={cn(
-                        "w-12 h-12 text-2xl rounded-xl transition-all",
+                        "aspect-square text-2xl sm:text-3xl rounded-xl transition-all flex items-center justify-center",
                         childProfile.avatarEmoji === emoji
-                          ? "bg-purple-100 ring-2 ring-purple-500 scale-110"
-                          : "bg-gray-100 hover:bg-purple-50"
+                          ? "bg-purple-200 ring-2 ring-purple-500 scale-105 shadow-lg"
+                          : "bg-gray-50 hover:bg-purple-50 hover:scale-105",
+                        // Highlight popular first row
+                        index < 5 && childProfile.avatarEmoji !== emoji && "bg-yellow-50 hover:bg-yellow-100"
                       )}
                     >
                       {emoji}
@@ -334,23 +337,33 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              {/* Mascot Selection */}
+              {/* Mascot Selection - Featured first */}
               <div>
                 <h3 className="font-bold text-gray-800 mb-3">Learning Buddy</h3>
+                <p className="text-sm text-gray-500 mb-3">Your buddy cheers you on while you learn!</p>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {Object.values(MASCOTS).map((mascot) => {
+                  {/* Display in preferred order: robot, dinosaur first */}
+                  {(['robot', 'dinosaur', 'rocket', 'spaceship', 'car', 'lizard', 'owl'] as const).map((mascotId) => {
+                    const mascot = MASCOTS[mascotId];
+                    if (!mascot) return null;
                     const isSelected = childProfile.selectedMascot === mascot.id;
+                    const isFeatured = mascotId === 'robot' || mascotId === 'dinosaur';
                     return (
                       <button
                         key={mascot.id}
                         onClick={() => handleMascotSelect(mascot.id)}
                         className={cn(
-                          "p-4 rounded-2xl border-2 transition-all text-center",
+                          "relative p-4 rounded-2xl border-2 transition-all text-center",
                           isSelected
-                            ? "border-indigo-400 bg-indigo-50 shadow-lg scale-105"
+                            ? "border-indigo-400 bg-indigo-100 shadow-lg scale-105"
+                            : isFeatured
+                            ? "border-yellow-300 bg-yellow-50 hover:border-yellow-400 hover:bg-yellow-100"
                             : "border-gray-200 bg-white hover:border-indigo-200"
                         )}
                       >
+                        {isFeatured && !isSelected && (
+                          <span className="absolute -top-2 -right-2 text-sm">⭐</span>
+                        )}
                         <div className="text-4xl mb-2">{mascot.emoji}</div>
                         <div className="font-bold text-gray-800 text-sm">{mascot.name}</div>
                         <div className="text-xs text-gray-500">{mascot.personality}</div>

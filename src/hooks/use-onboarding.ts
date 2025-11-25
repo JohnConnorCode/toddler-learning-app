@@ -218,38 +218,33 @@ export function useHasInterests(): boolean {
   return (childProfile?.interests?.length ?? 0) > 0;
 }
 
-// Avatar emoji options for children
+// Avatar emoji options for children - Popular themes first!
 export const AVATAR_EMOJIS = [
-  // Classic animals
+  // 🔥 POPULAR: Robots & Dinosaurs (most requested!)
+  "🤖", // Robot
+  "🦕", // Brontosaurus
+  "🦖", // T-Rex
+  "🚀", // Rocket
+  "🛸", // UFO
+  // Space & Aliens
+  "👽", // Alien
+  "🌟", // Star
+  // Vehicles
+  "🚗", // Car
+  "🏎️", // Race Car
+  // Lizards & Reptiles
+  "🦎", // Lizard
+  "🐊", // Crocodile
+  "🐢", // Turtle
+  // Classic Animals
   "🦁", // Lion
   "🐻", // Bear
   "🐰", // Bunny
   "🦊", // Fox
   "🐼", // Panda
-  "🐨", // Koala
-  "🦋", // Butterfly
-  "🐬", // Dolphin
   "🦄", // Unicorn
-  "🐸", // Frog
-  "🐯", // Tiger
   "🐶", // Dog
-  // Robots & Tech
-  "🤖", // Robot
-  "🦾", // Robot Arm
-  // Dinosaurs
-  "🦕", // Brontosaurus
-  "🦖", // T-Rex
-  // Lizards & Reptiles
-  "🦎", // Lizard
-  "🐊", // Crocodile
-  "🐢", // Turtle
-  // Vehicles
-  "🚗", // Car
-  "🏎️", // Race Car
-  // Space
-  "🚀", // Rocket
-  "🛸", // UFO
-  "👽", // Alien
+  "🐱", // Cat
 ] as const;
 
 // Age options (2-5 years old)
