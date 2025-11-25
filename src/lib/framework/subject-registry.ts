@@ -169,7 +169,7 @@ export const SUBJECTS: Record<SubjectId, SubjectConfig> = {
       accent: '#059669',
     },
     order: 2,
-    enabled: false, // Coming soon
+    enabled: true,
     minAge: 2,
     maxAge: 7,
     activityTypes: [
