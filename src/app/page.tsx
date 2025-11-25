@@ -6,7 +6,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { BookOpen, Star, Settings, Eye, Users, ClipboardCheck, Sparkles, BarChart3, Rocket, Map, Book, Trophy, Pencil, Calculator, Edit3, Play } from "lucide-react";
 import { InstallButton } from "@/components/InstallButton";
-import { useLevelProgress } from "@/hooks/use-level-progress";
+import { useLevelProgress, useLevelProgressHydrated } from "@/hooks/use-level-progress";
 import { useAccessibility, getMotionProps } from "@/hooks/use-accessibility";
 import { useOnboarding, useChildName } from "@/hooks/use-onboarding";
 import { useMascot } from "@/hooks/use-mascot";
@@ -16,6 +16,7 @@ import { UnifiedProgress } from "@/components/home/UnifiedProgress";
 
 export default function Home() {
     const router = useRouter();
+    const hasHydrated = useLevelProgressHydrated();
     const { getTotalProgress, currentLevel } = useLevelProgress();
     const { shouldReduceMotion } = useAccessibility();
     const { isOnboardingComplete, childProfile } = useOnboarding();
@@ -31,14 +32,15 @@ export default function Home() {
     const resumeUrl = getResumeUrl();
     const resumeLabel = getResumeLabel();
 
-    // Redirect first-time users to onboarding, show loading until ready
+    // Redirect first-time users to onboarding, show loading until ready AFTER hydration
     useEffect(() => {
+        if (!hasHydrated) return;
         if (isOnboardingComplete === false) {
             router.replace("/onboarding");
         } else if (isOnboardingComplete === true) {
             setIsReady(true);
         }
-    }, [isOnboardingComplete, router]);
+    }, [isOnboardingComplete, router, hasHydrated]);
 
     // Show beautiful loading screen while checking onboarding status
     if (!isReady) {

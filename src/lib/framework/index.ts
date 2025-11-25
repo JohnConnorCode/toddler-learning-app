@@ -83,6 +83,7 @@ export {
   useReadingProgress,
   useMathProgress,
   useGlobalProgress,
+  useHasHydrated,
 } from './progress-store';
 
 // Activity interface

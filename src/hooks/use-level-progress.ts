@@ -15,6 +15,10 @@ import {
 } from "@/lib/levels-data";
 
 interface LevelProgressState extends UserProgress {
+  // Hydration state - CRITICAL for SSR
+  _hasHydrated: boolean;
+  setHasHydrated: (state: boolean) => void;
+
   // Actions
   completeLesson: (lessonId: string, starsEarned: number) => void;
   startLesson: (lessonId: string) => void;
@@ -69,6 +73,10 @@ export const useLevelProgress = create<LevelProgressState>()(
   persist(
     (set, get) => ({
       ...getInitialProgress(),
+
+      // Hydration state
+      _hasHydrated: false,
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
 
       completeLesson: (lessonId: string, starsEarned: number) => {
         const result = getLessonById(lessonId);
@@ -241,6 +249,16 @@ export const useLevelProgress = create<LevelProgressState>()(
     }),
     {
       name: "level-progress",
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );
+
+/**
+ * Hook to check if level progress store has hydrated
+ */
+export function useLevelProgressHydrated() {
+  return useLevelProgress((state) => state._hasHydrated);
+}

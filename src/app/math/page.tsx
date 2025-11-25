@@ -6,10 +6,11 @@ import Link from "next/link";
 import { ArrowLeft, Calculator, Lock, Star, Check, Play, Unlock, Zap } from "lucide-react";
 import { useAccessibility } from "@/hooks/use-accessibility";
 import { getMathUnits, type MathUnit, type MathLesson } from "@/lib/math-data";
-import { useSubjectProgress } from "@/lib/framework";
+import { useSubjectProgress, useHasHydrated } from "@/lib/framework";
 
 export default function MathPage() {
   const { shouldReduceMotion } = useAccessibility();
+  const hasHydrated = useHasHydrated();
   // Memoize units to prevent new array on every render
   const units = useMemo(() => getMathUnits(), []);
   const { isLessonCompleted, isUnitUnlocked, unlockUnit } = useSubjectProgress("math");
@@ -18,8 +19,9 @@ export default function MathPage() {
   const [showUnlockConfirm, setShowUnlockConfirm] = useState<string | null>(null);
   const hasInitialized = useRef(false);
 
-  // Unlock first unit and set ready state - run only once
+  // Unlock first unit and set ready state - run only once AFTER hydration
   useEffect(() => {
+    if (!hasHydrated) return;
     if (hasInitialized.current) return;
     hasInitialized.current = true;
 
@@ -31,7 +33,7 @@ export default function MathPage() {
     }
     setIsReady(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [hasHydrated]);
 
   // Unlock all units
   const handleUnlockAll = useCallback(() => {
@@ -55,8 +57,8 @@ export default function MathPage() {
     [units, isUnitUnlocked]
   );
 
-  // Show loading while initializing
-  if (!isReady) {
+  // Show loading while initializing or waiting for hydration
+  if (!hasHydrated || !isReady) {
     return (
       <main className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 flex items-center justify-center p-4">
         <motion.div

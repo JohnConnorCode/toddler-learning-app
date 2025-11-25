@@ -39,6 +39,10 @@ export interface ProgressState {
   overallStreak: number;
   lastActivityDate: string | null;
 
+  /** Hydration state - CRITICAL for SSR */
+  _hasHydrated: boolean;
+  setHasHydrated: (state: boolean) => void;
+
   /** Actions */
   initializeSubject: (subjectId: SubjectId) => void;
   recordItemAttempt: (
@@ -199,6 +203,10 @@ export const useProgressStore = create<ProgressState>()(
       currentLevel: 1,
       overallStreak: 0,
       lastActivityDate: null,
+
+      // Hydration state - starts false, set true after rehydration
+      _hasHydrated: false,
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
 
       // Initialize a subject's progress
       initializeSubject: (subjectId) => {
@@ -481,9 +489,22 @@ export const useProgressStore = create<ProgressState>()(
         overallStreak: state.overallStreak,
         lastActivityDate: state.lastActivityDate,
       }),
+      onRehydrateStorage: () => (state) => {
+        // Called after hydration is complete
+        state?.setHasHydrated(true);
+      },
     }
   )
 );
+
+/**
+ * Hook to check if store has hydrated from localStorage
+ * MUST be used to prevent hydration mismatches in SSR
+ */
+export function useHasHydrated() {
+  const hasHydrated = useProgressStore((state) => state._hasHydrated);
+  return hasHydrated;
+}
 
 // ============================================
 // CONVENIENCE HOOKS
