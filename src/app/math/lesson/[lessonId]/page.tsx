@@ -21,7 +21,14 @@ import {
 import { MathProblemCard } from "@/components/math/MathProblemCard";
 import { useSubjectProgress, useGlobalProgress } from "@/lib/framework";
 import { calculateStars } from "@/lib/framework";
-import confetti from "canvas-confetti";
+import { playSound, playFeedback } from "@/lib/sound-effects";
+import {
+  triggerSmallConfetti,
+  triggerMediumConfetti,
+  triggerBigConfetti,
+  triggerMegaConfetti,
+  triggerStarShower,
+} from "@/lib/confetti";
 
 type LessonPhase = "intro" | "active" | "complete";
 
@@ -106,13 +113,29 @@ export default function MathLessonPage() {
       timestamp: new Date().toISOString(),
     });
 
-    // Celebration
-    if (!shouldReduceMotion && stars >= 2) {
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-      });
+    // Difficulty-based celebration with sound
+    if (!shouldReduceMotion) {
+      if (stars === 3) {
+        // Perfect score - mega celebration
+        playFeedback('celebrate', 'heavy');
+        triggerMegaConfetti();
+        triggerStarShower();
+      } else if (stars === 2) {
+        // Good job - big celebration
+        playFeedback('fanfare', 'medium');
+        triggerBigConfetti();
+      } else if (stars === 1) {
+        // Completed - medium celebration
+        playSound('success');
+        triggerMediumConfetti();
+      } else {
+        // Keep trying - small encouragement
+        playSound('chime');
+        triggerSmallConfetti();
+      }
+    } else {
+      // Reduced motion - just play sound
+      playSound(stars >= 2 ? 'celebrate' : 'success');
     }
 
     setPhase("complete");
@@ -193,7 +216,10 @@ export default function MathLessonPage() {
             <motion.button
               whileHover={shouldReduceMotion ? {} : { scale: 1.05 }}
               whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
-              onClick={() => setPhase("active")}
+              onClick={() => {
+                playSound('whoosh');
+                setPhase("active");
+              }}
               className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl transition-shadow"
             >
               Start Lesson
@@ -289,7 +315,10 @@ export default function MathLessonPage() {
             <motion.button
               whileHover={shouldReduceMotion ? {} : { scale: 1.02 }}
               whileTap={shouldReduceMotion ? {} : { scale: 0.98 }}
-              onClick={handleRestart}
+              onClick={() => {
+                playSound('whoosh');
+                handleRestart();
+              }}
               className="flex-1 py-3 bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-2"
             >
               <RotateCcw className="w-5 h-5" />

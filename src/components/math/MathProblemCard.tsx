@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Volume2, Check, X, HelpCircle, ArrowRight, RotateCcw } from "lucide-react";
 import { useAccessibility } from "@/hooks/use-accessibility";
 import type { MathProblem } from "@/lib/math-data";
-import { formatProblem, checkAnswer, getNumberData } from "@/lib/math-data";
+import { formatProblem, checkAnswer, getEmojiForProblem } from "@/lib/math-data";
+import { playSound, playFeedback } from "@/lib/sound-effects";
+import { triggerSmallConfetti, triggerMediumConfetti, triggerStarShower } from "@/lib/confetti";
 
 interface MathProblemCardProps {
   problem: MathProblem;
@@ -14,6 +16,304 @@ interface MathProblemCardProps {
   autoSpeak?: boolean;
 }
 
+// ============================================
+// EMOJI COUNTER COMPONENT
+// ============================================
+
+interface EmojiCounterProps {
+  count: number;
+  emoji: string;
+  animate?: boolean;
+  crossedOut?: number;
+  color?: string;
+}
+
+function EmojiCounter({ count, emoji, animate = true, crossedOut = 0, color }: EmojiCounterProps) {
+  const { shouldReduceMotion } = useAccessibility();
+
+  return (
+    <div className="flex flex-wrap justify-center gap-2 max-w-[200px]">
+      {Array.from({ length: count }).map((_, i) => {
+        const isCrossed = i >= count - crossedOut;
+
+        return (
+          <motion.span
+            key={i}
+            initial={animate && !shouldReduceMotion ? { scale: 0, opacity: 0 } : {}}
+            animate={{ scale: 1, opacity: isCrossed ? 0.3 : 1 }}
+            transition={{ delay: animate ? i * 0.1 : 0, duration: 0.2 }}
+            className={`text-3xl sm:text-4xl relative ${isCrossed ? 'grayscale' : ''}`}
+          >
+            {emoji}
+            {isCrossed && (
+              <motion.span
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="absolute inset-0 flex items-center justify-center text-red-500 text-2xl"
+              >
+                ❌
+              </motion.span>
+            )}
+          </motion.span>
+        );
+      })}
+    </div>
+  );
+}
+
+// ============================================
+// NUMBER LINE COMPONENT
+// ============================================
+
+interface NumberLineProps {
+  min?: number;
+  max?: number;
+  current?: number;
+  highlight?: number[];
+  showJumps?: { from: number; to: number; label: string }[];
+}
+
+function NumberLine({
+  min = 0,
+  max = 20,
+  current,
+  highlight = [],
+  showJumps = []
+}: NumberLineProps) {
+  const { shouldReduceMotion } = useAccessibility();
+  const numbers = Array.from({ length: max - min + 1 }, (_, i) => min + i);
+
+  return (
+    <div className="relative w-full overflow-x-auto py-4">
+      <div className="flex items-center justify-center gap-1 min-w-fit px-4">
+        {numbers.map((num, i) => {
+          const isHighlighted = highlight.includes(num);
+          const isCurrent = num === current;
+
+          return (
+            <motion.div
+              key={num}
+              initial={!shouldReduceMotion ? { y: -10, opacity: 0 } : {}}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: i * 0.03 }}
+              className={`
+                flex flex-col items-center
+                ${isCurrent ? 'scale-125 z-10' : ''}
+              `}
+            >
+              {/* Jump indicators */}
+              {showJumps.map((jump, jumpIdx) => {
+                if (jump.from === num) {
+                  return (
+                    <motion.div
+                      key={jumpIdx}
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-6 text-xs font-bold text-purple-600"
+                    >
+                      {jump.label}
+                    </motion.div>
+                  );
+                }
+                return null;
+              })}
+
+              {/* Number circle */}
+              <div
+                className={`
+                  w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold
+                  transition-all duration-200
+                  ${isCurrent
+                    ? 'bg-purple-500 text-white shadow-lg ring-2 ring-purple-300'
+                    : isHighlighted
+                      ? 'bg-yellow-400 text-yellow-900'
+                      : 'bg-gray-100 text-gray-600'
+                  }
+                `}
+              >
+                {num}
+              </div>
+
+              {/* Tick mark */}
+              <div className={`w-0.5 h-2 mt-1 ${isCurrent ? 'bg-purple-500' : 'bg-gray-300'}`} />
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Line */}
+      <div className="absolute bottom-2 left-4 right-4 h-0.5 bg-gray-300" />
+    </div>
+  );
+}
+
+// ============================================
+// MATH VISUALIZER COMPONENT
+// ============================================
+
+interface MathVisualizerProps {
+  problem: MathProblem;
+  emoji: string;
+}
+
+function MathVisualizer({ problem, emoji }: MathVisualizerProps) {
+  const { shouldReduceMotion } = useAccessibility();
+
+  // Counting (single operand)
+  if (problem.operands.length === 1) {
+    const count = problem.operands[0];
+
+    // Use number line for larger numbers
+    if (count > 10) {
+      return (
+        <div className="my-4">
+          <NumberLine
+            min={0}
+            max={Math.min(count + 2, 20)}
+            current={count}
+            highlight={Array.from({ length: count + 1 }, (_, i) => i)}
+          />
+        </div>
+      );
+    }
+
+    // Use emoji counter for smaller numbers
+    return (
+      <div className="my-4">
+        <EmojiCounter count={count} emoji={emoji} animate={!shouldReduceMotion} />
+      </div>
+    );
+  }
+
+  // Addition - show two groups combining
+  if (problem.operator === "+") {
+    const [a, b, c] = problem.operands;
+    const hasThreeOperands = problem.operands.length === 3;
+    const total = problem.operands.reduce((sum, n) => sum + n, 0);
+
+    // Use number line for larger totals
+    if (total > 12) {
+      return (
+        <div className="my-4">
+          <NumberLine
+            min={0}
+            max={Math.min(total + 2, 20)}
+            current={a}
+            highlight={[a, a + b, hasThreeOperands ? total : a + b]}
+          />
+          <div className="text-center mt-2 text-sm text-gray-500">
+            Start at {a}, jump +{b}{hasThreeOperands ? `, then +${c}` : ''}
+          </div>
+        </div>
+      );
+    }
+
+    // Show emoji groups
+    return (
+      <div className="flex flex-wrap justify-center items-center gap-3 my-4">
+        <EmojiCounter count={a} emoji={emoji} animate={!shouldReduceMotion} />
+        <motion.span
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          className="text-3xl font-bold text-gray-400"
+        >
+          +
+        </motion.span>
+        <EmojiCounter count={b} emoji={emoji} animate={!shouldReduceMotion} />
+        {hasThreeOperands && (
+          <>
+            <motion.span
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2 }}
+              className="text-3xl font-bold text-gray-400"
+            >
+              +
+            </motion.span>
+            <EmojiCounter count={c} emoji={emoji} animate={!shouldReduceMotion} />
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // Subtraction - show items being crossed out
+  if (problem.operator === "-") {
+    const [total, ...subtracts] = problem.operands;
+    const totalSubtracted = subtracts.reduce((sum, n) => sum + n, 0);
+
+    // Use number line for larger numbers
+    if (total > 12) {
+      return (
+        <div className="my-4">
+          <NumberLine
+            min={0}
+            max={Math.min(total + 2, 20)}
+            current={total}
+            highlight={[total, total - subtracts[0], problem.answer]}
+          />
+          <div className="text-center mt-2 text-sm text-gray-500">
+            Start at {total}, jump back -{subtracts[0]}{subtracts.length > 1 ? `, then -${subtracts[1]}` : ''}
+          </div>
+        </div>
+      );
+    }
+
+    // Show emoji with crossed out items
+    return (
+      <div className="my-4">
+        <EmojiCounter
+          count={total}
+          emoji={emoji}
+          animate={!shouldReduceMotion}
+          crossedOut={totalSubtracted}
+        />
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="text-center mt-2 text-sm text-gray-500"
+        >
+          Take away {totalSubtracted}
+        </motion.p>
+      </div>
+    );
+  }
+
+  return null;
+}
+
+// ============================================
+// CELEBRATION HELPER
+// ============================================
+
+function celebrateCorrectAnswer(difficulty: number, shouldReduceMotion: boolean) {
+  if (shouldReduceMotion) {
+    // Just play sound for reduced motion users
+    playSound('success');
+    return;
+  }
+
+  // Difficulty-based celebration
+  if (difficulty <= 2) {
+    // Easy: Sound effect + haptic
+    playFeedback('success', 'light');
+  } else if (difficulty === 3) {
+    // Medium: Sound + small confetti
+    playFeedback('success', 'medium');
+    triggerSmallConfetti();
+  } else {
+    // Hard: Sound + star shower
+    playFeedback('celebrate', 'heavy');
+    triggerMediumConfetti();
+  }
+}
+
+// ============================================
+// MAIN COMPONENT
+// ============================================
+
 export function MathProblemCard({
   problem,
   onAnswer,
@@ -21,10 +321,12 @@ export function MathProblemCard({
   autoSpeak = true,
 }: MathProblemCardProps) {
   const { shouldReduceMotion } = useAccessibility();
-  const [userAnswer, setUserAnswer] = useState<string>("");
   const [attempts, setAttempts] = useState(0);
   const [showFeedback, setShowFeedback] = useState<"correct" | "incorrect" | null>(null);
   const [showHintText, setShowHintText] = useState(false);
+
+  // Get consistent emoji for this problem
+  const emoji = useMemo(() => getEmojiForProblem(problem.id), [problem.id]);
 
   // Generate answer options for multiple choice
   const generateOptions = useCallback(() => {
@@ -49,126 +351,80 @@ export function MathProblemCard({
 
   const [options] = useState(generateOptions);
 
-  // Speak the problem
+  // Speak the problem with improved phrasing
   const speakProblem = useCallback(() => {
     if ("speechSynthesis" in window) {
-      const text = problem.operands.length === 1
-        ? `How many is ${problem.operands[0]}?`
-        : `What is ${problem.operands.join(` ${problem.operator === "+" ? "plus" : "minus"} `)}?`;
+      // Cancel any ongoing speech
+      speechSynthesis.cancel();
+
+      let text: string;
+      if (problem.operands.length === 1) {
+        text = `How many is ${problem.operands[0]}?`;
+      } else if (problem.operands.length === 3) {
+        const operatorWord = problem.operator === "+" ? "plus" : "minus";
+        text = `What is ${problem.operands[0]}... ${operatorWord}... ${problem.operands[1]}... ${operatorWord}... ${problem.operands[2]}?`;
+      } else {
+        const operatorWord = problem.operator === "+" ? "plus" : "minus";
+        text = `What is ${problem.operands[0]}... ${operatorWord}... ${problem.operands[1]}?`;
+      }
+
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.8;
+      utterance.rate = 0.7; // Slower for better comprehension
+      utterance.pitch = 1.1; // Slightly higher pitch for friendliness
       speechSynthesis.speak(utterance);
     }
   }, [problem]);
 
   useEffect(() => {
     if (autoSpeak) {
-      speakProblem();
+      // Small delay before speaking
+      const timer = setTimeout(speakProblem, 300);
+      return () => clearTimeout(timer);
     }
   }, [autoSpeak, speakProblem]);
 
   const handleOptionClick = (answer: number) => {
+    // Play tap sound
+    playSound('snap');
+
     const isCorrect = checkAnswer(problem, answer);
     const newAttempts = attempts + 1;
     setAttempts(newAttempts);
     setShowFeedback(isCorrect ? "correct" : "incorrect");
 
-    // Speak feedback
-    if ("speechSynthesis" in window) {
-      const text = isCorrect
-        ? ["Great job!", "Awesome!", "Perfect!", "You got it!"][Math.floor(Math.random() * 4)]
-        : "Try again!";
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.9;
-      speechSynthesis.speak(utterance);
-    }
-
     if (isCorrect) {
+      // Celebration based on difficulty
+      celebrateCorrectAnswer(problem.difficulty, shouldReduceMotion);
+
+      // Speak encouragement
+      if ("speechSynthesis" in window) {
+        const phrases = ["Great job!", "Awesome!", "Perfect!", "You got it!", "Amazing!"];
+        const text = phrases[Math.floor(Math.random() * phrases.length)];
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.9;
+        utterance.pitch = 1.2;
+        setTimeout(() => speechSynthesis.speak(utterance), 300);
+      }
+
       setTimeout(() => {
         onAnswer(true, newAttempts);
         setShowFeedback(null);
         setAttempts(0);
       }, 1500);
     } else {
+      // Wrong answer feedback
+      playSound('pop');
+
+      if ("speechSynthesis" in window) {
+        const utterance = new SpeechSynthesisUtterance("Try again!");
+        utterance.rate = 0.9;
+        setTimeout(() => speechSynthesis.speak(utterance), 200);
+      }
+
       setTimeout(() => {
         setShowFeedback(null);
       }, 1000);
     }
-  };
-
-  const handleNumberInput = (num: string) => {
-    if (userAnswer.length < 2) {
-      setUserAnswer((prev) => prev + num);
-    }
-  };
-
-  const handleSubmit = () => {
-    const answer = parseInt(userAnswer, 10);
-    if (isNaN(answer)) return;
-
-    handleOptionClick(answer);
-    setUserAnswer("");
-  };
-
-  const handleClear = () => {
-    setUserAnswer("");
-  };
-
-  // Visual representation of the problem
-  const renderVisual = () => {
-    if (problem.operands.length === 1) {
-      // Counting - show dots
-      const count = problem.operands[0];
-      return (
-        <div className="flex flex-wrap justify-center gap-2 max-w-[200px] mx-auto my-4">
-          {Array.from({ length: count }).map((_, i) => (
-            <motion.div
-              key={i}
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: i * 0.1 }}
-              className="w-8 h-8 rounded-full bg-yellow-400 shadow-md"
-            />
-          ))}
-        </div>
-      );
-    }
-
-    // Addition/Subtraction visual
-    if (problem.visualHint === "fingers" && problem.operands[0] <= 10) {
-      return (
-        <div className="flex justify-center items-center gap-4 my-4">
-          {problem.operands.map((num, i) => (
-            <div key={i} className="flex items-center gap-2">
-              {i > 0 && (
-                <span className="text-3xl font-bold text-gray-400">
-                  {problem.operator}
-                </span>
-              )}
-              <div className="flex flex-wrap justify-center gap-1 max-w-[100px]">
-                {Array.from({ length: num }).map((_, j) => (
-                  <motion.div
-                    key={j}
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: (i * num + j) * 0.05 }}
-                    className={`w-6 h-6 rounded-full shadow-sm ${
-                      i === 0
-                        ? "bg-blue-400"
-                        : problem.operator === "+"
-                        ? "bg-green-400"
-                        : "bg-red-400"
-                    }`}
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      );
-    }
-
-    return null;
   };
 
   return (
@@ -195,7 +451,10 @@ export function MathProblemCard({
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={speakProblem}
+          onClick={() => {
+            playSound('pop');
+            speakProblem();
+          }}
           className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
         >
           <Volume2 className="w-5 h-5 text-gray-600" />
@@ -204,7 +463,7 @@ export function MathProblemCard({
       </div>
 
       {/* Visual Representation */}
-      {renderVisual()}
+      <MathVisualizer problem={problem} emoji={emoji} />
 
       {/* Feedback Overlay */}
       <AnimatePresence>
@@ -220,7 +479,10 @@ export function MathProblemCard({
             }`}
           >
             <motion.div
-              animate={shouldReduceMotion ? {} : { scale: [1, 1.2, 1] }}
+              animate={shouldReduceMotion ? {} : {
+                scale: [1, 1.2, 1],
+                rotate: showFeedback === "correct" ? [0, -10, 10, 0] : [0, -5, 5, 0]
+              }}
               className={`p-8 rounded-full ${
                 showFeedback === "correct" ? "bg-green-500" : "bg-red-500"
               }`}
@@ -265,7 +527,10 @@ export function MathProblemCard({
       {showHint && problem.hint && (
         <div className="mt-4">
           <button
-            onClick={() => setShowHintText(!showHintText)}
+            onClick={() => {
+              playSound('pop');
+              setShowHintText(!showHintText);
+            }}
             className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mx-auto"
           >
             <HelpCircle className="w-4 h-4" />
@@ -328,7 +593,10 @@ export function NumberKeypad({
           <motion.button
             key={num}
             whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
-            onClick={() => onNumberPress(num)}
+            onClick={() => {
+              playSound('snap');
+              onNumberPress(num);
+            }}
             className="py-4 text-2xl font-bold bg-white rounded-xl hover:bg-gray-50 transition-colors"
           >
             {num}
@@ -336,21 +604,30 @@ export function NumberKeypad({
         ))}
         <motion.button
           whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
-          onClick={onClear}
+          onClick={() => {
+            playSound('pop');
+            onClear();
+          }}
           className="py-4 text-xl font-bold bg-red-100 text-red-600 rounded-xl hover:bg-red-200 transition-colors"
         >
           <RotateCcw className="w-6 h-6 mx-auto" />
         </motion.button>
         <motion.button
           whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
-          onClick={() => onNumberPress("0")}
+          onClick={() => {
+            playSound('snap');
+            onNumberPress("0");
+          }}
           className="py-4 text-2xl font-bold bg-white rounded-xl hover:bg-gray-50 transition-colors"
         >
           0
         </motion.button>
         <motion.button
           whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
-          onClick={onSubmit}
+          onClick={() => {
+            playSound('chime');
+            onSubmit();
+          }}
           className="py-4 text-xl font-bold bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors"
         >
           <ArrowRight className="w-6 h-6 mx-auto" />

@@ -6,6 +6,48 @@
  */
 
 // ============================================
+// EMOJI THEMES FOR VISUAL LEARNING
+// ============================================
+
+export const MATH_EMOJI_THEMES = {
+  fruits: ['🍎', '🍊', '🍋', '🍇', '🍓'],
+  animals: ['🐶', '🐱', '🐰', '🐻', '🦊'],
+  stars: ['⭐', '🌟', '✨', '💫', '⚡'],
+  shapes: ['🔴', '🟠', '🟡', '🟢', '🔵'],
+  nature: ['🌸', '🌺', '🌻', '🌷', '🌹'],
+} as const;
+
+export type EmojiTheme = keyof typeof MATH_EMOJI_THEMES;
+
+/**
+ * Get a random emoji from a theme
+ */
+export function getRandomEmoji(theme: EmojiTheme): string {
+  const emojis = MATH_EMOJI_THEMES[theme];
+  return emojis[Math.floor(Math.random() * emojis.length)];
+}
+
+/**
+ * Get a consistent emoji for a problem (seeded by problem ID)
+ */
+export function getEmojiForProblem(problemId: string, theme?: EmojiTheme): string {
+  // Simple hash from problem ID
+  let hash = 0;
+  for (let i = 0; i < problemId.length; i++) {
+    hash = ((hash << 5) - hash) + problemId.charCodeAt(i);
+    hash = hash & hash;
+  }
+
+  // Pick theme based on hash if not specified
+  const themes = Object.keys(MATH_EMOJI_THEMES) as EmojiTheme[];
+  const selectedTheme = theme || themes[Math.abs(hash) % themes.length];
+
+  // Pick emoji from theme
+  const emojis = MATH_EMOJI_THEMES[selectedTheme];
+  return emojis[Math.abs(hash) % emojis.length];
+}
+
+// ============================================
 // TYPES
 // ============================================
 
