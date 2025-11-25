@@ -3,6 +3,7 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 import { PWARegister } from "@/components/PWARegister";
 import { AccessibilityProvider } from "@/components/AccessibilityProvider";
+import { AppShell } from "@/components/AppShell";
 
 const outfit = Outfit({ subsets: ["latin"] });
 
@@ -67,7 +68,9 @@ export default function RootLayout({
 
                 <AccessibilityProvider>
                     <PWARegister />
-                    {children}
+                    <AppShell>
+                        {children}
+                    </AppShell>
                 </AccessibilityProvider>
             </body>
         </html>
