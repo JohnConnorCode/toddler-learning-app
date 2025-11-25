@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowLeft, Calculator, Lock, Star, Check, Play } from "lucide-react";
@@ -12,11 +12,40 @@ export default function MathPage() {
   const { shouldReduceMotion } = useAccessibility();
   const units = getMathUnits();
   const { isLessonCompleted, isUnitUnlocked, unlockUnit } = useSubjectProgress("math");
-  const [expandedUnit, setExpandedUnit] = useState<string | null>(units[0]?.id || null);
+  const [expandedUnit, setExpandedUnit] = useState<string | null>(null);
+  const [isReady, setIsReady] = useState(false);
 
-  // Unlock first unit by default
-  if (units[0] && !isUnitUnlocked(units[0].id)) {
-    unlockUnit(units[0].id);
+  // Unlock first unit and set ready state in useEffect (not during render)
+  useEffect(() => {
+    if (units[0]) {
+      if (!isUnitUnlocked(units[0].id)) {
+        unlockUnit(units[0].id);
+      }
+      setExpandedUnit(units[0].id);
+    }
+    setIsReady(true);
+  }, [units, isUnitUnlocked, unlockUnit]);
+
+  // Show loading while initializing
+  if (!isReady) {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="text-center"
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            className="text-6xl mb-4"
+          >
+            🔢
+          </motion.div>
+          <p className="text-gray-500 font-medium">Loading math...</p>
+        </motion.div>
+      </main>
+    );
   }
 
   return (

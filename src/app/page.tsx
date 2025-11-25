@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -21,13 +21,51 @@ export default function Home() {
     const motionProps = getMotionProps(shouldReduceMotion);
     const { mascot, greet } = useMascot();
     const { theme, hasInterests } = useTheme();
+    const [isReady, setIsReady] = useState(false);
 
-    // Redirect first-time users to onboarding
+    // Redirect first-time users to onboarding, show loading until ready
     useEffect(() => {
-        if (!isOnboardingComplete) {
+        if (isOnboardingComplete === false) {
             router.replace("/onboarding");
+        } else if (isOnboardingComplete === true) {
+            setIsReady(true);
         }
     }, [isOnboardingComplete, router]);
+
+    // Show beautiful loading screen while checking onboarding status
+    if (!isReady) {
+        return (
+            <main className="min-h-screen bg-gradient-to-br from-yellow-100 via-pink-50 to-blue-100 flex flex-col items-center justify-center p-4">
+                <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                    className="text-center"
+                >
+                    <motion.div
+                        animate={{
+                            scale: [1, 1.2, 1],
+                            rotate: [0, 10, -10, 0]
+                        }}
+                        transition={{
+                            duration: 1.5,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                        }}
+                        className="text-8xl mb-6"
+                    >
+                        🌟
+                    </motion.div>
+                    <h1 className="text-3xl font-black text-gray-800 mb-2">
+                        Smart Starts
+                    </h1>
+                    <p className="text-gray-500 font-medium">
+                        Getting ready to learn...
+                    </p>
+                </motion.div>
+            </main>
+        );
+    }
 
     return (
         <main
