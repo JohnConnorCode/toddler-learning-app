@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, ButtonHTMLAttributes } from "react";
+import { forwardRef, useState, useCallback, useRef } from "react";
 import { motion, HTMLMotionProps } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { LoadingSpinner } from "./LoadingStates";
@@ -17,6 +17,10 @@ interface ButtonProps extends Omit<HTMLMotionProps<"button">, "ref"> {
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   fullWidth?: boolean;
+  /** Prevent double-clicks by disabling button briefly after click */
+  preventDoubleClick?: boolean;
+  /** Duration in ms to keep button disabled after click (default: 500) */
+  doubleClickDelay?: number;
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
@@ -51,20 +55,47 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       leftIcon,
       rightIcon,
       fullWidth = false,
+      preventDoubleClick = false,
+      doubleClickDelay = 500,
       className,
       disabled,
+      onClick,
       ...props
     },
     ref
   ) => {
     const { shouldReduceMotion } = useAccessibility();
+    const [isClickDisabled, setIsClickDisabled] = useState(false);
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    const handleClick = useCallback(
+      (e: React.MouseEvent<HTMLButtonElement>) => {
+        if (preventDoubleClick && isClickDisabled) {
+          e.preventDefault();
+          return;
+        }
+
+        if (preventDoubleClick) {
+          setIsClickDisabled(true);
+          timeoutRef.current = setTimeout(() => {
+            setIsClickDisabled(false);
+          }, doubleClickDelay);
+        }
+
+        onClick?.(e);
+      },
+      [preventDoubleClick, isClickDisabled, doubleClickDelay, onClick]
+    );
+
+    const isDisabled = disabled || isLoading || (preventDoubleClick && isClickDisabled);
 
     return (
       <motion.button
         ref={ref}
-        whileHover={shouldReduceMotion || disabled || isLoading ? {} : { scale: 1.02 }}
-        whileTap={shouldReduceMotion || disabled || isLoading ? {} : { scale: 0.98 }}
-        disabled={disabled || isLoading}
+        whileHover={shouldReduceMotion || isDisabled ? {} : { scale: 1.02 }}
+        whileTap={shouldReduceMotion || isDisabled ? {} : { scale: 0.98 }}
+        disabled={isDisabled}
+        onClick={handleClick}
         className={cn(
           "inline-flex items-center justify-center font-bold transition-all touch-target",
           "disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none",

@@ -196,10 +196,10 @@ body {
   }
 }
 
-/* Touch target minimum size for motor accessibility */
+/* Touch target minimum size for toddler-friendly accessibility (48px minimum) */
 .touch-target {
-  min-width: 44px;
-  min-height: 44px;
+  min-width: 48px;
+  min-height: 48px;
 }
 
 /* Screen reader only content */
@@ -280,13 +280,14 @@ a:focus-visible,
   align-items: center;
   justify-content: center;
   gap: 4px;
-  padding: 8px 12px;
+  padding: 8px 14px;
   border-radius: 16px;
   transition: all 0.2s ease;
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
   position: relative;
-  min-width: 60px;
+  min-width: 72px;
+  min-height: 56px;
 }
 
 .bottom-nav-item:active {

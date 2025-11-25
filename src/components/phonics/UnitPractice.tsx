@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePhonicsProgress } from "@/hooks/use-phonics-progress";
 import { getPhonicsItemsForUnit, getUnitById } from "@/lib/systematic-phonics-data";
-import { LetterCard } from "@/components/game/LetterCard";
-import { ArrowLeft, ChevronRight, ChevronLeft, CheckCircle, Award } from "lucide-react";
+import { ArrowLeft, ChevronRight, ChevronLeft, CheckCircle, Award, Volume2, Repeat } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAudio } from "@/hooks/use-audio";
 
 interface UnitPracticeProps {
   unitId: number;
@@ -22,21 +22,111 @@ export function UnitPractice({ unitId, onExit, onComplete }: UnitPracticeProps) 
     getUnitProgress,
   } = usePhonicsProgress();
 
+  const { playLetterSound } = useAudio();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showCompletion, setShowCompletion] = useState(false);
+  const [teachingPhase, setTeachingPhase] = useState<"intro" | "sound" | "word" | "practice" | "quiz">("intro");
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [quizOptions, setQuizOptions] = useState<string[]>([]);
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [letterMastery, setLetterMastery] = useState<Record<string, boolean>>({});
 
   const unit = getUnitById(unitId);
   const phonicsItems = getPhonicsItemsForUnit(unitId);
   const currentItem = phonicsItems[currentIndex];
   const unitProgress = getUnitProgress(unitId);
 
+  // Generate quiz options (correct letter + 3 random distractors)
+  const generateQuizOptions = useCallback(() => {
+    if (!currentItem) return [];
+    const otherLetters = phonicsItems
+      .filter(item => item.letter !== currentItem.letter)
+      .map(item => item.letter);
+    // Add some common confusing letters if not enough in unit
+    const extraLetters = ['B', 'D', 'P', 'M', 'N', 'S', 'F', 'V'].filter(
+      l => l !== currentItem.letter && !otherLetters.includes(l)
+    );
+    const allDistractors = [...otherLetters, ...extraLetters];
+    // Shuffle and take 3
+    const shuffled = allDistractors.sort(() => Math.random() - 0.5).slice(0, 3);
+    // Add correct answer and shuffle again
+    const options = [...shuffled, currentItem.letter].sort(() => Math.random() - 0.5);
+    return options;
+  }, [currentItem, phonicsItems]);
+
+  // Play the full teaching sequence for current letter
+  const playTeachingSequence = useCallback(async () => {
+    if (!currentItem || isPlaying) return;
+
+    setIsPlaying(true);
+    setTeachingPhase("intro");
+    setSelectedAnswer(null);
+    setIsCorrect(null);
+
+    // Wait a moment, then play phonics sound
+    await new Promise(r => setTimeout(r, 500));
+    setTeachingPhase("sound");
+
+    await playLetterSound(currentItem.letter, "phonics");
+    await new Promise(r => setTimeout(r, 300));
+
+    // Play letter name
+    await playLetterSound(currentItem.letter, "name");
+    await new Promise(r => setTimeout(r, 300));
+
+    // Play example
+    setTeachingPhase("word");
+    await playLetterSound(currentItem.letter, "example");
+
+    setTeachingPhase("practice");
+    setIsPlaying(false);
+  }, [currentItem, playLetterSound, isPlaying]);
+
+  // Start the quiz for current letter
+  const startQuiz = useCallback(() => {
+    setQuizOptions(generateQuizOptions());
+    setSelectedAnswer(null);
+    setIsCorrect(null);
+    setTeachingPhase("quiz");
+    // Play the sound they need to identify
+    if (currentItem) {
+      playLetterSound(currentItem.letter, "phonics");
+    }
+  }, [generateQuizOptions, currentItem, playLetterSound]);
+
+  // Handle quiz answer
+  const handleQuizAnswer = useCallback((answer: string) => {
+    if (selectedAnswer !== null || !currentItem) return; // Already answered
+
+    setSelectedAnswer(answer);
+    const correct = answer === currentItem.letter;
+    setIsCorrect(correct);
+
+    // Track mastery
+    setLetterMastery(prev => ({
+      ...prev,
+      [currentItem.letter]: correct
+    }));
+
+    // Play feedback sound
+    if (correct) {
+      playLetterSound(currentItem.letter, "name");
+    }
+  }, [selectedAnswer, currentItem, playLetterSound]);
+
+  // Auto-play when letter changes
   useEffect(() => {
-    // Mark current letter as practiced when it's viewed
     if (currentItem) {
       markLetterPracticed(currentItem.letter);
       updateUnitLetterCompletion(unitId);
+      // Auto-play the teaching sequence
+      const timer = setTimeout(() => {
+        playTeachingSequence();
+      }, 300);
+      return () => clearTimeout(timer);
     }
-  }, [currentIndex, currentItem, markLetterPracticed, updateUnitLetterCompletion, unitId]);
+  }, [currentIndex, currentItem, markLetterPracticed, updateUnitLetterCompletion, unitId, playTeachingSequence]);
 
   if (!unit || phonicsItems.length === 0) {
     return (
@@ -55,11 +145,28 @@ export function UnitPractice({ unitId, onExit, onComplete }: UnitPracticeProps) 
   }
 
   const nextLetter = () => {
+    // Can only advance if quiz was passed OR if they answered correctly
+    if (teachingPhase !== "quiz" || !isCorrect) {
+      return; // Must pass quiz first
+    }
+
     if (currentIndex < phonicsItems.length - 1) {
       setCurrentIndex(currentIndex + 1);
+      setTeachingPhase("intro"); // Reset for next letter
     } else {
-      // All letters completed - show completion screen
-      setShowCompletion(true);
+      // All letters completed - calculate actual mastery score
+      const masteredCount = Object.values(letterMastery).filter(Boolean).length;
+      const masteryScore = Math.round((masteredCount / phonicsItems.length) * 100);
+      // Only complete unit if score >= 75%
+      if (masteryScore >= 75) {
+        setShowCompletion(true);
+      } else {
+        // Not enough mastery - show retry message
+        alert(`You got ${masteredCount}/${phonicsItems.length} correct. Try again to master all letters!`);
+        setCurrentIndex(0);
+        setLetterMastery({});
+        setTeachingPhase("intro");
+      }
     }
   };
 
@@ -70,8 +177,10 @@ export function UnitPractice({ unitId, onExit, onComplete }: UnitPracticeProps) 
   };
 
   const handleFinishUnit = () => {
-    // Mark unit as completed with 100% score (practice mode doesn't have mastery check yet)
-    completeUnit(unitId, 100);
+    // Calculate actual mastery score based on quiz results
+    const masteredCount = Object.values(letterMastery).filter(Boolean).length;
+    const masteryScore = Math.round((masteredCount / phonicsItems.length) * 100);
+    completeUnit(unitId, masteryScore);
     onComplete();
   };
 
@@ -198,22 +307,213 @@ export function UnitPractice({ unitId, onExit, onComplete }: UnitPracticeProps) 
         </div>
       </div>
 
-      {/* Main Card Area */}
+      {/* Main Teaching Area */}
       <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 relative overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentIndex}
-            initial={{ x: 300, opacity: 0, rotate: 10 }}
-            animate={{ x: 0, opacity: 1, rotate: 0 }}
-            exit={{ x: -300, opacity: 0, rotate: -10 }}
+            initial={{ x: 300, opacity: 0, scale: 0.8 }}
+            animate={{ x: 0, opacity: 1, scale: 1 }}
+            exit={{ x: -300, opacity: 0, scale: 0.8 }}
             transition={{ type: "spring", stiffness: 260, damping: 20 }}
+            className="w-full max-w-lg"
           >
-            <LetterCard
-              item={currentItem}
-              onComplete={() => {
-                // Auto-advance after card is flipped
-              }}
-            />
+            {/* Teaching Card */}
+            <div className={cn(
+              "bg-white rounded-3xl shadow-2xl p-6 sm:p-8 text-center",
+              "border-4 border-white"
+            )}>
+              {/* Big Letter Display */}
+              <motion.div
+                animate={teachingPhase === "sound" ? { scale: [1, 1.1, 1] } : {}}
+                transition={{ duration: 0.5, repeat: teachingPhase === "sound" ? Infinity : 0 }}
+                className={cn(
+                  "w-32 h-32 sm:w-40 sm:h-40 mx-auto rounded-2xl flex items-center justify-center mb-4",
+                  currentItem.color
+                )}
+              >
+                <span className="text-7xl sm:text-8xl font-black text-white drop-shadow-lg">
+                  {currentItem.letter}
+                </span>
+              </motion.div>
+
+              {/* Teaching Phase Indicator */}
+              <div className="mb-4">
+                {teachingPhase === "intro" && (
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-xl font-bold text-gray-600"
+                  >
+                    This is the letter...
+                  </motion.p>
+                )}
+                {teachingPhase === "sound" && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    <p className="text-2xl font-black text-primary mb-2">
+                      "{currentItem.letter}" says...
+                    </p>
+                    <motion.div
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ duration: 0.6, repeat: Infinity }}
+                      className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full"
+                    >
+                      <Volume2 className="w-5 h-5" />
+                      <span className="text-xl font-black">
+                        /{currentItem.sound || currentItem.letter.toLowerCase()}/
+                      </span>
+                    </motion.div>
+                  </motion.div>
+                )}
+                {teachingPhase === "word" && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    <p className="text-lg font-bold text-gray-500 mb-2">
+                      {currentItem.letter} is for...
+                    </p>
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-24 h-24 sm:w-28 sm:h-28 bg-gray-100 rounded-xl overflow-hidden border-2 border-gray-200">
+                        <img
+                          src={currentItem.image}
+                          alt={currentItem.word}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <p className="text-3xl font-black text-gray-800">
+                        <span className={cn("text-4xl", currentItem.color.replace("bg-", "text-"))}>
+                          {currentItem.letter}
+                        </span>
+                        {currentItem.word.slice(1)}
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
+                {teachingPhase === "practice" && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-4"
+                  >
+                    <p className="text-lg font-bold text-gray-600">Examples with "{currentItem.letter}":</p>
+                    <div className="flex flex-wrap justify-center gap-2">
+                      {currentItem.exampleWords.map((word, idx) => (
+                        <span
+                          key={idx}
+                          className="px-3 py-1 bg-gray-100 rounded-full font-bold text-gray-700"
+                        >
+                          <span className={currentItem.color.replace("bg-", "text-")}>
+                            {word.charAt(0).toUpperCase()}
+                          </span>
+                          {word.slice(1)}
+                        </span>
+                      ))}
+                    </div>
+                    {/* Quiz button */}
+                    <button
+                      onClick={startQuiz}
+                      className="mt-4 px-6 py-3 bg-green-500 text-white rounded-full font-black text-lg hover:bg-green-600 active:scale-95 transition-all shadow-lg"
+                    >
+                      Test Your Knowledge!
+                    </button>
+                  </motion.div>
+                )}
+                {teachingPhase === "quiz" && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-4"
+                  >
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <button
+                        onClick={() => currentItem && playLetterSound(currentItem.letter, "phonics")}
+                        className="p-3 bg-blue-100 rounded-full hover:bg-blue-200 transition-colors"
+                      >
+                        <Volume2 className="w-6 h-6 text-blue-600" />
+                      </button>
+                      <p className="text-xl font-black text-gray-800">
+                        Which letter makes this sound?
+                      </p>
+                    </div>
+
+                    {/* Quiz Options */}
+                    <div className="grid grid-cols-2 gap-3">
+                      {quizOptions.map((letter) => {
+                        const isSelected = selectedAnswer === letter;
+                        const isCorrectAnswer = letter === currentItem.letter;
+                        const showResult = selectedAnswer !== null;
+
+                        return (
+                          <button
+                            key={letter}
+                            onClick={() => handleQuizAnswer(letter)}
+                            disabled={showResult}
+                            className={cn(
+                              "p-4 rounded-2xl font-black text-4xl transition-all border-4",
+                              !showResult && "bg-white border-gray-200 hover:border-blue-400 hover:scale-105 active:scale-95",
+                              showResult && isSelected && isCorrect && "bg-green-100 border-green-500 scale-105",
+                              showResult && isSelected && !isCorrect && "bg-red-100 border-red-500",
+                              showResult && !isSelected && isCorrectAnswer && "bg-green-100 border-green-500 ring-4 ring-green-300",
+                              showResult && !isSelected && !isCorrectAnswer && "opacity-50"
+                            )}
+                          >
+                            {letter}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Feedback */}
+                    {selectedAnswer !== null && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="text-center"
+                      >
+                        {isCorrect ? (
+                          <div className="text-green-600">
+                            <p className="text-2xl font-black">Correct! 🎉</p>
+                            <p className="text-lg">Great job!</p>
+                          </div>
+                        ) : (
+                          <div className="text-orange-600">
+                            <p className="text-xl font-bold">Not quite!</p>
+                            <p className="text-lg">The answer is "{currentItem.letter}"</p>
+                            <button
+                              onClick={playTeachingSequence}
+                              className="mt-2 px-4 py-2 bg-orange-100 text-orange-700 rounded-full font-bold hover:bg-orange-200"
+                            >
+                              Learn Again
+                            </button>
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Replay Button - hide during quiz */}
+              {teachingPhase !== "quiz" && (
+                <button
+                  onClick={playTeachingSequence}
+                  disabled={isPlaying}
+                  className={cn(
+                    "inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold transition-all",
+                    isPlaying
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-blue-500 text-white hover:bg-blue-600 active:scale-95"
+                  )}
+                >
+                  <Repeat className="w-5 h-5" />
+                  {isPlaying ? "Playing..." : "Hear Again"}
+                </button>
+              )}
+            </div>
           </motion.div>
         </AnimatePresence>
 
@@ -229,11 +529,14 @@ export function UnitPractice({ unitId, onExit, onComplete }: UnitPracticeProps) 
 
           <button
             onClick={nextLetter}
+            disabled={teachingPhase !== "quiz" || !isCorrect}
             className={cn(
-              "p-4 sm:p-5 md:p-6 rounded-full shadow-lg hover:shadow-xl active:scale-90 transition-all",
-              currentIndex === phonicsItems.length - 1
-                ? "bg-green-500"
-                : "bg-secondary"
+              "p-4 sm:p-5 md:p-6 rounded-full shadow-lg transition-all",
+              teachingPhase === "quiz" && isCorrect
+                ? currentIndex === phonicsItems.length - 1
+                  ? "bg-green-500 hover:shadow-xl active:scale-90"
+                  : "bg-secondary hover:shadow-xl active:scale-90"
+                : "bg-gray-300 cursor-not-allowed opacity-50"
             )}
           >
             {currentIndex === phonicsItems.length - 1 ? (

@@ -42,7 +42,7 @@ export function BackButton({
       whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
       onClick={handleClick}
       className={cn(
-        "flex items-center gap-2 p-3 bg-white rounded-full shadow-md hover:shadow-lg transition-shadow touch-target",
+        "flex items-center gap-2 p-4 bg-white rounded-full shadow-md hover:shadow-lg transition-shadow touch-target",
         className
       )}
       aria-label={label}
@@ -67,7 +67,7 @@ export function HomeButton({ className }: HomeButtonProps) {
         whileHover={shouldReduceMotion ? {} : { scale: 1.05 }}
         whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
         className={cn(
-          "p-3 bg-white rounded-full shadow-md hover:shadow-lg transition-shadow",
+          "p-4 bg-white rounded-full shadow-md hover:shadow-lg transition-shadow touch-target",
           className
         )}
       >
@@ -104,12 +104,12 @@ export function CloseButton({ onClick, href, className }: CloseButtonProps) {
       whileTap={shouldReduceMotion ? {} : { scale: 0.9 }}
       onClick={handleClick}
       className={cn(
-        "p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors touch-target",
+        "p-3 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors touch-target",
         className
       )}
       aria-label="Close"
     >
-      <X className="w-5 h-5 text-gray-600" aria-hidden="true" />
+      <X className="w-6 h-6 text-gray-600" aria-hidden="true" />
     </motion.button>
   );
 }
@@ -238,7 +238,7 @@ export function BottomNav({ items, activeHref, className }: BottomNavProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center gap-1 p-2 min-w-[64px] transition-colors touch-target",
+                "flex flex-col items-center gap-1 p-2 min-w-[72px] min-h-[56px] transition-colors touch-target",
                 isActive ? "text-yellow-500" : "text-gray-400 hover:text-gray-600"
               )}
               aria-current={isActive ? "page" : undefined}

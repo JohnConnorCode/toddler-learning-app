@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Star, Trophy, ArrowRight } from "lucide-react";
-import Link from "next/link";
+import { ArrowLeft, Star, Trophy, ArrowRight, Pause } from "lucide-react";
 import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
 import { type Level, type Lesson, type Activity } from "@/lib/levels-data";
 import { useLevelProgress } from "@/hooks/use-level-progress";
 import { useAchievements } from "@/hooks/use-achievements";
+import { useSession } from "@/hooks/use-session";
+import { ConfirmDialog, useConfirmNavigation } from "@/components/ui/ConfirmDialog";
 
 // Activity component imports (to be created/connected)
 import { ActivityPhonics } from "@/components/activities/ActivityPhonics";
@@ -29,24 +30,48 @@ export function LessonPlayer({ level, lesson }: LessonPlayerProps) {
     trackLessonComplete,
     trackLevelVisit,
   } = useAchievements();
+  const { startSession, updateSession, clearSession } = useSession();
 
   const [currentActivityIndex, setCurrentActivityIndex] = useState(0);
   const [completedActivities, setCompletedActivities] = useState<Set<string>>(new Set());
   const [starsEarned, setStarsEarned] = useState(0);
   const [showCompletion, setShowCompletion] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   const currentActivity = lesson.activities[currentActivityIndex];
   const isLastActivity = currentActivityIndex === lesson.activities.length - 1;
   const progress = ((currentActivityIndex + 1) / lesson.activities.length) * 100;
 
-  // Mark lesson as started
+  // Warn before leaving during lesson
+  useConfirmNavigation(currentActivityIndex > 0 && !showCompletion);
+
+  // Mark lesson as started and track session
   useEffect(() => {
     startLesson(lesson.id);
     // Track level visit for achievements
     trackLevelVisit(level.levelNumber);
     // Update daily streak
     updateStreak();
-  }, [lesson.id, startLesson, level.levelNumber, trackLevelVisit, updateStreak]);
+    // Start session tracking for resume functionality
+    startSession({
+      type: "level-lesson",
+      levelId: level.id,
+      levelTitle: level.title,
+      lessonId: lesson.id,
+      lessonTitle: lesson.title,
+      activityIndex: 0,
+      totalActivities: lesson.activities.length,
+      progress: 0,
+    });
+  }, [lesson.id, startLesson, level.levelNumber, trackLevelVisit, updateStreak, level.id, level.title, lesson.title, lesson.activities.length, startSession]);
+
+  // Update session when activity changes
+  useEffect(() => {
+    updateSession({
+      activityIndex: currentActivityIndex,
+      progress: (currentActivityIndex / lesson.activities.length) * 100,
+    });
+  }, [currentActivityIndex, lesson.activities.length, updateSession]);
 
   const handleActivityComplete = (stars: number = 3) => {
     // Award stars (max 3 per activity)
@@ -94,6 +119,9 @@ export function LessonPlayer({ level, lesson }: LessonPlayerProps) {
     // Save progress
     completeLesson(lesson.id, starsEarned);
 
+    // Clear session since lesson is complete
+    clearSession();
+
     // Return to level page
     router.push(`/levels/${level.id}`);
   };
@@ -102,6 +130,21 @@ export function LessonPlayer({ level, lesson }: LessonPlayerProps) {
     if (!isLastActivity) {
       setCurrentActivityIndex(prev => prev + 1);
     }
+  };
+
+  const handleExitRequest = () => {
+    // If progress made, show confirmation
+    if (currentActivityIndex > 0 || starsEarned > 0) {
+      setShowExitConfirm(true);
+    } else {
+      handleExitConfirmed();
+    }
+  };
+
+  const handleExitConfirmed = () => {
+    setShowExitConfirm(false);
+    // Session is saved, navigate back
+    router.push(`/levels/${level.id}`);
   };
 
   if (showCompletion) {
@@ -123,12 +166,13 @@ export function LessonPlayer({ level, lesson }: LessonPlayerProps) {
         <div className="max-w-6xl mx-auto p-4">
           <div className="flex items-center gap-4 mb-3">
             {/* Back Button */}
-            <Link
-              href={`/levels/${level.id}`}
-              className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            <button
+              onClick={handleExitRequest}
+              className="p-4 rounded-full hover:bg-gray-100 transition-colors touch-target"
+              aria-label="Exit lesson"
             >
               <ArrowLeft className="w-5 h-5 text-gray-600" />
-            </Link>
+            </button>
 
             {/* Lesson Title */}
             <div className="flex-1 min-w-0">
@@ -192,6 +236,19 @@ export function LessonPlayer({ level, lesson }: LessonPlayerProps) {
           Skip (Dev Only)
         </button>
       )}
+
+      {/* Exit Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showExitConfirm}
+        onClose={() => setShowExitConfirm(false)}
+        onConfirm={handleExitConfirmed}
+        title="Leave Lesson?"
+        message="Your progress will be saved. You can resume this lesson from the home screen."
+        confirmText="Exit & Save"
+        cancelText="Keep Learning"
+        variant="warning"
+        icon={<Pause className="w-8 h-8 text-yellow-600" />}
+      />
     </div>
   );
 }

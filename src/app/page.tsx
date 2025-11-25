@@ -4,13 +4,15 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { BookOpen, Star, Settings, Eye, Users, ClipboardCheck, Sparkles, BarChart3, Rocket, Map, Book, Trophy, Pencil, Calculator, Edit3 } from "lucide-react";
+import { BookOpen, Star, Settings, Eye, Users, ClipboardCheck, Sparkles, BarChart3, Rocket, Map, Book, Trophy, Pencil, Calculator, Edit3, Play } from "lucide-react";
 import { InstallButton } from "@/components/InstallButton";
 import { useLevelProgress } from "@/hooks/use-level-progress";
 import { useAccessibility, getMotionProps } from "@/hooks/use-accessibility";
 import { useOnboarding, useChildName } from "@/hooks/use-onboarding";
 import { useMascot } from "@/hooks/use-mascot";
 import { useTheme } from "@/hooks/use-theme";
+import { useSession } from "@/hooks/use-session";
+import { UnifiedProgress } from "@/components/home/UnifiedProgress";
 
 export default function Home() {
     const router = useRouter();
@@ -21,7 +23,13 @@ export default function Home() {
     const motionProps = getMotionProps(shouldReduceMotion);
     const { mascot, greet } = useMascot();
     const { theme, hasInterests } = useTheme();
+    const { hasActiveSession, getResumeUrl, getResumeLabel, activeSession } = useSession();
     const [isReady, setIsReady] = useState(false);
+
+    // Check for active session
+    const showResumeCard = hasActiveSession();
+    const resumeUrl = getResumeUrl();
+    const resumeLabel = getResumeLabel();
 
     // Redirect first-time users to onboarding, show loading until ready
     useEffect(() => {
@@ -147,6 +155,69 @@ export default function Home() {
                     </motion.div>
                 )}
             </motion.div>
+
+            {/* Unified Progress Dashboard */}
+            {childProfile && <UnifiedProgress />}
+
+            {/* Resume Session Card - shown when there's an active session */}
+            {showResumeCard && resumeUrl && (
+                <motion.div
+                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ delay: 0.15, type: "spring", stiffness: 200 }}
+                    className="w-full max-w-4xl mb-4 sm:mb-6 relative z-10"
+                >
+                    <Link href={resumeUrl} className="group block">
+                        <div className="relative bg-gradient-to-br from-green-500 via-emerald-500 to-teal-600 rounded-2xl sm:rounded-[2rem] p-5 sm:p-6 shadow-xl border-b-4 sm:border-b-6 border-green-700 group-hover:scale-[1.02] transition-all overflow-hidden">
+                            {/* Animated pulse background */}
+                            <motion.div
+                                animate={{ opacity: [0.3, 0.5, 0.3] }}
+                                transition={{ duration: 2, repeat: Infinity }}
+                                className="absolute inset-0 bg-white/10"
+                            />
+
+                            {/* Badge */}
+                            <motion.div
+                                animate={{ scale: [1, 1.1, 1] }}
+                                transition={{ duration: 1, repeat: Infinity }}
+                                className="absolute top-3 right-3 bg-yellow-400 text-yellow-900 px-3 py-1.5 rounded-full font-black text-xs flex items-center gap-1.5 shadow-lg"
+                            >
+                                <Play className="w-3 h-3" />
+                                CONTINUE
+                            </motion.div>
+
+                            <div className="relative flex items-center gap-4">
+                                <div className="bg-white/20 backdrop-blur-sm p-4 rounded-xl">
+                                    <Play className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+                                </div>
+
+                                <div className="flex-1">
+                                    <h2 className="text-xl sm:text-2xl font-black text-white mb-1">
+                                        Resume Learning
+                                    </h2>
+                                    <p className="text-white/90 text-sm sm:text-base font-medium">
+                                        {resumeLabel}
+                                    </p>
+                                    {activeSession?.progress !== undefined && (
+                                        <div className="mt-2 flex items-center gap-2">
+                                            <div className="flex-1 h-2 bg-white/30 rounded-full overflow-hidden">
+                                                <motion.div
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${activeSession.progress}%` }}
+                                                    className="h-full bg-white rounded-full"
+                                                />
+                                            </div>
+                                            <span className="text-white/80 text-xs font-bold">
+                                                {Math.round(activeSession.progress)}%
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </Link>
+                </motion.div>
+            )}
 
             {/* Featured Learning Journey Card */}
             <motion.div
@@ -385,24 +456,27 @@ export default function Home() {
                 <div className="flex gap-3 sm:gap-4">
                     <Link
                         href="/achievements"
-                        className="p-3 sm:p-4 rounded-full bg-white shadow-md text-yellow-400 hover:text-yellow-600 hover:scale-110 transition-all group"
+                        className="p-4 rounded-full bg-white shadow-md text-yellow-400 hover:text-yellow-600 hover:scale-110 transition-all group touch-target"
                         title="Achievements & Badges"
+                        aria-label="Achievements & Badges"
                     >
-                        <Trophy className="w-5 h-5 sm:w-6 sm:h-6 group-hover:scale-110 transition-transform duration-300" />
+                        <Trophy className="w-6 h-6 group-hover:scale-110 transition-transform duration-300" aria-hidden="true" />
                     </Link>
                     <Link
                         href="/parent-dashboard"
-                        className="p-3 sm:p-4 rounded-full bg-white shadow-md text-purple-400 hover:text-purple-600 hover:scale-110 transition-all group"
+                        className="p-4 rounded-full bg-white shadow-md text-purple-400 hover:text-purple-600 hover:scale-110 transition-all group touch-target"
                         title="Parent Dashboard"
+                        aria-label="Parent Dashboard"
                     >
-                        <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 group-hover:scale-110 transition-transform duration-300" />
+                        <BarChart3 className="w-6 h-6 group-hover:scale-110 transition-transform duration-300" aria-hidden="true" />
                     </Link>
                     <Link
                         href="/settings"
-                        className="p-3 sm:p-4 rounded-full bg-white shadow-md text-gray-400 hover:text-gray-600 hover:scale-110 transition-all group"
+                        className="p-4 rounded-full bg-white shadow-md text-gray-400 hover:text-gray-600 hover:scale-110 transition-all group touch-target"
                         title="Settings"
+                        aria-label="Settings"
                     >
-                        <Settings className="w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-90 transition-transform duration-300" />
+                        <Settings className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" aria-hidden="true" />
                     </Link>
                 </div>
             </motion.div>

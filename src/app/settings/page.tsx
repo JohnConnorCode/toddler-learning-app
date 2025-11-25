@@ -807,6 +807,57 @@ export default function SettingsPage() {
               </div>
             )}
 
+            {/* Export Data */}
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
+              <div>
+                <h3 className="font-bold text-gray-800">Export Data</h3>
+                <p className="text-sm text-gray-600">
+                  Download all progress data as a backup file
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  const exportData: Record<string, unknown> = {};
+                  const keysToExport = [
+                    "profiles-storage",
+                    "achievements",
+                    "level-progress",
+                    "story-progress",
+                    "learning-progress-storage",
+                    "phonics-progress",
+                    "little-learner-onboarding",
+                    "toddler-learning-settings",
+                    "daily-goals",
+                  ];
+                  for (const key of keysToExport) {
+                    const data = localStorage.getItem(key);
+                    if (data) {
+                      try {
+                        exportData[key] = JSON.parse(data);
+                      } catch {
+                        exportData[key] = data;
+                      }
+                    }
+                  }
+                  const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+                    type: "application/json",
+                  });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `learning-progress-${new Date().toISOString().split("T")[0]}.json`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                }}
+                className="px-6 py-3 bg-gray-600 text-white font-bold rounded-xl hover:bg-gray-700 transition-colors flex items-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Export
+              </button>
+            </div>
+
             {/* Info */}
             <p className="text-xs text-gray-500 text-center">
               {isLoggedIn
