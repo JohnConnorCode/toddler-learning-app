@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Story, StoryPage } from "@/lib/stories-data";
 import { useStoryProgress } from "@/hooks/use-story-progress";
-import { ChevronLeft, ChevronRight, X, Heart, BookOpen, Star } from "lucide-react";
+import { useSpeech, useVolumeControl } from "@/hooks/use-audio";
+import { ChevronLeft, ChevronRight, X, Heart, BookOpen, Star, Volume2, VolumeX, Play, Pause } from "lucide-react";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 import confetti from "canvas-confetti";
 
@@ -19,6 +20,7 @@ export function StoryReader({ story, onClose, startPage = 0 }: StoryReaderProps)
   const [highlightedWordIndex, setHighlightedWordIndex] = useState<number | null>(null);
   const [isReading, setIsReading] = useState(false);
   const [showCompletion, setShowCompletion] = useState(false);
+  const isReadingRef = useRef(false);
 
   const {
     startStory,
@@ -27,6 +29,9 @@ export function StoryReader({ story, onClose, startPage = 0 }: StoryReaderProps)
     toggleFavorite,
     getStoryProgress,
   } = useStoryProgress();
+
+  const { speakWords, stop: stopSpeech, isSupported: isTTSSupported } = useSpeech();
+  const { isMuted, toggleMute } = useVolumeControl();
 
   const currentPage = story.pages[currentPageIndex];
   const progress = getStoryProgress(story.id);
@@ -46,7 +51,22 @@ export function StoryReader({ story, onClose, startPage = 0 }: StoryReaderProps)
     }
   }, [currentPage, story.id, updatePageProgress]);
 
+  // Stop reading when page changes
+  useEffect(() => {
+    return () => {
+      isReadingRef.current = false;
+      stopSpeech();
+    };
+  }, [currentPageIndex, stopSpeech]);
+
   const nextPage = () => {
+    // Stop reading before page change
+    if (isReading) {
+      isReadingRef.current = false;
+      setIsReading(false);
+      stopSpeech();
+    }
+
     if (isLastPage) {
       // Story completed!
       completeStory(story.id);
@@ -59,42 +79,56 @@ export function StoryReader({ story, onClose, startPage = 0 }: StoryReaderProps)
     } else {
       setCurrentPageIndex(currentPageIndex + 1);
       setHighlightedWordIndex(null);
-      setIsReading(false);
     }
   };
 
   const prevPage = () => {
     if (!isFirstPage) {
+      // Stop reading before page change
+      if (isReading) {
+        isReadingRef.current = false;
+        setIsReading(false);
+        stopSpeech();
+      }
       setCurrentPageIndex(currentPageIndex - 1);
       setHighlightedWordIndex(null);
-      setIsReading(false);
     }
   };
 
-  const handleReadAlong = () => {
+  const handleReadAlong = async () => {
     if (isReading) {
+      // Stop reading
+      isReadingRef.current = false;
       setIsReading(false);
       setHighlightedWordIndex(null);
+      stopSpeech();
       return;
     }
 
+    // Start reading with TTS
+    isReadingRef.current = true;
     setIsReading(true);
     setHighlightedWordIndex(0);
 
-    // Highlight each word sequentially
-    let wordIndex = 0;
-    const interval = setInterval(() => {
-      wordIndex++;
-      if (wordIndex >= currentPage.words.length) {
-        clearInterval(interval);
-        setIsReading(false);
-        setHighlightedWordIndex(null);
-      } else {
-        setHighlightedWordIndex(wordIndex);
-      }
-    }, 600); // 600ms per word
+    const words = currentPage.words.map((w) => w.text);
 
-    return () => clearInterval(interval);
+    await speakWords(
+      words,
+      // onWordStart callback
+      (index) => {
+        if (isReadingRef.current) {
+          setHighlightedWordIndex(index);
+        }
+      },
+      // onComplete callback
+      () => {
+        if (isReadingRef.current) {
+          setIsReading(false);
+          setHighlightedWordIndex(null);
+          isReadingRef.current = false;
+        }
+      }
+    );
   };
 
   const handleFavorite = () => {
@@ -168,6 +202,20 @@ export function StoryReader({ story, onClose, startPage = 0 }: StoryReaderProps)
         </button>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Volume Toggle */}
+          <button
+            onClick={toggleMute}
+            className="p-2 sm:p-3 bg-white rounded-full shadow-lg hover:scale-110 transition-transform"
+            title={isMuted ? "Unmute" : "Mute"}
+          >
+            {isMuted ? (
+              <VolumeX className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400" />
+            ) : (
+              <Volume2 className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+            )}
+          </button>
+
+          {/* Favorite Toggle */}
           <button
             onClick={handleFavorite}
             className="p-2 sm:p-3 bg-white rounded-full shadow-lg hover:scale-110 transition-transform"
@@ -179,6 +227,7 @@ export function StoryReader({ story, onClose, startPage = 0 }: StoryReaderProps)
             />
           </button>
 
+          {/* Page Counter */}
           <div className="bg-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-full shadow-lg">
             <span className="font-bold text-gray-700 text-sm sm:text-base">
               {currentPage.pageNumber} / {story.pages.length}
@@ -229,17 +278,36 @@ export function StoryReader({ story, onClose, startPage = 0 }: StoryReaderProps)
               </p>
 
               {/* Read-Along Button */}
-              <button
-                onClick={handleReadAlong}
-                className="mt-4 sm:mt-6 inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-full font-bold text-sm sm:text-base shadow-lg hover:scale-105 transition-transform"
-                style={{
-                  backgroundColor: isReading ? "#E5E7EB" : story.theme.primary,
-                  color: isReading ? "#1F2937" : "white",
-                }}
-              >
-                <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span>{isReading ? "Stop" : "Read Along"}</span>
-              </button>
+              <div className="mt-4 sm:mt-6 flex items-center justify-center gap-3">
+                <motion.button
+                  onClick={handleReadAlong}
+                  disabled={isMuted}
+                  whileTap={{ scale: 0.95 }}
+                  className="inline-flex items-center gap-2 px-5 sm:px-8 py-3 sm:py-4 rounded-full font-bold text-base sm:text-lg shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    backgroundColor: isReading ? "#EF4444" : story.theme.primary,
+                    color: "white",
+                  }}
+                >
+                  {isReading ? (
+                    <>
+                      <Pause className="w-5 h-5 sm:w-6 sm:h-6" />
+                      <span>Pause</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-5 h-5 sm:w-6 sm:h-6" />
+                      <span>Read to Me</span>
+                    </>
+                  )}
+                </motion.button>
+
+                {isMuted && (
+                  <p className="text-xs sm:text-sm text-gray-500">
+                    Turn on sound to hear the story
+                  </p>
+                )}
+              </div>
             </div>
           </motion.div>
         </AnimatePresence>

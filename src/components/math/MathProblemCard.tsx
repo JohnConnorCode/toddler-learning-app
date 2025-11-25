@@ -4,8 +4,9 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Volume2, Check, X, HelpCircle, ArrowRight, RotateCcw } from "lucide-react";
 import { useAccessibility } from "@/hooks/use-accessibility";
+import { useTheme } from "@/hooks/use-theme";
 import type { MathProblem } from "@/lib/math-data";
-import { formatProblem, checkAnswer, getEmojiForProblem } from "@/lib/math-data";
+import { formatProblem, checkAnswer, getEmojiForProblem, MATH_EMOJI_THEMES, type EmojiTheme } from "@/lib/math-data";
 import { playSound, playFeedback } from "@/lib/sound-effects";
 import { triggerSmallConfetti, triggerMediumConfetti, triggerStarShower } from "@/lib/confetti";
 
@@ -321,12 +322,29 @@ export function MathProblemCard({
   autoSpeak = true,
 }: MathProblemCardProps) {
   const { shouldReduceMotion } = useAccessibility();
+  const { themeId, hasInterests } = useTheme();
   const [attempts, setAttempts] = useState(0);
   const [showFeedback, setShowFeedback] = useState<"correct" | "incorrect" | null>(null);
   const [showHintText, setShowHintText] = useState(false);
+  const [showExplanation, setShowExplanation] = useState(false);
+  const [selectedWrongAnswer, setSelectedWrongAnswer] = useState<number | null>(null);
 
-  // Get consistent emoji for this problem
-  const emoji = useMemo(() => getEmojiForProblem(problem.id), [problem.id]);
+  // Get consistent emoji for this problem, preferring user's interest theme
+  const emoji = useMemo(() => {
+    // If user has selected an interest that matches a math theme, use it
+    if (hasInterests && themeId in MATH_EMOJI_THEMES) {
+      const emojis = MATH_EMOJI_THEMES[themeId as EmojiTheme];
+      // Use problem ID to pick a consistent emoji from the theme
+      let hash = 0;
+      for (let i = 0; i < problem.id.length; i++) {
+        hash = ((hash << 5) - hash) + problem.id.charCodeAt(i);
+        hash = hash & hash;
+      }
+      return emojis[Math.abs(hash) % emojis.length];
+    }
+    // Fall back to default behavior
+    return getEmojiForProblem(problem.id);
+  }, [problem.id, themeId, hasInterests]);
 
   // Generate answer options for multiple choice
   const generateOptions = useCallback(() => {
@@ -414,16 +432,50 @@ export function MathProblemCard({
     } else {
       // Wrong answer feedback
       playSound('pop');
+      setSelectedWrongAnswer(answer);
 
-      if ("speechSynthesis" in window) {
-        const utterance = new SpeechSynthesisUtterance("Try again!");
-        utterance.rate = 0.9;
-        setTimeout(() => speechSynthesis.speak(utterance), 200);
+      // After 2 wrong attempts, show explanation
+      if (newAttempts >= 2) {
+        // Show visual explanation
+        setShowExplanation(true);
+
+        if ("speechSynthesis" in window) {
+          speechSynthesis.cancel();
+          // Explain the correct answer
+          const operatorWord = problem.operator === "+" ? "plus" : "minus";
+          let explanation: string;
+          if (problem.operands.length === 1) {
+            explanation = `Let's count together. ${problem.answer}!`;
+          } else {
+            explanation = `${problem.operands[0]} ${operatorWord} ${problem.operands[1]} equals ${problem.answer}. Let's try again!`;
+          }
+          const utterance = new SpeechSynthesisUtterance(explanation);
+          utterance.rate = 0.7;
+          utterance.pitch = 1.1;
+          setTimeout(() => speechSynthesis.speak(utterance), 300);
+        }
+
+        // Reset after showing explanation
+        setTimeout(() => {
+          setShowFeedback(null);
+          setShowExplanation(false);
+          setSelectedWrongAnswer(null);
+        }, 4000);
+      } else {
+        // First wrong attempt - just encourage retry
+        if ("speechSynthesis" in window) {
+          const phrases = ["Almost!", "Try again!", "Not quite!", "Keep trying!"];
+          const text = phrases[Math.floor(Math.random() * phrases.length)];
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.rate = 0.9;
+          setTimeout(() => speechSynthesis.speak(utterance), 200);
+        }
+
+        setTimeout(() => {
+          setShowFeedback(null);
+          setSelectedWrongAnswer(null);
+        }, 1000);
       }
-
-      setTimeout(() => {
-        setShowFeedback(null);
-      }, 1000);
     }
   };
 
@@ -478,21 +530,74 @@ export function MathProblemCard({
                 : "bg-red-500/20"
             }`}
           >
-            <motion.div
-              animate={shouldReduceMotion ? {} : {
-                scale: [1, 1.2, 1],
-                rotate: showFeedback === "correct" ? [0, -10, 10, 0] : [0, -5, 5, 0]
-              }}
-              className={`p-8 rounded-full ${
-                showFeedback === "correct" ? "bg-green-500" : "bg-red-500"
-              }`}
-            >
-              {showFeedback === "correct" ? (
-                <Check className="w-16 h-16 text-white" />
-              ) : (
-                <X className="w-16 h-16 text-white" />
-              )}
-            </motion.div>
+            {showExplanation ? (
+              /* Show visual explanation after multiple wrong attempts */
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white rounded-3xl p-6 sm:p-8 shadow-2xl max-w-sm mx-4 text-center"
+              >
+                <div className="text-4xl mb-4">🤔</div>
+                <p className="text-lg font-bold text-gray-800 mb-4">
+                  Let&apos;s figure it out together!
+                </p>
+
+                {/* Show the correct answer visually */}
+                <div className="bg-gradient-to-br from-purple-100 to-indigo-100 rounded-2xl p-4 mb-4">
+                  <p className="text-2xl sm:text-3xl font-black text-gray-800">
+                    {formatProblem(problem)} ={" "}
+                    <span className="text-green-600">{problem.answer}</span>
+                  </p>
+                </div>
+
+                {/* Visual representation */}
+                <div className="mb-4">
+                  <MathVisualizer problem={problem} emoji={emoji} />
+                </div>
+
+                {/* Counting explanation for addition */}
+                {problem.operator === "+" && problem.operands.length >= 2 && (
+                  <p className="text-sm text-gray-600">
+                    {problem.operands[0]} + {problem.operands[1]} = {problem.answer}
+                    <br />
+                    <span className="text-xs">
+                      Start with {problem.operands[0]}, then count {problem.operands[1]} more!
+                    </span>
+                  </p>
+                )}
+
+                {/* Counting explanation for subtraction */}
+                {problem.operator === "-" && problem.operands.length >= 2 && (
+                  <p className="text-sm text-gray-600">
+                    {problem.operands[0]} - {problem.operands[1]} = {problem.answer}
+                    <br />
+                    <span className="text-xs">
+                      Start with {problem.operands[0]}, take away {problem.operands[1]}!
+                    </span>
+                  </p>
+                )}
+
+                <p className="text-sm font-medium text-purple-600 mt-4">
+                  Tap the right answer: {problem.answer}
+                </p>
+              </motion.div>
+            ) : (
+              <motion.div
+                animate={shouldReduceMotion ? {} : {
+                  scale: [1, 1.2, 1],
+                  rotate: showFeedback === "correct" ? [0, -10, 10, 0] : [0, -5, 5, 0]
+                }}
+                className={`p-8 rounded-full ${
+                  showFeedback === "correct" ? "bg-green-500" : "bg-red-500"
+                }`}
+              >
+                {showFeedback === "correct" ? (
+                  <Check className="w-16 h-16 text-white" />
+                ) : (
+                  <X className="w-16 h-16 text-white" />
+                )}
+              </motion.div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

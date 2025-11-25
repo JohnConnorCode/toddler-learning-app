@@ -7,7 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "generate-audio": "node scripts/generate-audio.js --all"
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:ui": "vitest --ui",
+    "generate-audio": "node scripts/generate-audio.js --all",
+    "validate-audio": "tsx scripts/validate-audio.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.84.0",
@@ -27,15 +32,21 @@
     "@ducanh2912/next-pwa": "^10.2.9",
     "@google-cloud/text-to-speech": "^6.4.0",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/howler": "^2.2.12",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^5.1.1",
     "eslint": "^9",
     "eslint-config-next": "16.0.3",
+    "jsdom": "^27.2.0",
     "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "tsx": "^4.20.6",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.0.13"
   }
 }

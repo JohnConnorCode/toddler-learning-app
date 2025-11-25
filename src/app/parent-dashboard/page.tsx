@@ -3,12 +3,15 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { usePhonicsProgress } from "@/hooks/use-phonics-progress";
+import { useOnboarding } from "@/hooks/use-onboarding";
+import { useStoryProgress } from "@/hooks/use-story-progress";
+import { useGlobalProgress, useMathProgress } from "@/lib/framework/progress-store";
+import { useProgress } from "@/hooks/use-progress";
+import { STORIES } from "@/lib/stories-data";
 import {
   getOverallBlendingStats,
   getAllWordReviews,
   exportReviewData,
-  getWordStats,
-  type WordReviewData,
 } from "@/lib/word-scheduler";
 import Link from "next/link";
 import {
@@ -21,11 +24,37 @@ import {
   Target,
   AlertCircle,
   CheckCircle2,
+  User,
+  Flame,
+  BookOpen,
+  Calculator,
+  Sparkles,
+  Trophy,
 } from "lucide-react";
 
 export default function ParentDashboardPage() {
   const { state, getOverallProgress } = usePhonicsProgress();
   const [showExportSuccess, setShowExportSuccess] = useState(false);
+
+  // Child profile
+  const { childProfile } = useOnboarding();
+
+  // Global progress (XP, level, streak)
+  const { totalXP, currentLevel, streak } = useGlobalProgress();
+
+  // Story progress
+  const storyProgress = useStoryProgress();
+  const storiesRead = Object.values(storyProgress.stories).filter(s => s.completed).length;
+  const totalStories = STORIES.length;
+  const favoriteStories = storyProgress.favorites.length;
+
+  // Math progress
+  const mathProgress = useMathProgress();
+  const mathLessonsCompleted = Object.values(mathProgress.progress?.lessonProgress || {}).filter(l => l.completed).length;
+
+  // Word progress
+  const { getStats } = useProgress();
+  const wordStats = getStats();
 
   const completedUnits = state.completedUnits;
   const maxUnit = completedUnits.length > 0 ? Math.max(...completedUnits) : 1;
@@ -124,7 +153,114 @@ export default function ParentDashboardPage() {
           </motion.div>
         )}
 
-        {/* Overview Cards */}
+        {/* Child Profile & Global Stats */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Child Profile Card */}
+          {childProfile && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl p-6 shadow-xl text-white"
+            >
+              <div className="flex items-center gap-4 mb-4">
+                <div className="text-5xl">{childProfile.avatarEmoji}</div>
+                <div>
+                  <h2 className="text-2xl font-black">{childProfile.name}</h2>
+                  <p className="opacity-90">{childProfile.age} years old</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4 mt-4">
+                <div className="text-center">
+                  <div className="flex items-center justify-center mb-1">
+                    <Trophy className="w-5 h-5" />
+                  </div>
+                  <p className="text-2xl font-bold">{currentLevel}</p>
+                  <p className="text-xs opacity-75">Level</p>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center mb-1">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <p className="text-2xl font-bold">{totalXP}</p>
+                  <p className="text-xs opacity-75">Total XP</p>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center mb-1">
+                    <Flame className="w-5 h-5" />
+                  </div>
+                  <p className="text-2xl font-bold">{streak || wordStats.streakDays}</p>
+                  <p className="text-xs opacity-75">Day Streak</p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Stories Progress */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-indigo-400"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-indigo-100 rounded-xl">
+                <BookOpen className="w-6 h-6 text-indigo-600" />
+              </div>
+              <h3 className="font-bold text-gray-700">Story Reading</h3>
+            </div>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Stories Read</span>
+                <span className="font-bold text-gray-800">{storiesRead} / {totalStories}</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-indigo-500 h-2 rounded-full transition-all"
+                  style={{ width: `${(storiesRead / totalStories) * 100}%` }}
+                />
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-500">Favorites</span>
+                <span className="text-pink-600 font-bold">{favoriteStories}</span>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Math Progress */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-emerald-400"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-emerald-100 rounded-xl">
+                <Calculator className="w-6 h-6 text-emerald-600" />
+              </div>
+              <h3 className="font-bold text-gray-700">Math Learning</h3>
+            </div>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Lessons Completed</span>
+                <span className="font-bold text-gray-800">{mathLessonsCompleted}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Words Practiced</span>
+                <span className="font-bold text-gray-800">{wordStats.totalWords}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Letters Learned</span>
+                <span className="font-bold text-gray-800">{wordStats.totalLetters}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-500">Avg. Mastery</span>
+                <span className="text-emerald-600 font-bold">{wordStats.averageMastery}%</span>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Reading & Blending Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Phonics Progress */}
           <motion.div

@@ -7,6 +7,8 @@ import { useAccessibility } from "@/hooks/use-accessibility";
 import { WelcomeStep } from "./WelcomeStep";
 import { ParentSetup } from "./ParentSetup";
 import { ChildIntro } from "./ChildIntro";
+import { InterestSelection } from "./InterestSelection";
+import { MascotSelection } from "./MascotSelection";
 import { GuidedFirstLesson } from "./GuidedFirstLesson";
 import { CompletionCelebration } from "./CompletionCelebration";
 
@@ -14,6 +16,8 @@ const STEPS: OnboardingStep[] = [
   "welcome",
   "parent-setup",
   "child-intro",
+  "interest-selection",
+  "mascot-selection",
   "guided-lesson",
   "complete",
 ];
@@ -76,6 +80,10 @@ export function OnboardingWizard() {
         return <ParentSetup onNext={nextStep} onBack={prevStep} />;
       case "child-intro":
         return <ChildIntro onNext={nextStep} onBack={prevStep} />;
+      case "interest-selection":
+        return <InterestSelection onNext={nextStep} onBack={prevStep} />;
+      case "mascot-selection":
+        return <MascotSelection onNext={nextStep} onBack={prevStep} />;
       case "guided-lesson":
         return <GuidedFirstLesson onNext={nextStep} onBack={prevStep} />;
       case "complete":

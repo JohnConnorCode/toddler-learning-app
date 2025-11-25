@@ -10,11 +10,19 @@
 // ============================================
 
 export const MATH_EMOJI_THEMES = {
+  // Classic themes
   fruits: ['🍎', '🍊', '🍋', '🍇', '🍓'],
   animals: ['🐶', '🐱', '🐰', '🐻', '🦊'],
   stars: ['⭐', '🌟', '✨', '💫', '⚡'],
   shapes: ['🔴', '🟠', '🟡', '🟢', '🔵'],
   nature: ['🌸', '🌺', '🌻', '🌷', '🌹'],
+  // Interest-based themes
+  robots: ['🤖', '⚙️', '🔧', '🦾', '🔩'],
+  dinosaurs: ['🦕', '🦖', '🦴', '🥚', '🌋'],
+  lizards: ['🦎', '🐊', '🐢', '🐍', '🦜'],
+  cars: ['🚗', '🚙', '🏎️', '🚕', '🚓'],
+  rockets: ['🚀', '🛸', '🌙', '⭐', '🌍'],
+  spaceships: ['🛸', '🚀', '👽', '🛰️', '🌌'],
 } as const;
 
 export type EmojiTheme = keyof typeof MATH_EMOJI_THEMES;
@@ -55,6 +63,37 @@ export type MathDifficulty = 1 | 2 | 3 | 4 | 5;
 
 export type OperationType = "addition" | "subtraction" | "mixed";
 
+// New problem styles for enhanced activities
+export type ProblemStyle =
+  | "standard"        // 2 + 3 = ?
+  | "counting"        // Count the objects
+  | "skip-counting"   // 2, 4, 6, ?, 10
+  | "number-bond"     // Part-part-whole
+  | "word-problem";   // Story-based context
+
+// Number bond data for composition problems
+export interface NumberBondData {
+  whole: number;
+  parts: [number, number];
+  missingPart: "whole" | "left" | "right";
+}
+
+// Skip counting sequence data
+export interface SkipCountData {
+  sequence: number[];
+  missingIndex: number;
+  skipBy: 2 | 5 | 10;
+}
+
+// Word problem context data
+export interface WordProblemContext {
+  story: string;
+  question: string;
+  objects: string;
+  emoji: string;
+  action: "join" | "separate" | "compare";
+}
+
 export interface NumberItem {
   id: string;
   number: number;
@@ -73,14 +112,19 @@ export interface MathProblem {
   answer: number;
   difficulty: MathDifficulty;
   hint?: string;
-  visualHint?: "fingers" | "objects" | "numberline";
+  visualHint?: "fingers" | "objects" | "numberline" | "tenframe" | "numberbond";
+  // Enhanced problem fields
+  problemStyle?: ProblemStyle;
+  numberBond?: NumberBondData;
+  skipCount?: SkipCountData;
+  wordProblem?: WordProblemContext;
 }
 
 export interface MathLesson {
   id: string;
   title: string;
   description: string;
-  type: "counting" | "number-recognition" | "addition" | "subtraction" | "mixed";
+  type: "counting" | "number-recognition" | "addition" | "subtraction" | "mixed" | "skip-counting" | "number-bonds" | "word-problems";
   difficulty: MathDifficulty;
   problems: MathProblem[];
   objectives: string[];
@@ -615,6 +659,240 @@ export const MATH_UNITS: MathUnit[] = [
           { id: "mixh-8", type: "subtraction", operands: [20, 8, 5], operator: "-", answer: 7, difficulty: 4 },
           { id: "mixh-9", type: "addition", operands: [10, 10], operator: "+", answer: 20, difficulty: 4 },
           { id: "mixh-10", type: "subtraction", operands: [20, 10], operator: "-", answer: 10, difficulty: 4 },
+        ],
+      },
+    ],
+  },
+
+  // ============================================
+  // UNIT 7: Counting Patterns (Skip Counting)
+  // ============================================
+  {
+    id: "unit-patterns",
+    title: "Counting Patterns",
+    description: "Learn to count by 2s, 5s, and 10s",
+    color: "bg-cyan-500",
+    icon: "🔢",
+    order: 7,
+    prerequisites: ["unit-numbers-11-20"],
+    lessons: [
+      {
+        id: "lesson-skip-by-2",
+        title: "Skip Count by 2s",
+        description: "Count forward by twos: 2, 4, 6, 8...",
+        type: "skip-counting",
+        difficulty: 2,
+        objectives: ["Count by 2s to 20", "Identify patterns in counting"],
+        estimatedMinutes: 6,
+        problems: [
+          { id: "skip2-1", type: "addition", operands: [2, 2], operator: "+", answer: 4, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [2, 4, 6, 8, 10], missingIndex: 1, skipBy: 2 } },
+          { id: "skip2-2", type: "addition", operands: [4, 2], operator: "+", answer: 6, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [2, 4, 6, 8, 10], missingIndex: 2, skipBy: 2 } },
+          { id: "skip2-3", type: "addition", operands: [6, 2], operator: "+", answer: 8, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [2, 4, 6, 8, 10], missingIndex: 3, skipBy: 2 } },
+          { id: "skip2-4", type: "addition", operands: [8, 2], operator: "+", answer: 10, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [2, 4, 6, 8, 10], missingIndex: 4, skipBy: 2 } },
+          { id: "skip2-5", type: "addition", operands: [10, 2], operator: "+", answer: 12, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [4, 6, 8, 10, 12], missingIndex: 4, skipBy: 2 } },
+          { id: "skip2-6", type: "addition", operands: [12, 2], operator: "+", answer: 14, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [8, 10, 12, 14, 16], missingIndex: 3, skipBy: 2 } },
+          { id: "skip2-7", type: "addition", operands: [14, 2], operator: "+", answer: 16, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [10, 12, 14, 16, 18], missingIndex: 3, skipBy: 2 } },
+          { id: "skip2-8", type: "addition", operands: [16, 2], operator: "+", answer: 18, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [12, 14, 16, 18, 20], missingIndex: 3, skipBy: 2 } },
+          { id: "skip2-9", type: "addition", operands: [18, 2], operator: "+", answer: 20, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [14, 16, 18, 20], missingIndex: 3, skipBy: 2 } },
+          { id: "skip2-10", type: "addition", operands: [6, 2], operator: "+", answer: 8, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [2, 4, 6, 8, 10], missingIndex: 0, skipBy: 2 } },
+        ],
+      },
+      {
+        id: "lesson-skip-by-5",
+        title: "Skip Count by 5s",
+        description: "Count forward by fives: 5, 10, 15, 20...",
+        type: "skip-counting",
+        difficulty: 2,
+        objectives: ["Count by 5s to 50", "Recognize multiples of 5"],
+        estimatedMinutes: 6,
+        problems: [
+          { id: "skip5-1", type: "addition", operands: [5, 5], operator: "+", answer: 10, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [5, 10, 15, 20, 25], missingIndex: 1, skipBy: 5 } },
+          { id: "skip5-2", type: "addition", operands: [10, 5], operator: "+", answer: 15, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [5, 10, 15, 20, 25], missingIndex: 2, skipBy: 5 } },
+          { id: "skip5-3", type: "addition", operands: [15, 5], operator: "+", answer: 20, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [5, 10, 15, 20, 25], missingIndex: 3, skipBy: 5 } },
+          { id: "skip5-4", type: "addition", operands: [20, 5], operator: "+", answer: 25, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [5, 10, 15, 20, 25], missingIndex: 4, skipBy: 5 } },
+          { id: "skip5-5", type: "addition", operands: [25, 5], operator: "+", answer: 30, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [10, 15, 20, 25, 30], missingIndex: 4, skipBy: 5 } },
+          { id: "skip5-6", type: "addition", operands: [30, 5], operator: "+", answer: 35, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [20, 25, 30, 35, 40], missingIndex: 3, skipBy: 5 } },
+          { id: "skip5-7", type: "addition", operands: [35, 5], operator: "+", answer: 40, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [25, 30, 35, 40, 45], missingIndex: 3, skipBy: 5 } },
+          { id: "skip5-8", type: "addition", operands: [40, 5], operator: "+", answer: 45, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [30, 35, 40, 45, 50], missingIndex: 3, skipBy: 5 } },
+          { id: "skip5-9", type: "addition", operands: [45, 5], operator: "+", answer: 50, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [35, 40, 45, 50], missingIndex: 3, skipBy: 5 } },
+          { id: "skip5-10", type: "addition", operands: [15, 5], operator: "+", answer: 20, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [5, 10, 15, 20, 25], missingIndex: 0, skipBy: 5 } },
+        ],
+      },
+      {
+        id: "lesson-skip-by-10",
+        title: "Skip Count by 10s",
+        description: "Count forward by tens: 10, 20, 30...",
+        type: "skip-counting",
+        difficulty: 2,
+        objectives: ["Count by 10s to 100", "Understand place value basics"],
+        estimatedMinutes: 6,
+        problems: [
+          { id: "skip10-1", type: "addition", operands: [10, 10], operator: "+", answer: 20, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [10, 20, 30, 40, 50], missingIndex: 1, skipBy: 10 } },
+          { id: "skip10-2", type: "addition", operands: [20, 10], operator: "+", answer: 30, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [10, 20, 30, 40, 50], missingIndex: 2, skipBy: 10 } },
+          { id: "skip10-3", type: "addition", operands: [30, 10], operator: "+", answer: 40, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [10, 20, 30, 40, 50], missingIndex: 3, skipBy: 10 } },
+          { id: "skip10-4", type: "addition", operands: [40, 10], operator: "+", answer: 50, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [10, 20, 30, 40, 50], missingIndex: 4, skipBy: 10 } },
+          { id: "skip10-5", type: "addition", operands: [50, 10], operator: "+", answer: 60, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [30, 40, 50, 60, 70], missingIndex: 3, skipBy: 10 } },
+          { id: "skip10-6", type: "addition", operands: [60, 10], operator: "+", answer: 70, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [40, 50, 60, 70, 80], missingIndex: 3, skipBy: 10 } },
+          { id: "skip10-7", type: "addition", operands: [70, 10], operator: "+", answer: 80, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [50, 60, 70, 80, 90], missingIndex: 3, skipBy: 10 } },
+          { id: "skip10-8", type: "addition", operands: [80, 10], operator: "+", answer: 90, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [60, 70, 80, 90, 100], missingIndex: 3, skipBy: 10 } },
+          { id: "skip10-9", type: "addition", operands: [90, 10], operator: "+", answer: 100, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [70, 80, 90, 100], missingIndex: 3, skipBy: 10 } },
+          { id: "skip10-10", type: "addition", operands: [20, 10], operator: "+", answer: 30, difficulty: 2, problemStyle: "skip-counting", skipCount: { sequence: [10, 20, 30, 40, 50], missingIndex: 0, skipBy: 10 } },
+        ],
+      },
+    ],
+  },
+
+  // ============================================
+  // UNIT 8: Number Bonds
+  // ============================================
+  {
+    id: "unit-number-bonds",
+    title: "Number Bonds",
+    description: "Learn how numbers fit together",
+    color: "bg-rose-500",
+    icon: "🔗",
+    order: 8,
+    prerequisites: ["unit-numbers-6-10"],
+    lessons: [
+      {
+        id: "lesson-bonds-5",
+        title: "Ways to Make 5",
+        description: "Discover all the ways to make 5",
+        type: "number-bonds",
+        difficulty: 2,
+        objectives: ["Find all pairs that make 5", "Understand part-whole relationships"],
+        estimatedMinutes: 6,
+        problems: [
+          { id: "bond5-1", type: "addition", operands: [0, 5], operator: "+", answer: 5, difficulty: 2, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 5, parts: [0, 5], missingPart: "left" } },
+          { id: "bond5-2", type: "addition", operands: [1, 4], operator: "+", answer: 5, difficulty: 2, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 5, parts: [1, 4], missingPart: "right" } },
+          { id: "bond5-3", type: "addition", operands: [2, 3], operator: "+", answer: 5, difficulty: 2, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 5, parts: [2, 3], missingPart: "whole" } },
+          { id: "bond5-4", type: "addition", operands: [3, 2], operator: "+", answer: 5, difficulty: 2, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 5, parts: [3, 2], missingPart: "left" } },
+          { id: "bond5-5", type: "addition", operands: [4, 1], operator: "+", answer: 5, difficulty: 2, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 5, parts: [4, 1], missingPart: "right" } },
+          { id: "bond5-6", type: "addition", operands: [5, 0], operator: "+", answer: 5, difficulty: 2, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 5, parts: [5, 0], missingPart: "whole" } },
+          { id: "bond5-7", type: "addition", operands: [1, 4], operator: "+", answer: 5, difficulty: 2, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 5, parts: [1, 4], missingPart: "left" } },
+          { id: "bond5-8", type: "addition", operands: [2, 3], operator: "+", answer: 5, difficulty: 2, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 5, parts: [2, 3], missingPart: "right" } },
+          { id: "bond5-9", type: "addition", operands: [3, 2], operator: "+", answer: 5, difficulty: 2, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 5, parts: [3, 2], missingPart: "whole" } },
+          { id: "bond5-10", type: "addition", operands: [4, 1], operator: "+", answer: 5, difficulty: 2, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 5, parts: [4, 1], missingPart: "left" } },
+        ],
+      },
+      {
+        id: "lesson-bonds-10",
+        title: "Ways to Make 10",
+        description: "Discover all the ways to make 10",
+        type: "number-bonds",
+        difficulty: 2,
+        objectives: ["Find all pairs that make 10", "Master the 'friendly 10'"],
+        estimatedMinutes: 7,
+        problems: [
+          { id: "bond10-1", type: "addition", operands: [1, 9], operator: "+", answer: 10, difficulty: 2, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 10, parts: [1, 9], missingPart: "right" } },
+          { id: "bond10-2", type: "addition", operands: [2, 8], operator: "+", answer: 10, difficulty: 2, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 10, parts: [2, 8], missingPart: "left" } },
+          { id: "bond10-3", type: "addition", operands: [3, 7], operator: "+", answer: 10, difficulty: 2, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 10, parts: [3, 7], missingPart: "whole" } },
+          { id: "bond10-4", type: "addition", operands: [4, 6], operator: "+", answer: 10, difficulty: 2, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 10, parts: [4, 6], missingPart: "right" } },
+          { id: "bond10-5", type: "addition", operands: [5, 5], operator: "+", answer: 10, difficulty: 2, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 10, parts: [5, 5], missingPart: "left" } },
+          { id: "bond10-6", type: "addition", operands: [6, 4], operator: "+", answer: 10, difficulty: 2, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 10, parts: [6, 4], missingPart: "whole" } },
+          { id: "bond10-7", type: "addition", operands: [7, 3], operator: "+", answer: 10, difficulty: 2, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 10, parts: [7, 3], missingPart: "right" } },
+          { id: "bond10-8", type: "addition", operands: [8, 2], operator: "+", answer: 10, difficulty: 2, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 10, parts: [8, 2], missingPart: "left" } },
+          { id: "bond10-9", type: "addition", operands: [9, 1], operator: "+", answer: 10, difficulty: 2, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 10, parts: [9, 1], missingPart: "whole" } },
+          { id: "bond10-10", type: "addition", operands: [0, 10], operator: "+", answer: 10, difficulty: 2, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 10, parts: [0, 10], missingPart: "right" } },
+        ],
+      },
+      {
+        id: "lesson-bonds-missing",
+        title: "Find the Missing Part",
+        description: "Practice finding missing numbers in bonds",
+        type: "number-bonds",
+        difficulty: 3,
+        objectives: ["Solve for missing parts", "Apply number bond knowledge"],
+        estimatedMinutes: 7,
+        problems: [
+          { id: "bondm-1", type: "addition", operands: [3, 4], operator: "+", answer: 7, difficulty: 3, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 7, parts: [3, 4], missingPart: "whole" } },
+          { id: "bondm-2", type: "addition", operands: [2, 6], operator: "+", answer: 8, difficulty: 3, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 8, parts: [2, 6], missingPart: "left" } },
+          { id: "bondm-3", type: "addition", operands: [5, 4], operator: "+", answer: 9, difficulty: 3, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 9, parts: [5, 4], missingPart: "right" } },
+          { id: "bondm-4", type: "addition", operands: [1, 5], operator: "+", answer: 6, difficulty: 3, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 6, parts: [1, 5], missingPart: "whole" } },
+          { id: "bondm-5", type: "addition", operands: [4, 4], operator: "+", answer: 8, difficulty: 3, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 8, parts: [4, 4], missingPart: "left" } },
+          { id: "bondm-6", type: "addition", operands: [6, 3], operator: "+", answer: 9, difficulty: 3, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 9, parts: [6, 3], missingPart: "right" } },
+          { id: "bondm-7", type: "addition", operands: [2, 5], operator: "+", answer: 7, difficulty: 3, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 7, parts: [2, 5], missingPart: "whole" } },
+          { id: "bondm-8", type: "addition", operands: [3, 3], operator: "+", answer: 6, difficulty: 3, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 6, parts: [3, 3], missingPart: "left" } },
+          { id: "bondm-9", type: "addition", operands: [7, 2], operator: "+", answer: 9, difficulty: 3, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 9, parts: [7, 2], missingPart: "right" } },
+          { id: "bondm-10", type: "addition", operands: [4, 3], operator: "+", answer: 7, difficulty: 3, problemStyle: "number-bond", visualHint: "numberbond", numberBond: { whole: 7, parts: [4, 3], missingPart: "whole" } },
+        ],
+      },
+    ],
+  },
+
+  // ============================================
+  // UNIT 9: Math Stories (Word Problems)
+  // ============================================
+  {
+    id: "unit-word-problems",
+    title: "Math Stories",
+    description: "Solve fun story problems",
+    color: "bg-amber-500",
+    icon: "📖",
+    order: 9,
+    prerequisites: ["unit-numbers-6-10"],
+    lessons: [
+      {
+        id: "lesson-stories-add",
+        title: "Adding Stories",
+        description: "Solve addition word problems",
+        type: "word-problems",
+        difficulty: 2,
+        objectives: ["Understand addition in context", "Visualize story problems"],
+        estimatedMinutes: 7,
+        problems: [
+          { id: "story-add-1", type: "addition", operands: [2, 3], operator: "+", answer: 5, difficulty: 2, problemStyle: "word-problem", wordProblem: { story: "Max has 2 toy cars. His friend gives him 3 more.", question: "How many toy cars does Max have now?", objects: "toy cars", emoji: "🚗", action: "join" } },
+          { id: "story-add-2", type: "addition", operands: [4, 2], operator: "+", answer: 6, difficulty: 2, problemStyle: "word-problem", wordProblem: { story: "Emma sees 4 birds. Then 2 more birds fly over.", question: "How many birds are there now?", objects: "birds", emoji: "🐦", action: "join" } },
+          { id: "story-add-3", type: "addition", operands: [3, 4], operator: "+", answer: 7, difficulty: 2, problemStyle: "word-problem", wordProblem: { story: "There are 3 red apples. Mom brings 4 green apples.", question: "How many apples are there in all?", objects: "apples", emoji: "🍎", action: "join" } },
+          { id: "story-add-4", type: "addition", operands: [5, 3], operator: "+", answer: 8, difficulty: 2, problemStyle: "word-problem", wordProblem: { story: "Sam has 5 stickers. He gets 3 more at school.", question: "How many stickers does Sam have now?", objects: "stickers", emoji: "⭐", action: "join" } },
+          { id: "story-add-5", type: "addition", operands: [2, 5], operator: "+", answer: 7, difficulty: 2, problemStyle: "word-problem", wordProblem: { story: "There are 2 dogs at the park. 5 more dogs come to play.", question: "How many dogs are at the park?", objects: "dogs", emoji: "🐕", action: "join" } },
+          { id: "story-add-6", type: "addition", operands: [4, 4], operator: "+", answer: 8, difficulty: 2, problemStyle: "word-problem", wordProblem: { story: "Lily has 4 crayons. Her sister gives her 4 more.", question: "How many crayons does Lily have?", objects: "crayons", emoji: "🖍️", action: "join" } },
+          { id: "story-add-7", type: "addition", operands: [3, 3], operator: "+", answer: 6, difficulty: 2, problemStyle: "word-problem", wordProblem: { story: "Ben has 3 balloons. He gets 3 more at the party.", question: "How many balloons does Ben have?", objects: "balloons", emoji: "🎈", action: "join" } },
+          { id: "story-add-8", type: "addition", operands: [1, 6], operator: "+", answer: 7, difficulty: 2, problemStyle: "word-problem", wordProblem: { story: "There is 1 cat on the bed. 6 more cats jump up.", question: "How many cats are on the bed?", objects: "cats", emoji: "🐱", action: "join" } },
+          { id: "story-add-9", type: "addition", operands: [5, 4], operator: "+", answer: 9, difficulty: 2, problemStyle: "word-problem", wordProblem: { story: "Maya picks 5 flowers. Then she picks 4 more.", question: "How many flowers did Maya pick?", objects: "flowers", emoji: "🌸", action: "join" } },
+          { id: "story-add-10", type: "addition", operands: [6, 4], operator: "+", answer: 10, difficulty: 2, problemStyle: "word-problem", wordProblem: { story: "There are 6 fish in the bowl. Dad adds 4 more fish.", question: "How many fish are in the bowl now?", objects: "fish", emoji: "🐟", action: "join" } },
+        ],
+      },
+      {
+        id: "lesson-stories-sub",
+        title: "Taking Away Stories",
+        description: "Solve subtraction word problems",
+        type: "word-problems",
+        difficulty: 2,
+        objectives: ["Understand subtraction in context", "Solve take-away problems"],
+        estimatedMinutes: 7,
+        problems: [
+          { id: "story-sub-1", type: "subtraction", operands: [5, 2], operator: "-", answer: 3, difficulty: 2, problemStyle: "word-problem", wordProblem: { story: "Max has 5 cookies. He eats 2 cookies.", question: "How many cookies does Max have left?", objects: "cookies", emoji: "🍪", action: "separate" } },
+          { id: "story-sub-2", type: "subtraction", operands: [6, 3], operator: "-", answer: 3, difficulty: 2, problemStyle: "word-problem", wordProblem: { story: "There are 6 birds. 3 birds fly away.", question: "How many birds are left?", objects: "birds", emoji: "🐦", action: "separate" } },
+          { id: "story-sub-3", type: "subtraction", operands: [7, 4], operator: "-", answer: 3, difficulty: 2, problemStyle: "word-problem", wordProblem: { story: "Emma has 7 balloons. 4 balloons pop!", question: "How many balloons does Emma have now?", objects: "balloons", emoji: "🎈", action: "separate" } },
+          { id: "story-sub-4", type: "subtraction", operands: [8, 3], operator: "-", answer: 5, difficulty: 2, problemStyle: "word-problem", wordProblem: { story: "There are 8 apples on the tree. Mom picks 3.", question: "How many apples are still on the tree?", objects: "apples", emoji: "🍎", action: "separate" } },
+          { id: "story-sub-5", type: "subtraction", operands: [5, 1], operator: "-", answer: 4, difficulty: 2, problemStyle: "word-problem", wordProblem: { story: "Sam has 5 toy cars. He gives 1 to his friend.", question: "How many toy cars does Sam have now?", objects: "toy cars", emoji: "🚗", action: "separate" } },
+          { id: "story-sub-6", type: "subtraction", operands: [9, 4], operator: "-", answer: 5, difficulty: 2, problemStyle: "word-problem", wordProblem: { story: "There are 9 ducks in the pond. 4 ducks swim away.", question: "How many ducks are still in the pond?", objects: "ducks", emoji: "🦆", action: "separate" } },
+          { id: "story-sub-7", type: "subtraction", operands: [6, 2], operator: "-", answer: 4, difficulty: 2, problemStyle: "word-problem", wordProblem: { story: "Lily has 6 stickers. She uses 2 on her notebook.", question: "How many stickers does Lily have left?", objects: "stickers", emoji: "⭐", action: "separate" } },
+          { id: "story-sub-8", type: "subtraction", operands: [10, 5], operator: "-", answer: 5, difficulty: 2, problemStyle: "word-problem", wordProblem: { story: "There are 10 fish. A cat catches 5 fish.", question: "How many fish are left?", objects: "fish", emoji: "🐟", action: "separate" } },
+          { id: "story-sub-9", type: "subtraction", operands: [7, 2], operator: "-", answer: 5, difficulty: 2, problemStyle: "word-problem", wordProblem: { story: "Ben has 7 crayons. 2 crayons break.", question: "How many crayons can Ben still use?", objects: "crayons", emoji: "🖍️", action: "separate" } },
+          { id: "story-sub-10", type: "subtraction", operands: [8, 5], operator: "-", answer: 3, difficulty: 2, problemStyle: "word-problem", wordProblem: { story: "Maya has 8 grapes. She eats 5 grapes.", question: "How many grapes does Maya have left?", objects: "grapes", emoji: "🍇", action: "separate" } },
+        ],
+      },
+      {
+        id: "lesson-stories-mixed",
+        title: "Story Time Math",
+        description: "Mixed addition and subtraction stories",
+        type: "word-problems",
+        difficulty: 3,
+        objectives: ["Choose the right operation", "Solve mixed story problems"],
+        estimatedMinutes: 8,
+        problems: [
+          { id: "story-mix-1", type: "addition", operands: [4, 3], operator: "+", answer: 7, difficulty: 3, problemStyle: "word-problem", wordProblem: { story: "There are 4 red balls and 3 blue balls.", question: "How many balls are there in all?", objects: "balls", emoji: "⚽", action: "join" } },
+          { id: "story-mix-2", type: "subtraction", operands: [8, 3], operator: "-", answer: 5, difficulty: 3, problemStyle: "word-problem", wordProblem: { story: "Max has 8 toy dinosaurs. He gives 3 to his brother.", question: "How many dinosaurs does Max have left?", objects: "dinosaurs", emoji: "🦕", action: "separate" } },
+          { id: "story-mix-3", type: "addition", operands: [5, 5], operator: "+", answer: 10, difficulty: 3, problemStyle: "word-problem", wordProblem: { story: "Emma has 5 red flowers and 5 yellow flowers.", question: "How many flowers does Emma have?", objects: "flowers", emoji: "🌸", action: "join" } },
+          { id: "story-mix-4", type: "subtraction", operands: [10, 4], operator: "-", answer: 6, difficulty: 3, problemStyle: "word-problem", wordProblem: { story: "There are 10 cookies on the plate. Dad eats 4.", question: "How many cookies are left?", objects: "cookies", emoji: "🍪", action: "separate" } },
+          { id: "story-mix-5", type: "addition", operands: [3, 6], operator: "+", answer: 9, difficulty: 3, problemStyle: "word-problem", wordProblem: { story: "Sam sees 3 butterflies. Then 6 more come.", question: "How many butterflies does Sam see now?", objects: "butterflies", emoji: "🦋", action: "join" } },
+          { id: "story-mix-6", type: "subtraction", operands: [9, 5], operator: "-", answer: 4, difficulty: 3, problemStyle: "word-problem", wordProblem: { story: "Lily has 9 pencils. She loses 5 at school.", question: "How many pencils does Lily have now?", objects: "pencils", emoji: "✏️", action: "separate" } },
+          { id: "story-mix-7", type: "addition", operands: [2, 7], operator: "+", answer: 9, difficulty: 3, problemStyle: "word-problem", wordProblem: { story: "There are 2 big dogs and 7 small dogs.", question: "How many dogs are there altogether?", objects: "dogs", emoji: "🐕", action: "join" } },
+          { id: "story-mix-8", type: "subtraction", operands: [7, 3], operator: "-", answer: 4, difficulty: 3, problemStyle: "word-problem", wordProblem: { story: "Ben has 7 candies. He shares 3 with his friend.", question: "How many candies does Ben have left?", objects: "candies", emoji: "🍬", action: "separate" } },
+          { id: "story-mix-9", type: "addition", operands: [6, 3], operator: "+", answer: 9, difficulty: 3, problemStyle: "word-problem", wordProblem: { story: "Maya has 6 books. Her mom gives her 3 more.", question: "How many books does Maya have now?", objects: "books", emoji: "📚", action: "join" } },
+          { id: "story-mix-10", type: "subtraction", operands: [10, 6], operator: "-", answer: 4, difficulty: 3, problemStyle: "word-problem", wordProblem: { story: "There are 10 birds. 6 birds fly to another tree.", question: "How many birds stay?", objects: "birds", emoji: "🐦", action: "separate" } },
         ],
       },
     ],

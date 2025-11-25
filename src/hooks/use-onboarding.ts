@@ -2,11 +2,14 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { InterestThemeId, MascotId } from "@/lib/theme-data";
 
 export type OnboardingStep =
   | "welcome"
   | "parent-setup"
   | "child-intro"
+  | "interest-selection"
+  | "mascot-selection"
   | "guided-lesson"
   | "complete";
 
@@ -14,6 +17,10 @@ export interface ChildProfile {
   name: string;
   age: number;
   avatarEmoji: string;
+  // Interest-based theming (added in v2)
+  interests: InterestThemeId[];
+  primaryInterest: InterestThemeId | null;
+  selectedMascot: MascotId;
 }
 
 export interface ParentPreferences {
@@ -141,7 +148,25 @@ export const useOnboarding = create<OnboardingState>()(
     }),
     {
       name: "little-learner-onboarding",
-      version: 1,
+      version: 2,
+      migrate: (persistedState: unknown, version: number) => {
+        const state = persistedState as OnboardingState;
+
+        // Migrate from v1 to v2: Add interest/mascot fields
+        if (version < 2 && state.childProfile) {
+          return {
+            ...state,
+            childProfile: {
+              ...state.childProfile,
+              interests: state.childProfile.interests || [],
+              primaryInterest: state.childProfile.primaryInterest || null,
+              selectedMascot: state.childProfile.selectedMascot || 'owl',
+            },
+          };
+        }
+
+        return state;
+      },
     }
   )
 );
@@ -162,8 +187,40 @@ export function useIsFirstVisit(): boolean {
   return !isOnboardingComplete && !hasSeenWelcome;
 }
 
+/**
+ * Get full profile with defaults for optional fields
+ */
+export function useProfile(): {
+  profile: ChildProfile | null;
+  isOnboarded: boolean;
+} {
+  const childProfile = useOnboarding((state) => state.childProfile);
+  const isOnboardingComplete = useOnboarding((state) => state.isOnboardingComplete);
+
+  // Apply defaults for migrated profiles
+  const profile = childProfile
+    ? {
+        ...childProfile,
+        interests: childProfile.interests || [],
+        primaryInterest: childProfile.primaryInterest || null,
+        selectedMascot: childProfile.selectedMascot || 'owl' as const,
+      }
+    : null;
+
+  return { profile, isOnboarded: isOnboardingComplete };
+}
+
+/**
+ * Check if user has selected interests
+ */
+export function useHasInterests(): boolean {
+  const childProfile = useOnboarding((state) => state.childProfile);
+  return (childProfile?.interests?.length ?? 0) > 0;
+}
+
 // Avatar emoji options for children
 export const AVATAR_EMOJIS = [
+  // Classic animals
   "🦁", // Lion
   "🐻", // Bear
   "🐰", // Bunny
@@ -176,6 +233,23 @@ export const AVATAR_EMOJIS = [
   "🐸", // Frog
   "🐯", // Tiger
   "🐶", // Dog
+  // Robots & Tech
+  "🤖", // Robot
+  "🦾", // Robot Arm
+  // Dinosaurs
+  "🦕", // Brontosaurus
+  "🦖", // T-Rex
+  // Lizards & Reptiles
+  "🦎", // Lizard
+  "🐊", // Crocodile
+  "🐢", // Turtle
+  // Vehicles
+  "🚗", // Car
+  "🏎️", // Race Car
+  // Space
+  "🚀", // Rocket
+  "🛸", // UFO
+  "👽", // Alien
 ] as const;
 
 // Age options (2-5 years old)

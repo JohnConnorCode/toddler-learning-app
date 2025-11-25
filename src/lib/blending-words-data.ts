@@ -203,6 +203,55 @@ export const BLENDING_WORDS: BlendingWord[] = [
   { word: "zit", minUnit: 6, difficulty: 1 },
   { word: "zoo", minUnit: 6, difficulty: 1 },
 
+  // Additional CVC words for expanded practice
+  // Unit 2 additions
+  { word: "mid", minUnit: 2, difficulty: 1 },
+  { word: "min", minUnit: 2, difficulty: 1 },
+
+  // Unit 3 additions
+  { word: "gig", minUnit: 3, difficulty: 1 },
+  { word: "tog", minUnit: 3, difficulty: 1 },
+  { word: "mod", minUnit: 3, difficulty: 1 },
+  { word: "nod", minUnit: 3, difficulty: 1 },
+  { word: "kit", minUnit: 3, difficulty: 1 },
+  { word: "kid", minUnit: 3, difficulty: 1 },
+
+  // Unit 4 additions
+  { word: "bob", minUnit: 4, difficulty: 1 },
+  { word: "mob", minUnit: 4, difficulty: 1 },
+  { word: "sob", minUnit: 4, difficulty: 1 },
+  { word: "cob", minUnit: 4, difficulty: 1 },
+  { word: "peg", minUnit: 4, difficulty: 1 },
+  { word: "keg", minUnit: 4, difficulty: 1 },
+  { word: "hem", minUnit: 4, difficulty: 1 },
+  { word: "rep", minUnit: 4, difficulty: 1 },
+  { word: "ref", minUnit: 5, difficulty: 1 },
+  { word: "reb", minUnit: 4, difficulty: 1 },
+
+  // Unit 5 additions
+  { word: "cub", minUnit: 5, difficulty: 1 },
+  { word: "dub", minUnit: 5, difficulty: 1 },
+  { word: "hub", minUnit: 5, difficulty: 1 },
+  { word: "pub", minUnit: 5, difficulty: 1 },
+  { word: "rub", minUnit: 5, difficulty: 1 },
+  { word: "sub", minUnit: 5, difficulty: 1 },
+  { word: "bud", minUnit: 5, difficulty: 1 },
+  { word: "cud", minUnit: 5, difficulty: 1 },
+  { word: "dud", minUnit: 5, difficulty: 1 },
+  { word: "mud", minUnit: 5, difficulty: 1 },
+  { word: "fib", minUnit: 5, difficulty: 1 },
+  { word: "lug", minUnit: 5, difficulty: 1 },
+  { word: "gum", minUnit: 5, difficulty: 1 },
+  { word: "sum", minUnit: 5, difficulty: 1 },
+  { word: "hum", minUnit: 5, difficulty: 1 },
+
+  // Unit 6 additions
+  { word: "vim", minUnit: 6, difficulty: 1 },
+  { word: "yip", minUnit: 6, difficulty: 1 },
+  { word: "zed", minUnit: 6, difficulty: 1 },
+  { word: "yak", minUnit: 6, difficulty: 1 },
+  { word: "yum", minUnit: 6, difficulty: 1 },
+
   // CVCC and CCVC words (difficulty 2)
   { word: "fast", minUnit: 5, difficulty: 2 },
   { word: "last", minUnit: 5, difficulty: 2 },

@@ -29,11 +29,14 @@ export function ParentSetup({ onNext, onBack }: ParentSetupProps) {
       return;
     }
 
-    // Save profile
+    // Save profile (interests and mascot will be set in later steps)
     setChildProfile({
       name: name.trim(),
       age: age || 3,
       avatarEmoji: avatar,
+      interests: childProfile?.interests || [],
+      primaryInterest: childProfile?.primaryInterest || null,
+      selectedMascot: childProfile?.selectedMascot || 'owl',
     });
 
     setParentPreferences({

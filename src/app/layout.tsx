@@ -4,6 +4,7 @@ import "./globals.css";
 import { PWARegister } from "@/components/PWARegister";
 import { AccessibilityProvider } from "@/components/AccessibilityProvider";
 import { AppShell } from "@/components/AppShell";
+import { AuthGuard } from "@/components/auth/AuthGuard";
 
 const outfit = Outfit({ subsets: ["latin"] });
 
@@ -68,9 +69,11 @@ export default function RootLayout({
 
                 <AccessibilityProvider>
                     <PWARegister />
-                    <AppShell>
-                        {children}
-                    </AppShell>
+                    <AuthGuard>
+                        <AppShell>
+                            {children}
+                        </AppShell>
+                    </AuthGuard>
                 </AccessibilityProvider>
             </body>
         </html>

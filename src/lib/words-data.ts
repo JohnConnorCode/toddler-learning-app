@@ -1,4 +1,4 @@
-export type WordCategory = "Animals" | "Food" | "Objects" | "Nature" | "Actions" | "Body" | "Places";
+export type WordCategory = "Animals" | "Food" | "Objects" | "Nature" | "Actions" | "Body" | "Places" | "Vehicles" | "Space" | "Technology" | "Dinosaurs" | "Reptiles";
 
 export type WordItem = {
     id: string;
@@ -951,6 +951,301 @@ export const WORDS_DATA: WordItem[] = [
         hint: "A place where you learn",
         difficulty: 3,
         image: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=400&h=400&fit=crop"
+    },
+
+    // ========== THEMED CATEGORIES ==========
+
+    // Vehicles
+    {
+        id: "400",
+        word: "CAR",
+        letters: ["C", "A", "R"],
+        category: "Vehicles",
+        sentence: "We drive in the car.",
+        hint: "A vehicle with four wheels",
+        difficulty: 1,
+        image: "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=400&h=400&fit=crop"
+    },
+    {
+        id: "401",
+        word: "VAN",
+        letters: ["V", "A", "N"],
+        category: "Vehicles",
+        sentence: "The van can carry lots of people.",
+        hint: "A big vehicle for families",
+        difficulty: 1,
+        relatedWords: ["CAN", "MAN", "RAN"],
+        image: "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=400&h=400&fit=crop"
+    },
+    {
+        id: "402",
+        word: "TAXI",
+        letters: ["T", "A", "X", "I"],
+        category: "Vehicles",
+        sentence: "The taxi takes us places.",
+        hint: "A yellow car that drives people around",
+        difficulty: 2,
+        image: "https://images.unsplash.com/photo-1565043666747-69f6646db940?w=400&h=400&fit=crop"
+    },
+    {
+        id: "403",
+        word: "TRAIN",
+        letters: ["T", "R", "A", "I", "N"],
+        category: "Vehicles",
+        sentence: "The train goes choo choo!",
+        hint: "It travels on tracks",
+        difficulty: 3,
+        relatedWords: ["RAIN", "BRAIN", "DRAIN"],
+        image: "https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=400&h=400&fit=crop"
+    },
+    {
+        id: "404",
+        word: "PLANE",
+        letters: ["P", "L", "A", "N", "E"],
+        category: "Vehicles",
+        sentence: "The plane flies high in the sky.",
+        hint: "It has wings and flies",
+        difficulty: 3,
+        image: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=400&h=400&fit=crop"
+    },
+    {
+        id: "405",
+        word: "WHEEL",
+        letters: ["W", "H", "E", "E", "L"],
+        category: "Vehicles",
+        sentence: "The wheel goes round and round.",
+        hint: "Round and helps vehicles move",
+        difficulty: 3,
+        image: "https://images.unsplash.com/photo-1621939514649-280e2ee25f60?w=400&h=400&fit=crop"
+    },
+
+    // Space
+    {
+        id: "420",
+        word: "SPACE",
+        letters: ["S", "P", "A", "C", "E"],
+        category: "Space",
+        sentence: "Rockets fly into space.",
+        hint: "Where the stars and planets are",
+        difficulty: 3,
+        image: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=400&h=400&fit=crop"
+    },
+    {
+        id: "421",
+        word: "EARTH",
+        letters: ["E", "A", "R", "T", "H"],
+        category: "Space",
+        sentence: "We live on planet Earth.",
+        hint: "Our home planet",
+        difficulty: 3,
+        image: "https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?w=400&h=400&fit=crop"
+    },
+    {
+        id: "422",
+        word: "ALIEN",
+        letters: ["A", "L", "I", "E", "N"],
+        category: "Space",
+        sentence: "Is there an alien on Mars?",
+        hint: "A being from another planet",
+        difficulty: 3,
+        image: "https://images.unsplash.com/photo-1599493758267-c6c884c7071f?w=400&h=400&fit=crop"
+    },
+    {
+        id: "423",
+        word: "ROCKET",
+        letters: ["R", "O", "C", "K", "E", "T"],
+        category: "Space",
+        sentence: "The rocket blasts off!",
+        hint: "It flies astronauts to space",
+        difficulty: 3,
+        image: "https://images.unsplash.com/photo-1518364538800-6bae3c2ea0f2?w=400&h=400&fit=crop"
+    },
+    {
+        id: "424",
+        word: "PLANET",
+        letters: ["P", "L", "A", "N", "E", "T"],
+        category: "Space",
+        sentence: "Mars is a red planet.",
+        hint: "A big ball in space, like Earth",
+        difficulty: 3,
+        image: "https://images.unsplash.com/photo-1614642264762-d0a3b8bf3700?w=400&h=400&fit=crop"
+    },
+
+    // Technology
+    {
+        id: "440",
+        word: "BOT",
+        letters: ["B", "O", "T"],
+        category: "Technology",
+        sentence: "The bot can help us.",
+        hint: "Short for robot",
+        difficulty: 1,
+        image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400&h=400&fit=crop"
+    },
+    {
+        id: "441",
+        word: "BEEP",
+        letters: ["B", "E", "E", "P"],
+        category: "Technology",
+        sentence: "The robot says beep!",
+        hint: "A sound machines make",
+        difficulty: 2,
+        image: "https://images.unsplash.com/photo-1546776310-eef45dd6d63c?w=400&h=400&fit=crop"
+    },
+    {
+        id: "442",
+        word: "GEAR",
+        letters: ["G", "E", "A", "R"],
+        category: "Technology",
+        sentence: "The gear turns around.",
+        hint: "A wheel with teeth that machines use",
+        difficulty: 2,
+        image: "https://images.unsplash.com/photo-1565043666747-69f6646db940?w=400&h=400&fit=crop"
+    },
+    {
+        id: "443",
+        word: "ROBOT",
+        letters: ["R", "O", "B", "O", "T"],
+        category: "Technology",
+        sentence: "The robot can dance!",
+        hint: "A machine that can move and help",
+        difficulty: 3,
+        image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400&h=400&fit=crop"
+    },
+    {
+        id: "444",
+        word: "POWER",
+        letters: ["P", "O", "W", "E", "R"],
+        category: "Technology",
+        sentence: "The robot needs power.",
+        hint: "Energy that makes things work",
+        difficulty: 3,
+        image: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=400&h=400&fit=crop"
+    },
+    {
+        id: "445",
+        word: "METAL",
+        letters: ["M", "E", "T", "A", "L"],
+        category: "Technology",
+        sentence: "Robots are made of metal.",
+        hint: "Shiny hard material",
+        difficulty: 3,
+        image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop"
+    },
+
+    // Dinosaurs
+    {
+        id: "460",
+        word: "DINO",
+        letters: ["D", "I", "N", "O"],
+        category: "Dinosaurs",
+        sentence: "The dino is big!",
+        hint: "Short for dinosaur",
+        difficulty: 2,
+        image: "https://images.unsplash.com/photo-1519709042477-8de6eaf1fdc5?w=400&h=400&fit=crop"
+    },
+    {
+        id: "461",
+        word: "BONE",
+        letters: ["B", "O", "N", "E"],
+        category: "Dinosaurs",
+        sentence: "We found a dinosaur bone!",
+        hint: "Hard white part inside animals",
+        difficulty: 2,
+        image: "https://images.unsplash.com/photo-1619448249478-4f4fd1d80cde?w=400&h=400&fit=crop"
+    },
+    {
+        id: "462",
+        word: "ROAR",
+        letters: ["R", "O", "A", "R"],
+        category: "Dinosaurs",
+        sentence: "The T-Rex says ROAR!",
+        hint: "A loud dinosaur sound",
+        difficulty: 2,
+        image: "https://images.unsplash.com/photo-1606567595334-d39972c85dfd?w=400&h=400&fit=crop"
+    },
+    {
+        id: "463",
+        word: "TAIL",
+        letters: ["T", "A", "I", "L"],
+        category: "Dinosaurs",
+        sentence: "The dinosaur wags its tail.",
+        hint: "On the back end of an animal",
+        difficulty: 2,
+        image: "https://images.unsplash.com/photo-1519709042477-8de6eaf1fdc5?w=400&h=400&fit=crop"
+    },
+    {
+        id: "464",
+        word: "CLAW",
+        letters: ["C", "L", "A", "W"],
+        category: "Dinosaurs",
+        sentence: "The dinosaur has sharp claws.",
+        hint: "Sharp nails on an animal's foot",
+        difficulty: 2,
+        image: "https://images.unsplash.com/photo-1619448249478-4f4fd1d80cde?w=400&h=400&fit=crop"
+    },
+    {
+        id: "465",
+        word: "FOSSIL",
+        letters: ["F", "O", "S", "S", "I", "L"],
+        category: "Dinosaurs",
+        sentence: "We found a fossil!",
+        hint: "Old bones preserved in rock",
+        difficulty: 3,
+        image: "https://images.unsplash.com/photo-1619448249478-4f4fd1d80cde?w=400&h=400&fit=crop"
+    },
+
+    // Reptiles
+    {
+        id: "480",
+        word: "SNAP",
+        letters: ["S", "N", "A", "P"],
+        category: "Reptiles",
+        sentence: "The crocodile can snap!",
+        hint: "A quick biting motion",
+        difficulty: 2,
+        image: "https://images.unsplash.com/photo-1571008840902-28b47f41b83f?w=400&h=400&fit=crop"
+    },
+    {
+        id: "481",
+        word: "COLD",
+        letters: ["C", "O", "L", "D"],
+        category: "Reptiles",
+        sentence: "Reptiles are cold-blooded.",
+        hint: "Not warm, lizards need sun to warm up",
+        difficulty: 2,
+        image: "https://images.unsplash.com/photo-1571008840902-28b47f41b83f?w=400&h=400&fit=crop"
+    },
+    {
+        id: "482",
+        word: "BASK",
+        letters: ["B", "A", "S", "K"],
+        category: "Reptiles",
+        sentence: "Lizards bask in the sun.",
+        hint: "To sit and enjoy the warmth",
+        difficulty: 2,
+        image: "https://images.unsplash.com/photo-1571008840902-28b47f41b83f?w=400&h=400&fit=crop"
+    },
+    {
+        id: "483",
+        word: "SCALE",
+        letters: ["S", "C", "A", "L", "E"],
+        category: "Reptiles",
+        sentence: "Snakes have smooth scales.",
+        hint: "Small flat pieces covering reptile skin",
+        difficulty: 3,
+        image: "https://images.unsplash.com/photo-1531386151447-fd76ad50012f?w=400&h=400&fit=crop"
+    },
+    {
+        id: "484",
+        word: "SHELL",
+        letters: ["S", "H", "E", "L", "L"],
+        category: "Reptiles",
+        sentence: "The turtle hides in its shell.",
+        hint: "Hard cover on a turtle's back",
+        difficulty: 3,
+        relatedWords: ["BELL", "WELL", "TELL", "SPELL"],
+        image: "https://images.unsplash.com/photo-1437622368342-7a3d73a34c8f?w=400&h=400&fit=crop"
     },
 ];
 

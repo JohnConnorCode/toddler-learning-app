@@ -4,11 +4,13 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { BookOpen, Star, Settings, Eye, Users, ClipboardCheck, Sparkles, BarChart3, Rocket, Map, Book, Trophy } from "lucide-react";
+import { BookOpen, Star, Settings, Eye, Users, ClipboardCheck, Sparkles, BarChart3, Rocket, Map, Book, Trophy, Pencil, Calculator, Edit3 } from "lucide-react";
 import { InstallButton } from "@/components/InstallButton";
 import { useLevelProgress } from "@/hooks/use-level-progress";
 import { useAccessibility, getMotionProps } from "@/hooks/use-accessibility";
 import { useOnboarding, useChildName } from "@/hooks/use-onboarding";
+import { useMascot } from "@/hooks/use-mascot";
+import { useTheme } from "@/hooks/use-theme";
 
 export default function Home() {
     const router = useRouter();
@@ -17,6 +19,8 @@ export default function Home() {
     const { isOnboardingComplete, childProfile } = useOnboarding();
     const childName = useChildName();
     const motionProps = getMotionProps(shouldReduceMotion);
+    const { mascot, greet } = useMascot();
+    const { theme, hasInterests } = useTheme();
 
     // Redirect first-time users to onboarding
     useEffect(() => {
@@ -53,14 +57,55 @@ export default function Home() {
                 <p className="text-lg sm:text-xl text-gray-500 font-medium">
                     {childProfile ? "Ready to learn today?" : "Let's play and learn!"}
                 </p>
+
+                {/* Mascot greeting - shown when user has completed onboarding */}
+                {childProfile && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                        className="mt-4 flex items-center justify-center gap-3"
+                    >
+                        <motion.span
+                            animate={shouldReduceMotion ? {} : {
+                                y: [0, -5, 0],
+                                rotate: [0, -5, 5, 0],
+                            }}
+                            transition={{
+                                duration: 2,
+                                repeat: Infinity,
+                                ease: "easeInOut",
+                            }}
+                            className="text-4xl"
+                        >
+                            {mascot.emoji}
+                        </motion.span>
+                        <div className="bg-white rounded-xl px-4 py-2 shadow-md">
+                            <p className="text-gray-700 font-medium text-sm">
+                                "{greet()}" — {mascot.name}
+                            </p>
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* Avatar - Clickable to edit profile */}
                 {childProfile?.avatarEmoji && (
                     <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        transition={{ type: "spring", stiffness: 300 }}
-                        className="mt-2 text-4xl"
+                        transition={{ type: "spring", stiffness: 300, delay: 0.4 }}
+                        className="mt-3"
                     >
-                        {childProfile.avatarEmoji}
+                        <Link
+                            href="/settings"
+                            className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all group"
+                            title="Edit Profile"
+                        >
+                            <span className="text-3xl group-hover:scale-110 transition-transform">
+                                {childProfile.avatarEmoji}
+                            </span>
+                            <Edit3 className="w-4 h-4 text-gray-400 group-hover:text-purple-500 transition-colors" />
+                        </Link>
                     </motion.div>
                 )}
             </motion.div>
@@ -255,6 +300,36 @@ export default function Home() {
                         </div>
                         <span className="text-2xl sm:text-3xl font-black text-gray-800 group-hover:text-orange-600 transition-colors">Story Books</span>
                         <span className="text-sm sm:text-base text-gray-400 mt-1 sm:mt-2 font-medium">Read & learn</span>
+                    </motion.div>
+                </Link>
+
+                <Link href="/math" className="group" aria-label="Fun Math - Learn counting, addition, and subtraction">
+                    <motion.div
+                        whileHover={shouldReduceMotion ? {} : { scale: 1.03, rotate: 2 }}
+                        whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
+                        className="bg-white rounded-2xl sm:rounded-[2rem] md:rounded-[2.5rem] p-6 sm:p-8 flex flex-col items-center justify-center shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] border-b-4 sm:border-b-6 md:border-b-8 border-gray-100 group-hover:border-teal-400/30 transition-all h-52 sm:h-60 md:h-64 relative overflow-hidden"
+                    >
+                        <div className="absolute inset-0 bg-gradient-to-br from-teal-50 to-transparent opacity-50" aria-hidden="true" />
+                        <div className="bg-teal-100 p-4 sm:p-5 md:p-6 rounded-full mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+                            <Calculator className="w-10 h-10 sm:w-12 sm:h-12 text-teal-500" aria-hidden="true" />
+                        </div>
+                        <span className="text-2xl sm:text-3xl font-black text-gray-800 group-hover:text-teal-600 transition-colors">Fun Math</span>
+                        <span className="text-sm sm:text-base text-gray-400 mt-1 sm:mt-2 font-medium">Count, add & subtract</span>
+                    </motion.div>
+                </Link>
+
+                <Link href="/practice" className="group" aria-label="Skills Practice - Trace letters, blend sounds, and more">
+                    <motion.div
+                        whileHover={shouldReduceMotion ? {} : { scale: 1.03, rotate: -2 }}
+                        whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
+                        className="bg-white rounded-2xl sm:rounded-[2rem] md:rounded-[2.5rem] p-6 sm:p-8 flex flex-col items-center justify-center shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] border-b-4 sm:border-b-6 md:border-b-8 border-gray-100 group-hover:border-indigo-400/30 transition-all h-52 sm:h-60 md:h-64 relative overflow-hidden"
+                    >
+                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 to-transparent opacity-50" aria-hidden="true" />
+                        <div className="bg-indigo-100 p-4 sm:p-5 md:p-6 rounded-full mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+                            <Pencil className="w-10 h-10 sm:w-12 sm:h-12 text-indigo-500" aria-hidden="true" />
+                        </div>
+                        <span className="text-2xl sm:text-3xl font-black text-gray-800 group-hover:text-indigo-600 transition-colors">Skills Practice</span>
+                        <span className="text-sm sm:text-base text-gray-400 mt-1 sm:mt-2 font-medium">Trace, blend & more</span>
                     </motion.div>
                 </Link>
             </nav>

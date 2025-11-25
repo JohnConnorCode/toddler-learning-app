@@ -80,6 +80,7 @@ export interface WeeklyReport {
 
 // Avatar options (emoji)
 export const AVATAR_OPTIONS = [
+  // Classic animals
   "🦁", // Lion
   "🐼", // Panda
   "🦊", // Fox
@@ -96,6 +97,23 @@ export const AVATAR_OPTIONS = [
   "🦋", // Butterfly
   "🐝", // Bee
   "🦆", // Duck
+  // Robots & Tech
+  "🤖", // Robot
+  "🦾", // Robot Arm
+  // Dinosaurs
+  "🦕", // Brontosaurus
+  "🦖", // T-Rex
+  // Lizards & Reptiles
+  "🦎", // Lizard
+  "🐊", // Crocodile
+  "🐢", // Turtle
+  // Vehicles
+  "🚗", // Car
+  "🏎️", // Race Car
+  // Space
+  "🚀", // Rocket
+  "🛸", // UFO
+  "👽", // Alien
 ];
 
 // Theme presets

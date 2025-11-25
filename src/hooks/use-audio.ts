@@ -386,3 +386,135 @@ export function useVolumeControl() {
     toggleMute,
   };
 }
+
+/**
+ * Text-to-speech hook for narration
+ * Uses browser's built-in speechSynthesis API
+ */
+export function useSpeech() {
+  const { volume, isMuted } = useAudioSettings();
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const isUnmounted = useRef(false);
+
+  useEffect(() => {
+    isUnmounted.current = false;
+    return () => {
+      isUnmounted.current = true;
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  /**
+   * Speak text using TTS
+   */
+  const speak = useCallback(
+    (
+      text: string,
+      options?: {
+        rate?: number;
+        pitch?: number;
+        onEnd?: () => void;
+        onWord?: (wordIndex: number) => void;
+      }
+    ): Promise<boolean> => {
+      return new Promise((resolve) => {
+        if (typeof window === "undefined" || !window.speechSynthesis) {
+          options?.onEnd?.();
+          resolve(false);
+          return;
+        }
+
+        if (isMuted) {
+          options?.onEnd?.();
+          resolve(false);
+          return;
+        }
+
+        // Cancel any ongoing speech
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.volume = volume;
+        utterance.rate = options?.rate ?? 0.8; // Slower for toddlers
+        utterance.pitch = options?.pitch ?? 1.1; // Slightly higher pitch
+
+        // Track word boundaries
+        let wordIndex = 0;
+        utterance.onboundary = (event) => {
+          if (event.name === "word" && !isUnmounted.current) {
+            options?.onWord?.(wordIndex);
+            wordIndex++;
+          }
+        };
+
+        utterance.onend = () => {
+          if (!isUnmounted.current) {
+            options?.onEnd?.();
+          }
+          resolve(true);
+        };
+
+        utterance.onerror = () => {
+          if (!isUnmounted.current) {
+            options?.onEnd?.();
+          }
+          resolve(false);
+        };
+
+        utteranceRef.current = utterance;
+        window.speechSynthesis.speak(utterance);
+      });
+    },
+    [volume, isMuted]
+  );
+
+  /**
+   * Speak words one at a time with callbacks
+   */
+  const speakWords = useCallback(
+    async (
+      words: string[],
+      onWordStart?: (index: number) => void,
+      onComplete?: () => void,
+      delayMs: number = 100
+    ): Promise<void> => {
+      for (let i = 0; i < words.length; i++) {
+        if (isUnmounted.current) break;
+
+        onWordStart?.(i);
+        await speak(words[i], { rate: 0.75 });
+
+        // Small delay between words
+        if (i < words.length - 1 && delayMs > 0) {
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
+        }
+      }
+      onComplete?.();
+    },
+    [speak]
+  );
+
+  /**
+   * Stop speech
+   */
+  const stop = useCallback(() => {
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+  }, []);
+
+  /**
+   * Check if speech synthesis is supported
+   */
+  const isSupported =
+    typeof window !== "undefined" && "speechSynthesis" in window;
+
+  return {
+    speak,
+    speakWords,
+    stop,
+    isSupported,
+  };
+}
