@@ -1,16 +1,23 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
 import { PWARegister } from "@/components/PWARegister";
+import { AccessibilityProvider } from "@/components/AccessibilityProvider";
 
 const outfit = Outfit({ subsets: ["latin"] });
 
+export const viewport: Viewport = {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5, // Allow zoom for accessibility
+    userScalable: true,
+    themeColor: "#FFB800",
+};
+
 export const metadata: Metadata = {
     title: "Little Learner - Toddler Learning App",
-    description: "Interactive phonics and word learning app for toddlers ages 2-5",
-    viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0", // Prevent zoom on mobile
+    description: "Interactive phonics and word learning app for toddlers ages 2-5. Designed for children ages 2-5 with accessibility features for all learners.",
     manifest: "/manifest.json",
-    themeColor: "#FFB800",
     appleWebApp: {
         capable: true,
         statusBarStyle: "default",
@@ -26,6 +33,9 @@ export const metadata: Metadata = {
             { url: "/icons/icon-180x180.png", sizes: "180x180", type: "image/png" },
         ],
     },
+    other: {
+        "mobile-web-app-capable": "yes",
+    },
 };
 
 export default function RootLayout({
@@ -36,8 +46,29 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body className={outfit.className}>
-                <PWARegister />
-                {children}
+                {/* Skip link for keyboard navigation */}
+                <a href="#main-content" className="skip-link">
+                    Skip to main content
+                </a>
+
+                {/* Screen reader announcements */}
+                <div
+                    id="aria-live-polite"
+                    aria-live="polite"
+                    aria-atomic="true"
+                    className="sr-only"
+                />
+                <div
+                    id="aria-live-assertive"
+                    aria-live="assertive"
+                    aria-atomic="true"
+                    className="sr-only"
+                />
+
+                <AccessibilityProvider>
+                    <PWARegister />
+                    {children}
+                </AccessibilityProvider>
             </body>
         </html>
     );

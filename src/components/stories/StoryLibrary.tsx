@@ -43,7 +43,9 @@ export function StoryLibrary() {
 
     // Apply main filter
     if (filter === "unlocked") {
-      stories = getUnlockedStories(currentLevel || 1);
+      // Convert level ID like "level-1" to number
+      const levelNumber = currentLevel ? parseInt(currentLevel.replace("level-", ""), 10) : 1;
+      stories = getUnlockedStories(levelNumber);
     } else if (filter === "favorites") {
       stories = stories.filter((s) => favorites.includes(s.id));
     } else if (filter === "completed") {
@@ -66,7 +68,9 @@ export function StoryLibrary() {
 
   const isStoryUnlocked = (story: Story): boolean => {
     if (!story.unlockLevel) return true;
-    return (currentLevel || 0) >= story.unlockLevel;
+    // Convert level ID like "level-1" to number for comparison
+    const levelNumber = currentLevel ? parseInt(currentLevel.replace("level-", ""), 10) : 0;
+    return levelNumber >= story.unlockLevel;
   };
 
   if (selectedStory) {
