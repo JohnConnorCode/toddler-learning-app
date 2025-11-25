@@ -1,22 +1,28 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { ArrowLeft, Calculator, Lock, Star, Check, Play } from "lucide-react";
+import { ArrowLeft, Calculator, Lock, Star, Check, Play, Unlock, Zap } from "lucide-react";
 import { useAccessibility } from "@/hooks/use-accessibility";
 import { getMathUnits, type MathUnit, type MathLesson } from "@/lib/math-data";
 import { useSubjectProgress } from "@/lib/framework";
 
 export default function MathPage() {
   const { shouldReduceMotion } = useAccessibility();
-  const units = getMathUnits();
+  // Memoize units to prevent new array on every render
+  const units = useMemo(() => getMathUnits(), []);
   const { isLessonCompleted, isUnitUnlocked, unlockUnit } = useSubjectProgress("math");
   const [expandedUnit, setExpandedUnit] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [showUnlockConfirm, setShowUnlockConfirm] = useState<string | null>(null);
+  const hasInitialized = useRef(false);
 
-  // Unlock first unit and set ready state in useEffect (not during render)
+  // Unlock first unit and set ready state - run only once
   useEffect(() => {
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+
     if (units[0]) {
       if (!isUnitUnlocked(units[0].id)) {
         unlockUnit(units[0].id);
@@ -24,7 +30,30 @@ export default function MathPage() {
       setExpandedUnit(units[0].id);
     }
     setIsReady(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Unlock all units
+  const handleUnlockAll = useCallback(() => {
+    units.forEach((unit) => {
+      if (!isUnitUnlocked(unit.id)) {
+        unlockUnit(unit.id);
+      }
+    });
   }, [units, isUnitUnlocked, unlockUnit]);
+
+  // Unlock a specific unit
+  const handleUnlockUnit = useCallback((unitId: string) => {
+    unlockUnit(unitId);
+    setShowUnlockConfirm(null);
+    setExpandedUnit(unitId);
+  }, [unlockUnit]);
+
+  // Check if all units are already unlocked
+  const allUnitsUnlocked = useMemo(() =>
+    units.every((unit) => isUnitUnlocked(unit.id)),
+    [units, isUnitUnlocked]
+  );
 
   // Show loading while initializing
   if (!isReady) {
@@ -80,7 +109,7 @@ export default function MathPage() {
             <div className="bg-white/20 p-4 rounded-2xl">
               <Calculator className="w-10 h-10" />
             </div>
-            <div>
+            <div className="flex-1">
               <h2 className="text-xl font-black mb-1">Learn Math!</h2>
               <p className="text-white/90">
                 Master numbers, counting, addition, and subtraction with fun
@@ -88,18 +117,31 @@ export default function MathPage() {
               </p>
             </div>
           </div>
+          {/* Skip Ahead Button */}
+          {!allUnitsUnlocked && (
+            <motion.button
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              onClick={handleUnlockAll}
+              className="mt-4 w-full py-3 bg-white/20 hover:bg-white/30 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors"
+            >
+              <Zap className="w-5 h-5" />
+              Skip Ahead - Unlock All Levels
+            </motion.button>
+          )}
         </motion.div>
 
         {/* Units */}
         <div className="space-y-4">
           {units.map((unit, index) => {
-            const isUnlocked = !unit.prerequisites?.length ||
-              unit.prerequisites.every((p) => isUnitUnlocked(p));
+            const isUnlocked = isUnitUnlocked(unit.id);
             const completedLessons = unit.lessons.filter((l) =>
               isLessonCompleted(l.id)
             ).length;
             const isComplete = completedLessons === unit.lessons.length;
             const isExpanded = expandedUnit === unit.id;
+            const isShowingUnlock = showUnlockConfirm === unit.id;
 
             return (
               <motion.div
@@ -110,13 +152,19 @@ export default function MathPage() {
               >
                 {/* Unit Header */}
                 <motion.button
-                  onClick={() => isUnlocked && setExpandedUnit(isExpanded ? null : unit.id)}
-                  disabled={!isUnlocked}
+                  onClick={() => {
+                    if (isUnlocked) {
+                      setExpandedUnit(isExpanded ? null : unit.id);
+                    } else {
+                      // Show unlock confirmation for locked units
+                      setShowUnlockConfirm(isShowingUnlock ? null : unit.id);
+                    }
+                  }}
                   className={`
                     w-full p-4 rounded-2xl flex items-center gap-4 transition-all
                     ${isUnlocked
                       ? "bg-white shadow-lg hover:shadow-xl cursor-pointer"
-                      : "bg-gray-100 cursor-not-allowed opacity-60"
+                      : "bg-gray-100 hover:bg-gray-200 cursor-pointer opacity-80"
                     }
                   `}
                 >
@@ -169,26 +217,61 @@ export default function MathPage() {
                   )}
                 </motion.button>
 
+                {/* Unlock confirmation for locked units */}
+                <AnimatePresence>
+                  {isShowingUnlock && !isUnlocked && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mt-2 overflow-hidden"
+                    >
+                      <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4">
+                        <p className="text-amber-800 text-sm mb-3">
+                          This level is locked. Would you like to skip ahead?
+                        </p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleUnlockUnit(unit.id)}
+                            className="flex-1 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
+                          >
+                            <Unlock className="w-4 h-4" />
+                            Unlock This Level
+                          </button>
+                          <button
+                            onClick={() => setShowUnlockConfirm(null)}
+                            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-semibold transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 {/* Lessons */}
-                {isExpanded && isUnlocked && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="mt-2 ml-4 space-y-2"
-                  >
-                    {unit.lessons.map((lesson, lessonIndex) => (
-                      <LessonCard
-                        key={lesson.id}
-                        lesson={lesson}
-                        unit={unit}
-                        index={lessonIndex}
-                        isCompleted={isLessonCompleted(lesson.id)}
-                        shouldReduceMotion={shouldReduceMotion}
-                      />
-                    ))}
-                  </motion.div>
-                )}
+                <AnimatePresence>
+                  {isExpanded && isUnlocked && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mt-2 ml-4 space-y-2"
+                    >
+                      {unit.lessons.map((lesson, lessonIndex) => (
+                        <LessonCard
+                          key={lesson.id}
+                          lesson={lesson}
+                          unit={unit}
+                          index={lessonIndex}
+                          isCompleted={isLessonCompleted(lesson.id)}
+                          shouldReduceMotion={shouldReduceMotion}
+                        />
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
             );
           })}

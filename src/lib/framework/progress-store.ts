@@ -7,6 +7,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { useCallback, useMemo, useEffect } from 'react';
 import type {
   SubjectId,
   ItemProgress,
@@ -490,27 +491,76 @@ export const useProgressStore = create<ProgressState>()(
 
 /**
  * Hook for subject-specific progress
+ * Returns stable function references that won't change between renders
  */
 export function useSubjectProgress(subjectId: SubjectId) {
   const store = useProgressStore();
 
-  // Initialize subject on first use
-  if (!store.subjects[subjectId]) {
-    store.initializeSubject(subjectId);
-  }
+  // Initialize subject on mount
+  useEffect(() => {
+    if (!store.subjects[subjectId]) {
+      store.initializeSubject(subjectId);
+    }
+  }, [subjectId, store]);
+
+  // Return stable function references
+  const recordAttempt = useCallback(
+    (itemId: string, isCorrect: boolean) =>
+      store.recordItemAttempt(subjectId, itemId, isCorrect),
+    [store, subjectId]
+  );
+
+  const getItemMastery = useCallback(
+    (itemId: string) => store.getItemMastery(subjectId, itemId),
+    [store, subjectId]
+  );
+
+  const isItemCompleted = useCallback(
+    (itemId: string) => store.isItemCompleted(subjectId, itemId),
+    [store, subjectId]
+  );
+
+  const completeLesson = useCallback(
+    (lessonId: string, score: number, unitId?: string) =>
+      store.completeLesson(subjectId, lessonId, score, unitId),
+    [store, subjectId]
+  );
+
+  const isLessonCompleted = useCallback(
+    (lessonId: string) => store.isLessonCompleted(subjectId, lessonId),
+    [store, subjectId]
+  );
+
+  const unlockUnit = useCallback(
+    (unitId: string) => store.unlockUnit(subjectId, unitId),
+    [store, subjectId]
+  );
+
+  const isUnitUnlocked = useCallback(
+    (unitId: string) => store.isUnitUnlocked(subjectId, unitId),
+    [store, subjectId]
+  );
+
+  const reset = useCallback(
+    () => store.resetSubjectProgress(subjectId),
+    [store, subjectId]
+  );
+
+  const progress = useMemo(
+    () => store.getSubjectProgress(subjectId),
+    [store, subjectId]
+  );
 
   return {
-    progress: store.getSubjectProgress(subjectId),
-    recordAttempt: (itemId: string, isCorrect: boolean) =>
-      store.recordItemAttempt(subjectId, itemId, isCorrect),
-    getItemMastery: (itemId: string) => store.getItemMastery(subjectId, itemId),
-    isItemCompleted: (itemId: string) => store.isItemCompleted(subjectId, itemId),
-    completeLesson: (lessonId: string, score: number, unitId?: string) =>
-      store.completeLesson(subjectId, lessonId, score, unitId),
-    isLessonCompleted: (lessonId: string) => store.isLessonCompleted(subjectId, lessonId),
-    unlockUnit: (unitId: string) => store.unlockUnit(subjectId, unitId),
-    isUnitUnlocked: (unitId: string) => store.isUnitUnlocked(subjectId, unitId),
-    reset: () => store.resetSubjectProgress(subjectId),
+    progress,
+    recordAttempt,
+    getItemMastery,
+    isItemCompleted,
+    completeLesson,
+    isLessonCompleted,
+    unlockUnit,
+    isUnitUnlocked,
+    reset,
   };
 }
 

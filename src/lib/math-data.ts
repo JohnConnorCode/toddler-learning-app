@@ -61,7 +61,7 @@ export function getEmojiForProblem(problemId: string, theme?: EmojiTheme): strin
 
 export type MathDifficulty = 1 | 2 | 3 | 4 | 5;
 
-export type OperationType = "addition" | "subtraction" | "mixed";
+export type OperationType = "addition" | "subtraction" | "mixed" | "comparison" | "pattern" | "missing-number";
 
 // New problem styles for enhanced activities
 export type ProblemStyle =
@@ -69,7 +69,11 @@ export type ProblemStyle =
   | "counting"        // Count the objects
   | "skip-counting"   // 2, 4, 6, ?, 10
   | "number-bond"     // Part-part-whole
-  | "word-problem";   // Story-based context
+  | "word-problem"    // Story-based context
+  | "comparison"      // 5 > 3, which is bigger?
+  | "pattern"         // 1, 2, 3, ?, 5
+  | "missing-number"  // 3 + ? = 7
+  | "ten-frame";      // Visual ten frame counting
 
 // Number bond data for composition problems
 export interface NumberBondData {
@@ -94,6 +98,27 @@ export interface WordProblemContext {
   action: "join" | "separate" | "compare";
 }
 
+// Comparison problem data
+export interface ComparisonData {
+  left: number;
+  right: number;
+  correctOperator: ">" | "<" | "=";
+}
+
+// Pattern problem data
+export interface PatternData {
+  sequence: number[];
+  missingIndex: number;
+  rule: string; // e.g., "+1", "+2", "*2"
+}
+
+// Missing number problem data
+export interface MissingNumberData {
+  equation: string; // e.g., "3 + ? = 7"
+  missingValue: number;
+  position: "left" | "right" | "result";
+}
+
 export interface NumberItem {
   id: string;
   number: number;
@@ -108,7 +133,7 @@ export interface MathProblem {
   id: string;
   type: OperationType;
   operands: number[];
-  operator: "+" | "-";
+  operator: "+" | "-" | ">" | "<" | "=";
   answer: number;
   difficulty: MathDifficulty;
   hint?: string;
@@ -118,13 +143,16 @@ export interface MathProblem {
   numberBond?: NumberBondData;
   skipCount?: SkipCountData;
   wordProblem?: WordProblemContext;
+  comparison?: ComparisonData;
+  pattern?: PatternData;
+  missingNumber?: MissingNumberData;
 }
 
 export interface MathLesson {
   id: string;
   title: string;
   description: string;
-  type: "counting" | "number-recognition" | "addition" | "subtraction" | "mixed" | "skip-counting" | "number-bonds" | "word-problems";
+  type: "counting" | "number-recognition" | "addition" | "subtraction" | "mixed" | "skip-counting" | "number-bonds" | "word-problems" | "comparison" | "patterns" | "missing-numbers" | "ten-frames";
   difficulty: MathDifficulty;
   problems: MathProblem[];
   objectives: string[];
@@ -269,6 +297,193 @@ function generateSubtractionProblems(
   return problems;
 }
 
+/**
+ * Generate comparison problems (greater than, less than, equal)
+ */
+function generateComparisonProblems(
+  maxNumber: number,
+  count: number,
+  difficulty: MathDifficulty
+): MathProblem[] {
+  const problems: MathProblem[] = [];
+  const usedCombos = new Set<string>();
+
+  while (problems.length < count) {
+    const left = Math.floor(Math.random() * maxNumber) + 1;
+    const right = Math.floor(Math.random() * maxNumber) + 1;
+
+    const combo = `${left}-${right}`;
+    if (usedCombos.has(combo)) continue;
+    usedCombos.add(combo);
+
+    let correctOperator: ">" | "<" | "=";
+    let answer: number;
+
+    if (left > right) {
+      correctOperator = ">";
+      answer = 1; // 1 = greater than
+    } else if (left < right) {
+      correctOperator = "<";
+      answer = -1; // -1 = less than
+    } else {
+      correctOperator = "=";
+      answer = 0; // 0 = equal
+    }
+
+    problems.push({
+      id: `cmp-${difficulty}-${problems.length}`,
+      type: "comparison",
+      operands: [left, right],
+      operator: correctOperator,
+      answer,
+      difficulty,
+      problemStyle: "comparison",
+      comparison: { left, right, correctOperator },
+      hint: `Count ${left} and ${right}. Which is bigger?`,
+    });
+  }
+
+  return problems;
+}
+
+/**
+ * Generate pattern problems (find the missing number in a sequence)
+ */
+function generatePatternProblems(
+  maxNumber: number,
+  count: number,
+  difficulty: MathDifficulty
+): MathProblem[] {
+  const problems: MathProblem[] = [];
+  const rules = ["+1", "+2", "+3", "-1", "-2"];
+
+  for (let i = 0; i < count; i++) {
+    const rule = rules[i % rules.length];
+    const increment = parseInt(rule);
+
+    // Generate starting number based on rule direction
+    let start: number;
+    if (increment > 0) {
+      start = Math.floor(Math.random() * (maxNumber - 15)) + 1;
+    } else {
+      start = Math.floor(Math.random() * (maxNumber - 10)) + 10;
+    }
+
+    // Generate sequence of 5 numbers
+    const sequence: number[] = [];
+    let current = start;
+    for (let j = 0; j < 5; j++) {
+      sequence.push(current);
+      current += increment;
+      if (current < 0 || current > maxNumber) break;
+    }
+
+    if (sequence.length < 5) continue;
+
+    // Pick a random position (not first or last) to be missing
+    const missingIndex = Math.floor(Math.random() * 3) + 1; // 1, 2, or 3
+    const answer = sequence[missingIndex];
+
+    problems.push({
+      id: `pat-${difficulty}-${problems.length}`,
+      type: "pattern",
+      operands: sequence,
+      operator: increment > 0 ? "+" : "-",
+      answer,
+      difficulty,
+      problemStyle: "pattern",
+      pattern: { sequence, missingIndex, rule },
+      hint: `Look at the pattern. Each number goes ${rule}`,
+    });
+  }
+
+  return problems;
+}
+
+/**
+ * Generate missing number problems (3 + ? = 7)
+ */
+function generateMissingNumberProblems(
+  maxSum: number,
+  count: number,
+  difficulty: MathDifficulty
+): MathProblem[] {
+  const problems: MathProblem[] = [];
+  const usedCombos = new Set<string>();
+
+  while (problems.length < count) {
+    const total = Math.floor(Math.random() * (maxSum - 2)) + 3;
+    const known = Math.floor(Math.random() * (total - 1)) + 1;
+    const missing = total - known;
+
+    const combo = `${known}-${missing}`;
+    if (usedCombos.has(combo)) continue;
+    usedCombos.add(combo);
+
+    // Randomly choose position for the missing number
+    const positions: ("left" | "right")[] = ["left", "right"];
+    const position = positions[Math.floor(Math.random() * positions.length)];
+
+    let equation: string;
+    let operands: number[];
+
+    if (position === "left") {
+      equation = `? + ${known} = ${total}`;
+      operands = [missing, known];
+    } else {
+      equation = `${known} + ? = ${total}`;
+      operands = [known, missing];
+    }
+
+    problems.push({
+      id: `miss-${difficulty}-${problems.length}`,
+      type: "missing-number",
+      operands: [known, total],
+      operator: "+",
+      answer: missing,
+      difficulty,
+      problemStyle: "missing-number",
+      missingNumber: { equation, missingValue: missing, position },
+      hint: `Think: What plus ${known} equals ${total}?`,
+    });
+  }
+
+  return problems;
+}
+
+/**
+ * Generate ten-frame counting problems
+ */
+function generateTenFrameProblems(
+  maxNumber: number,
+  count: number,
+  difficulty: MathDifficulty
+): MathProblem[] {
+  const problems: MathProblem[] = [];
+  const usedNumbers = new Set<number>();
+
+  while (problems.length < count) {
+    const num = Math.floor(Math.random() * Math.min(maxNumber, 20)) + 1;
+
+    if (usedNumbers.has(num)) continue;
+    usedNumbers.add(num);
+
+    problems.push({
+      id: `tf-${difficulty}-${problems.length}`,
+      type: "addition",
+      operands: [num],
+      operator: "+",
+      answer: num,
+      difficulty,
+      problemStyle: "ten-frame",
+      visualHint: "tenframe",
+      hint: `Count the filled circles in the ten frame!`,
+    });
+  }
+
+  return problems;
+}
+
 // ============================================
 // MATH UNITS & LESSONS
 // ============================================
@@ -292,13 +507,25 @@ export const MATH_UNITS: MathUnit[] = [
         type: "counting",
         difficulty: 1,
         objectives: ["Count objects up to 5", "Recognize numbers 1-5"],
-        estimatedMinutes: 5,
+        estimatedMinutes: 7,
         problems: [
-          { id: "count-1", type: "addition", operands: [1], operator: "+", answer: 1, difficulty: 1, hint: "Count: one!" },
-          { id: "count-2", type: "addition", operands: [2], operator: "+", answer: 2, difficulty: 1, hint: "Count: one, two!" },
-          { id: "count-3", type: "addition", operands: [3], operator: "+", answer: 3, difficulty: 1, hint: "Count: one, two, three!" },
-          { id: "count-4", type: "addition", operands: [4], operator: "+", answer: 4, difficulty: 1, hint: "Count: one, two, three, four!" },
-          { id: "count-5", type: "addition", operands: [5], operator: "+", answer: 5, difficulty: 1, hint: "Count: one, two, three, four, five!" },
+          { id: "count-1", type: "addition", operands: [1], operator: "+", answer: 1, difficulty: 1, hint: "Count: one!", visualHint: "fingers" },
+          { id: "count-2", type: "addition", operands: [2], operator: "+", answer: 2, difficulty: 1, hint: "Count: one, two!", visualHint: "fingers" },
+          { id: "count-3", type: "addition", operands: [3], operator: "+", answer: 3, difficulty: 1, hint: "Count: one, two, three!", visualHint: "fingers" },
+          { id: "count-4", type: "addition", operands: [4], operator: "+", answer: 4, difficulty: 1, hint: "Count: one, two, three, four!", visualHint: "fingers" },
+          { id: "count-5", type: "addition", operands: [5], operator: "+", answer: 5, difficulty: 1, hint: "Count: one, two, three, four, five!", visualHint: "fingers" },
+          // Ten frame practice
+          { id: "count-tf-1", type: "addition", operands: [2], operator: "+", answer: 2, difficulty: 1, problemStyle: "ten-frame", visualHint: "tenframe", hint: "Count the dots!" },
+          { id: "count-tf-2", type: "addition", operands: [4], operator: "+", answer: 4, difficulty: 1, problemStyle: "ten-frame", visualHint: "tenframe", hint: "Count the dots!" },
+          { id: "count-tf-3", type: "addition", operands: [5], operator: "+", answer: 5, difficulty: 1, problemStyle: "ten-frame", visualHint: "tenframe", hint: "Count the dots!" },
+          // Mixed counting review
+          { id: "count-r1", type: "addition", operands: [3], operator: "+", answer: 3, difficulty: 1, visualHint: "objects" },
+          { id: "count-r2", type: "addition", operands: [1], operator: "+", answer: 1, difficulty: 1, visualHint: "objects" },
+          { id: "count-r3", type: "addition", operands: [4], operator: "+", answer: 4, difficulty: 1, visualHint: "objects" },
+          { id: "count-r4", type: "addition", operands: [2], operator: "+", answer: 2, difficulty: 1, visualHint: "objects" },
+          { id: "count-r5", type: "addition", operands: [5], operator: "+", answer: 5, difficulty: 1, visualHint: "objects" },
+          { id: "count-r6", type: "addition", operands: [3], operator: "+", answer: 3, difficulty: 1, visualHint: "fingers" },
+          { id: "count-r7", type: "addition", operands: [4], operator: "+", answer: 4, difficulty: 1, visualHint: "tenframe" },
         ],
       },
       {
@@ -308,7 +535,7 @@ export const MATH_UNITS: MathUnit[] = [
         type: "addition",
         difficulty: 1,
         objectives: ["Add two numbers with sum up to 5", "Use fingers to count"],
-        estimatedMinutes: 5,
+        estimatedMinutes: 8,
         problems: [
           { id: "add5-1", type: "addition", operands: [1, 1], operator: "+", answer: 2, difficulty: 1, visualHint: "fingers" },
           { id: "add5-2", type: "addition", operands: [1, 2], operator: "+", answer: 3, difficulty: 1, visualHint: "fingers" },
@@ -318,6 +545,15 @@ export const MATH_UNITS: MathUnit[] = [
           { id: "add5-6", type: "addition", operands: [3, 1], operator: "+", answer: 4, difficulty: 1, visualHint: "fingers" },
           { id: "add5-7", type: "addition", operands: [0, 5], operator: "+", answer: 5, difficulty: 1, visualHint: "fingers" },
           { id: "add5-8", type: "addition", operands: [4, 1], operator: "+", answer: 5, difficulty: 1, visualHint: "fingers" },
+          // Additional problems with objects
+          { id: "add5-9", type: "addition", operands: [0, 3], operator: "+", answer: 3, difficulty: 1, visualHint: "objects" },
+          { id: "add5-10", type: "addition", operands: [1, 3], operator: "+", answer: 4, difficulty: 1, visualHint: "objects" },
+          { id: "add5-11", type: "addition", operands: [0, 4], operator: "+", answer: 4, difficulty: 1, visualHint: "objects" },
+          { id: "add5-12", type: "addition", operands: [3, 2], operator: "+", answer: 5, difficulty: 1, visualHint: "objects" },
+          // Review with mixed visuals
+          { id: "add5-13", type: "addition", operands: [2, 1], operator: "+", answer: 3, difficulty: 1, visualHint: "fingers" },
+          { id: "add5-14", type: "addition", operands: [0, 2], operator: "+", answer: 2, difficulty: 1, visualHint: "objects" },
+          { id: "add5-15", type: "addition", operands: [1, 1], operator: "+", answer: 2, difficulty: 1, visualHint: "tenframe" },
         ],
       },
       {
@@ -327,7 +563,7 @@ export const MATH_UNITS: MathUnit[] = [
         type: "subtraction",
         difficulty: 1,
         objectives: ["Subtract from numbers up to 5", "Understand taking away"],
-        estimatedMinutes: 5,
+        estimatedMinutes: 8,
         problems: [
           { id: "sub5-1", type: "subtraction", operands: [2, 1], operator: "-", answer: 1, difficulty: 1, visualHint: "fingers" },
           { id: "sub5-2", type: "subtraction", operands: [3, 1], operator: "-", answer: 2, difficulty: 1, visualHint: "fingers" },
@@ -337,6 +573,38 @@ export const MATH_UNITS: MathUnit[] = [
           { id: "sub5-6", type: "subtraction", operands: [5, 1], operator: "-", answer: 4, difficulty: 1, visualHint: "fingers" },
           { id: "sub5-7", type: "subtraction", operands: [5, 2], operator: "-", answer: 3, difficulty: 1, visualHint: "fingers" },
           { id: "sub5-8", type: "subtraction", operands: [5, 3], operator: "-", answer: 2, difficulty: 1, visualHint: "fingers" },
+          // Additional problems
+          { id: "sub5-9", type: "subtraction", operands: [5, 4], operator: "-", answer: 1, difficulty: 1, visualHint: "objects" },
+          { id: "sub5-10", type: "subtraction", operands: [4, 3], operator: "-", answer: 1, difficulty: 1, visualHint: "objects" },
+          { id: "sub5-11", type: "subtraction", operands: [5, 5], operator: "-", answer: 0, difficulty: 1, visualHint: "fingers" },
+          { id: "sub5-12", type: "subtraction", operands: [3, 0], operator: "-", answer: 3, difficulty: 1, visualHint: "fingers" },
+          { id: "sub5-13", type: "subtraction", operands: [4, 4], operator: "-", answer: 0, difficulty: 1, visualHint: "objects" },
+          { id: "sub5-14", type: "subtraction", operands: [2, 2], operator: "-", answer: 0, difficulty: 1, visualHint: "fingers" },
+          { id: "sub5-15", type: "subtraction", operands: [5, 0], operator: "-", answer: 5, difficulty: 1, visualHint: "tenframe" },
+        ],
+      },
+      // NEW: Comparison lesson for Unit 1
+      {
+        id: "lesson-compare-1-5",
+        title: "Which is Bigger?",
+        description: "Compare numbers 1 to 5",
+        type: "comparison",
+        difficulty: 1,
+        objectives: ["Understand greater than and less than", "Compare small numbers"],
+        estimatedMinutes: 6,
+        problems: [
+          { id: "cmp1-1", type: "comparison", operands: [3, 1], operator: ">", answer: 1, difficulty: 1, problemStyle: "comparison", comparison: { left: 3, right: 1, correctOperator: ">" }, hint: "Which number is bigger?" },
+          { id: "cmp1-2", type: "comparison", operands: [2, 4], operator: "<", answer: -1, difficulty: 1, problemStyle: "comparison", comparison: { left: 2, right: 4, correctOperator: "<" }, hint: "Which number is smaller?" },
+          { id: "cmp1-3", type: "comparison", operands: [5, 2], operator: ">", answer: 1, difficulty: 1, problemStyle: "comparison", comparison: { left: 5, right: 2, correctOperator: ">" }, hint: "Count and compare!" },
+          { id: "cmp1-4", type: "comparison", operands: [1, 3], operator: "<", answer: -1, difficulty: 1, problemStyle: "comparison", comparison: { left: 1, right: 3, correctOperator: "<" }, hint: "1 is less than 3" },
+          { id: "cmp1-5", type: "comparison", operands: [4, 4], operator: "=", answer: 0, difficulty: 1, problemStyle: "comparison", comparison: { left: 4, right: 4, correctOperator: "=" }, hint: "Same numbers are equal!" },
+          { id: "cmp1-6", type: "comparison", operands: [5, 3], operator: ">", answer: 1, difficulty: 1, problemStyle: "comparison", comparison: { left: 5, right: 3, correctOperator: ">" } },
+          { id: "cmp1-7", type: "comparison", operands: [1, 5], operator: "<", answer: -1, difficulty: 1, problemStyle: "comparison", comparison: { left: 1, right: 5, correctOperator: "<" } },
+          { id: "cmp1-8", type: "comparison", operands: [2, 2], operator: "=", answer: 0, difficulty: 1, problemStyle: "comparison", comparison: { left: 2, right: 2, correctOperator: "=" } },
+          { id: "cmp1-9", type: "comparison", operands: [4, 1], operator: ">", answer: 1, difficulty: 1, problemStyle: "comparison", comparison: { left: 4, right: 1, correctOperator: ">" } },
+          { id: "cmp1-10", type: "comparison", operands: [3, 5], operator: "<", answer: -1, difficulty: 1, problemStyle: "comparison", comparison: { left: 3, right: 5, correctOperator: "<" } },
+          { id: "cmp1-11", type: "comparison", operands: [2, 3], operator: "<", answer: -1, difficulty: 1, problemStyle: "comparison", comparison: { left: 2, right: 3, correctOperator: "<" } },
+          { id: "cmp1-12", type: "comparison", operands: [5, 1], operator: ">", answer: 1, difficulty: 1, problemStyle: "comparison", comparison: { left: 5, right: 1, correctOperator: ">" } },
         ],
       },
     ],
@@ -893,6 +1161,175 @@ export const MATH_UNITS: MathUnit[] = [
           { id: "story-mix-8", type: "subtraction", operands: [7, 3], operator: "-", answer: 4, difficulty: 3, problemStyle: "word-problem", wordProblem: { story: "Ben has 7 candies. He shares 3 with his friend.", question: "How many candies does Ben have left?", objects: "candies", emoji: "🍬", action: "separate" } },
           { id: "story-mix-9", type: "addition", operands: [6, 3], operator: "+", answer: 9, difficulty: 3, problemStyle: "word-problem", wordProblem: { story: "Maya has 6 books. Her mom gives her 3 more.", question: "How many books does Maya have now?", objects: "books", emoji: "📚", action: "join" } },
           { id: "story-mix-10", type: "subtraction", operands: [10, 6], operator: "-", answer: 4, difficulty: 3, problemStyle: "word-problem", wordProblem: { story: "There are 10 birds. 6 birds fly to another tree.", question: "How many birds stay?", objects: "birds", emoji: "🐦", action: "separate" } },
+        ],
+      },
+    ],
+  },
+
+  // ============================================
+  // UNIT 10: Patterns & Sequences
+  // ============================================
+  {
+    id: "unit-patterns",
+    title: "Patterns & Sequences",
+    description: "Find patterns and complete number sequences",
+    color: "bg-cyan-500",
+    icon: "🔄",
+    order: 10,
+    prerequisites: ["unit-numbers-6-10"],
+    lessons: [
+      {
+        id: "lesson-patterns-plus1",
+        title: "Count by Ones",
+        description: "Find the missing number in +1 patterns",
+        type: "patterns",
+        difficulty: 1,
+        objectives: ["Recognize counting patterns", "Find missing numbers"],
+        estimatedMinutes: 6,
+        problems: [
+          { id: "pat1-1", type: "pattern", operands: [1, 2, 3, 4, 5], operator: "+", answer: 3, difficulty: 1, problemStyle: "pattern", pattern: { sequence: [1, 2, 3, 4, 5], missingIndex: 2, rule: "+1" }, hint: "Count up by 1!" },
+          { id: "pat1-2", type: "pattern", operands: [2, 3, 4, 5, 6], operator: "+", answer: 4, difficulty: 1, problemStyle: "pattern", pattern: { sequence: [2, 3, 4, 5, 6], missingIndex: 2, rule: "+1" }, hint: "Each number is 1 more" },
+          { id: "pat1-3", type: "pattern", operands: [3, 4, 5, 6, 7], operator: "+", answer: 5, difficulty: 1, problemStyle: "pattern", pattern: { sequence: [3, 4, 5, 6, 7], missingIndex: 2, rule: "+1" } },
+          { id: "pat1-4", type: "pattern", operands: [4, 5, 6, 7, 8], operator: "+", answer: 7, difficulty: 1, problemStyle: "pattern", pattern: { sequence: [4, 5, 6, 7, 8], missingIndex: 3, rule: "+1" } },
+          { id: "pat1-5", type: "pattern", operands: [5, 6, 7, 8, 9], operator: "+", answer: 6, difficulty: 1, problemStyle: "pattern", pattern: { sequence: [5, 6, 7, 8, 9], missingIndex: 1, rule: "+1" } },
+          { id: "pat1-6", type: "pattern", operands: [6, 7, 8, 9, 10], operator: "+", answer: 8, difficulty: 1, problemStyle: "pattern", pattern: { sequence: [6, 7, 8, 9, 10], missingIndex: 2, rule: "+1" } },
+          { id: "pat1-7", type: "pattern", operands: [7, 8, 9, 10, 11], operator: "+", answer: 10, difficulty: 1, problemStyle: "pattern", pattern: { sequence: [7, 8, 9, 10, 11], missingIndex: 3, rule: "+1" } },
+          { id: "pat1-8", type: "pattern", operands: [8, 9, 10, 11, 12], operator: "+", answer: 9, difficulty: 1, problemStyle: "pattern", pattern: { sequence: [8, 9, 10, 11, 12], missingIndex: 1, rule: "+1" } },
+          { id: "pat1-9", type: "pattern", operands: [1, 2, 3, 4, 5], operator: "+", answer: 4, difficulty: 1, problemStyle: "pattern", pattern: { sequence: [1, 2, 3, 4, 5], missingIndex: 3, rule: "+1" } },
+          { id: "pat1-10", type: "pattern", operands: [10, 11, 12, 13, 14], operator: "+", answer: 12, difficulty: 1, problemStyle: "pattern", pattern: { sequence: [10, 11, 12, 13, 14], missingIndex: 2, rule: "+1" } },
+          { id: "pat1-11", type: "pattern", operands: [3, 4, 5, 6, 7], operator: "+", answer: 4, difficulty: 1, problemStyle: "pattern", pattern: { sequence: [3, 4, 5, 6, 7], missingIndex: 1, rule: "+1" } },
+          { id: "pat1-12", type: "pattern", operands: [5, 6, 7, 8, 9], operator: "+", answer: 8, difficulty: 1, problemStyle: "pattern", pattern: { sequence: [5, 6, 7, 8, 9], missingIndex: 3, rule: "+1" } },
+        ],
+      },
+      {
+        id: "lesson-patterns-plus2",
+        title: "Skip Count by Twos",
+        description: "Find the missing number in +2 patterns",
+        type: "patterns",
+        difficulty: 2,
+        objectives: ["Skip count by 2s", "Recognize even number patterns"],
+        estimatedMinutes: 7,
+        problems: [
+          { id: "pat2-1", type: "pattern", operands: [2, 4, 6, 8, 10], operator: "+", answer: 6, difficulty: 2, problemStyle: "pattern", pattern: { sequence: [2, 4, 6, 8, 10], missingIndex: 2, rule: "+2" }, hint: "Count by 2s!" },
+          { id: "pat2-2", type: "pattern", operands: [1, 3, 5, 7, 9], operator: "+", answer: 5, difficulty: 2, problemStyle: "pattern", pattern: { sequence: [1, 3, 5, 7, 9], missingIndex: 2, rule: "+2" }, hint: "Odd numbers go +2" },
+          { id: "pat2-3", type: "pattern", operands: [4, 6, 8, 10, 12], operator: "+", answer: 8, difficulty: 2, problemStyle: "pattern", pattern: { sequence: [4, 6, 8, 10, 12], missingIndex: 2, rule: "+2" } },
+          { id: "pat2-4", type: "pattern", operands: [6, 8, 10, 12, 14], operator: "+", answer: 10, difficulty: 2, problemStyle: "pattern", pattern: { sequence: [6, 8, 10, 12, 14], missingIndex: 2, rule: "+2" } },
+          { id: "pat2-5", type: "pattern", operands: [8, 10, 12, 14, 16], operator: "+", answer: 14, difficulty: 2, problemStyle: "pattern", pattern: { sequence: [8, 10, 12, 14, 16], missingIndex: 3, rule: "+2" } },
+          { id: "pat2-6", type: "pattern", operands: [3, 5, 7, 9, 11], operator: "+", answer: 7, difficulty: 2, problemStyle: "pattern", pattern: { sequence: [3, 5, 7, 9, 11], missingIndex: 2, rule: "+2" } },
+          { id: "pat2-7", type: "pattern", operands: [5, 7, 9, 11, 13], operator: "+", answer: 9, difficulty: 2, problemStyle: "pattern", pattern: { sequence: [5, 7, 9, 11, 13], missingIndex: 2, rule: "+2" } },
+          { id: "pat2-8", type: "pattern", operands: [10, 12, 14, 16, 18], operator: "+", answer: 12, difficulty: 2, problemStyle: "pattern", pattern: { sequence: [10, 12, 14, 16, 18], missingIndex: 1, rule: "+2" } },
+          { id: "pat2-9", type: "pattern", operands: [2, 4, 6, 8, 10], operator: "+", answer: 4, difficulty: 2, problemStyle: "pattern", pattern: { sequence: [2, 4, 6, 8, 10], missingIndex: 1, rule: "+2" } },
+          { id: "pat2-10", type: "pattern", operands: [7, 9, 11, 13, 15], operator: "+", answer: 11, difficulty: 2, problemStyle: "pattern", pattern: { sequence: [7, 9, 11, 13, 15], missingIndex: 2, rule: "+2" } },
+          { id: "pat2-11", type: "pattern", operands: [12, 14, 16, 18, 20], operator: "+", answer: 16, difficulty: 2, problemStyle: "pattern", pattern: { sequence: [12, 14, 16, 18, 20], missingIndex: 2, rule: "+2" } },
+          { id: "pat2-12", type: "pattern", operands: [4, 6, 8, 10, 12], operator: "+", answer: 6, difficulty: 2, problemStyle: "pattern", pattern: { sequence: [4, 6, 8, 10, 12], missingIndex: 1, rule: "+2" } },
+        ],
+      },
+      {
+        id: "lesson-patterns-countdown",
+        title: "Countdown Patterns",
+        description: "Find missing numbers counting down",
+        type: "patterns",
+        difficulty: 2,
+        objectives: ["Count backwards", "Recognize descending patterns"],
+        estimatedMinutes: 6,
+        problems: [
+          { id: "patd-1", type: "pattern", operands: [10, 9, 8, 7, 6], operator: "-", answer: 8, difficulty: 2, problemStyle: "pattern", pattern: { sequence: [10, 9, 8, 7, 6], missingIndex: 2, rule: "-1" }, hint: "Count down!" },
+          { id: "patd-2", type: "pattern", operands: [8, 7, 6, 5, 4], operator: "-", answer: 6, difficulty: 2, problemStyle: "pattern", pattern: { sequence: [8, 7, 6, 5, 4], missingIndex: 2, rule: "-1" } },
+          { id: "patd-3", type: "pattern", operands: [15, 14, 13, 12, 11], operator: "-", answer: 13, difficulty: 2, problemStyle: "pattern", pattern: { sequence: [15, 14, 13, 12, 11], missingIndex: 2, rule: "-1" } },
+          { id: "patd-4", type: "pattern", operands: [20, 18, 16, 14, 12], operator: "-", answer: 16, difficulty: 2, problemStyle: "pattern", pattern: { sequence: [20, 18, 16, 14, 12], missingIndex: 2, rule: "-2" }, hint: "Skip count backwards by 2!" },
+          { id: "patd-5", type: "pattern", operands: [12, 11, 10, 9, 8], operator: "-", answer: 10, difficulty: 2, problemStyle: "pattern", pattern: { sequence: [12, 11, 10, 9, 8], missingIndex: 2, rule: "-1" } },
+          { id: "patd-6", type: "pattern", operands: [16, 14, 12, 10, 8], operator: "-", answer: 12, difficulty: 2, problemStyle: "pattern", pattern: { sequence: [16, 14, 12, 10, 8], missingIndex: 2, rule: "-2" } },
+          { id: "patd-7", type: "pattern", operands: [7, 6, 5, 4, 3], operator: "-", answer: 5, difficulty: 2, problemStyle: "pattern", pattern: { sequence: [7, 6, 5, 4, 3], missingIndex: 2, rule: "-1" } },
+          { id: "patd-8", type: "pattern", operands: [14, 12, 10, 8, 6], operator: "-", answer: 10, difficulty: 2, problemStyle: "pattern", pattern: { sequence: [14, 12, 10, 8, 6], missingIndex: 2, rule: "-2" } },
+          { id: "patd-9", type: "pattern", operands: [9, 8, 7, 6, 5], operator: "-", answer: 7, difficulty: 2, problemStyle: "pattern", pattern: { sequence: [9, 8, 7, 6, 5], missingIndex: 2, rule: "-1" } },
+          { id: "patd-10", type: "pattern", operands: [18, 16, 14, 12, 10], operator: "-", answer: 14, difficulty: 2, problemStyle: "pattern", pattern: { sequence: [18, 16, 14, 12, 10], missingIndex: 2, rule: "-2" } },
+        ],
+      },
+    ],
+  },
+
+  // ============================================
+  // UNIT 11: Missing Numbers
+  // ============================================
+  {
+    id: "unit-missing-numbers",
+    title: "Find the Mystery Number",
+    description: "Solve equations with missing numbers",
+    color: "bg-rose-500",
+    icon: "❓",
+    order: 11,
+    prerequisites: ["unit-numbers-6-10"],
+    lessons: [
+      {
+        id: "lesson-missing-add",
+        title: "Addition Mystery",
+        description: "Find the missing number in addition",
+        type: "missing-numbers",
+        difficulty: 2,
+        objectives: ["Solve for unknown addends", "Think backwards"],
+        estimatedMinutes: 7,
+        problems: [
+          { id: "miss-a1", type: "missing-number", operands: [2, 5], operator: "+", answer: 3, difficulty: 2, problemStyle: "missing-number", missingNumber: { equation: "2 + ? = 5", missingValue: 3, position: "right" }, hint: "What plus 2 equals 5?" },
+          { id: "miss-a2", type: "missing-number", operands: [3, 7], operator: "+", answer: 4, difficulty: 2, problemStyle: "missing-number", missingNumber: { equation: "3 + ? = 7", missingValue: 4, position: "right" }, hint: "Count up from 3 to 7" },
+          { id: "miss-a3", type: "missing-number", operands: [4, 9], operator: "+", answer: 5, difficulty: 2, problemStyle: "missing-number", missingNumber: { equation: "4 + ? = 9", missingValue: 5, position: "right" } },
+          { id: "miss-a4", type: "missing-number", operands: [5, 8], operator: "+", answer: 3, difficulty: 2, problemStyle: "missing-number", missingNumber: { equation: "5 + ? = 8", missingValue: 3, position: "right" } },
+          { id: "miss-a5", type: "missing-number", operands: [1, 6], operator: "+", answer: 5, difficulty: 2, problemStyle: "missing-number", missingNumber: { equation: "1 + ? = 6", missingValue: 5, position: "right" } },
+          { id: "miss-a6", type: "missing-number", operands: [6, 10], operator: "+", answer: 4, difficulty: 2, problemStyle: "missing-number", missingNumber: { equation: "6 + ? = 10", missingValue: 4, position: "right" } },
+          { id: "miss-a7", type: "missing-number", operands: [3, 5], operator: "+", answer: 2, difficulty: 2, problemStyle: "missing-number", missingNumber: { equation: "? + 3 = 5", missingValue: 2, position: "left" } },
+          { id: "miss-a8", type: "missing-number", operands: [4, 8], operator: "+", answer: 4, difficulty: 2, problemStyle: "missing-number", missingNumber: { equation: "? + 4 = 8", missingValue: 4, position: "left" } },
+          { id: "miss-a9", type: "missing-number", operands: [2, 7], operator: "+", answer: 5, difficulty: 2, problemStyle: "missing-number", missingNumber: { equation: "? + 2 = 7", missingValue: 5, position: "left" } },
+          { id: "miss-a10", type: "missing-number", operands: [5, 10], operator: "+", answer: 5, difficulty: 2, problemStyle: "missing-number", missingNumber: { equation: "? + 5 = 10", missingValue: 5, position: "left" } },
+          { id: "miss-a11", type: "missing-number", operands: [7, 9], operator: "+", answer: 2, difficulty: 2, problemStyle: "missing-number", missingNumber: { equation: "7 + ? = 9", missingValue: 2, position: "right" } },
+          { id: "miss-a12", type: "missing-number", operands: [3, 10], operator: "+", answer: 7, difficulty: 2, problemStyle: "missing-number", missingNumber: { equation: "3 + ? = 10", missingValue: 7, position: "right" } },
+        ],
+      },
+      {
+        id: "lesson-missing-sub",
+        title: "Subtraction Mystery",
+        description: "Find the missing number in subtraction",
+        type: "missing-numbers",
+        difficulty: 2,
+        objectives: ["Solve for unknown in subtraction", "Use inverse operations"],
+        estimatedMinutes: 7,
+        problems: [
+          { id: "miss-s1", type: "missing-number", operands: [5, 2], operator: "-", answer: 3, difficulty: 2, problemStyle: "missing-number", missingNumber: { equation: "5 - ? = 2", missingValue: 3, position: "right" }, hint: "What do you take away from 5 to get 2?" },
+          { id: "miss-s2", type: "missing-number", operands: [7, 4], operator: "-", answer: 3, difficulty: 2, problemStyle: "missing-number", missingNumber: { equation: "7 - ? = 4", missingValue: 3, position: "right" } },
+          { id: "miss-s3", type: "missing-number", operands: [9, 5], operator: "-", answer: 4, difficulty: 2, problemStyle: "missing-number", missingNumber: { equation: "9 - ? = 5", missingValue: 4, position: "right" } },
+          { id: "miss-s4", type: "missing-number", operands: [8, 3], operator: "-", answer: 5, difficulty: 2, problemStyle: "missing-number", missingNumber: { equation: "8 - ? = 3", missingValue: 5, position: "right" } },
+          { id: "miss-s5", type: "missing-number", operands: [10, 6], operator: "-", answer: 4, difficulty: 2, problemStyle: "missing-number", missingNumber: { equation: "10 - ? = 6", missingValue: 4, position: "right" } },
+          { id: "miss-s6", type: "missing-number", operands: [6, 2], operator: "-", answer: 4, difficulty: 2, problemStyle: "missing-number", missingNumber: { equation: "6 - ? = 2", missingValue: 4, position: "right" } },
+          { id: "miss-s7", type: "missing-number", operands: [4, 1], operator: "-", answer: 3, difficulty: 2, problemStyle: "missing-number", missingNumber: { equation: "? - 1 = 3", missingValue: 4, position: "left" }, hint: "What minus 1 equals 3?" },
+          { id: "miss-s8", type: "missing-number", operands: [7, 2], operator: "-", answer: 5, difficulty: 2, problemStyle: "missing-number", missingNumber: { equation: "? - 2 = 5", missingValue: 7, position: "left" } },
+          { id: "miss-s9", type: "missing-number", operands: [9, 3], operator: "-", answer: 6, difficulty: 2, problemStyle: "missing-number", missingNumber: { equation: "? - 3 = 6", missingValue: 9, position: "left" } },
+          { id: "miss-s10", type: "missing-number", operands: [8, 4], operator: "-", answer: 4, difficulty: 2, problemStyle: "missing-number", missingNumber: { equation: "? - 4 = 4", missingValue: 8, position: "left" } },
+          { id: "miss-s11", type: "missing-number", operands: [10, 3], operator: "-", answer: 7, difficulty: 2, problemStyle: "missing-number", missingNumber: { equation: "10 - ? = 7", missingValue: 3, position: "right" } },
+          { id: "miss-s12", type: "missing-number", operands: [6, 5], operator: "-", answer: 1, difficulty: 2, problemStyle: "missing-number", missingNumber: { equation: "? - 5 = 1", missingValue: 6, position: "left" } },
+        ],
+      },
+      {
+        id: "lesson-missing-mixed",
+        title: "Mystery Number Challenge",
+        description: "Mixed missing number problems",
+        type: "missing-numbers",
+        difficulty: 3,
+        objectives: ["Solve various missing number equations", "Choose the right strategy"],
+        estimatedMinutes: 8,
+        problems: [
+          { id: "miss-m1", type: "missing-number", operands: [3, 8], operator: "+", answer: 5, difficulty: 3, problemStyle: "missing-number", missingNumber: { equation: "3 + ? = 8", missingValue: 5, position: "right" } },
+          { id: "miss-m2", type: "missing-number", operands: [9, 4], operator: "-", answer: 5, difficulty: 3, problemStyle: "missing-number", missingNumber: { equation: "9 - ? = 4", missingValue: 5, position: "right" } },
+          { id: "miss-m3", type: "missing-number", operands: [6, 10], operator: "+", answer: 4, difficulty: 3, problemStyle: "missing-number", missingNumber: { equation: "? + 6 = 10", missingValue: 4, position: "left" } },
+          { id: "miss-m4", type: "missing-number", operands: [7, 3], operator: "-", answer: 4, difficulty: 3, problemStyle: "missing-number", missingNumber: { equation: "? - 3 = 4", missingValue: 7, position: "left" } },
+          { id: "miss-m5", type: "missing-number", operands: [4, 11], operator: "+", answer: 7, difficulty: 3, problemStyle: "missing-number", missingNumber: { equation: "4 + ? = 11", missingValue: 7, position: "right" } },
+          { id: "miss-m6", type: "missing-number", operands: [12, 5], operator: "-", answer: 7, difficulty: 3, problemStyle: "missing-number", missingNumber: { equation: "12 - ? = 5", missingValue: 7, position: "right" } },
+          { id: "miss-m7", type: "missing-number", operands: [8, 15], operator: "+", answer: 7, difficulty: 3, problemStyle: "missing-number", missingNumber: { equation: "? + 8 = 15", missingValue: 7, position: "left" } },
+          { id: "miss-m8", type: "missing-number", operands: [11, 6], operator: "-", answer: 5, difficulty: 3, problemStyle: "missing-number", missingNumber: { equation: "? - 6 = 5", missingValue: 11, position: "left" } },
+          { id: "miss-m9", type: "missing-number", operands: [5, 12], operator: "+", answer: 7, difficulty: 3, problemStyle: "missing-number", missingNumber: { equation: "5 + ? = 12", missingValue: 7, position: "right" } },
+          { id: "miss-m10", type: "missing-number", operands: [14, 8], operator: "-", answer: 6, difficulty: 3, problemStyle: "missing-number", missingNumber: { equation: "14 - ? = 8", missingValue: 6, position: "right" } },
+          { id: "miss-m11", type: "missing-number", operands: [9, 13], operator: "+", answer: 4, difficulty: 3, problemStyle: "missing-number", missingNumber: { equation: "? + 9 = 13", missingValue: 4, position: "left" } },
+          { id: "miss-m12", type: "missing-number", operands: [10, 4], operator: "-", answer: 6, difficulty: 3, problemStyle: "missing-number", missingNumber: { equation: "? - 4 = 6", missingValue: 10, position: "left" } },
+          { id: "miss-m13", type: "missing-number", operands: [7, 15], operator: "+", answer: 8, difficulty: 3, problemStyle: "missing-number", missingNumber: { equation: "7 + ? = 15", missingValue: 8, position: "right" } },
+          { id: "miss-m14", type: "missing-number", operands: [13, 7], operator: "-", answer: 6, difficulty: 3, problemStyle: "missing-number", missingNumber: { equation: "13 - ? = 7", missingValue: 6, position: "right" } },
+          { id: "miss-m15", type: "missing-number", operands: [6, 14], operator: "+", answer: 8, difficulty: 3, problemStyle: "missing-number", missingNumber: { equation: "? + 6 = 14", missingValue: 8, position: "left" } },
         ],
       },
     ],

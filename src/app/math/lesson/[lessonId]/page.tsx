@@ -13,6 +13,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useAccessibility } from "@/hooks/use-accessibility";
+import { useAdaptiveDifficulty, type DifficultyLevel } from "@/hooks/use-adaptive-difficulty";
 import {
   getMathLessonById,
   type MathLesson,
@@ -47,6 +48,12 @@ export default function MathLessonPage() {
 
   const { completeLesson, recordAttempt } = useSubjectProgress("math");
   const { completeActivity } = useGlobalProgress();
+  const {
+    showHints: adaptiveShowHints,
+    streak,
+    recordAttempt: recordAdaptiveAttempt,
+    getPerformanceSummary,
+  } = useAdaptiveDifficulty("math");
 
   useEffect(() => {
     const foundLesson = getMathLessonById(lessonId);
@@ -70,6 +77,14 @@ export default function MathLessonPage() {
 
   const handleAnswer = (isCorrect: boolean, attempts: number) => {
     setTotalAttempts((prev) => prev + attempts);
+
+    // Record to adaptive difficulty system
+    recordAdaptiveAttempt(
+      currentProblem.id,
+      isCorrect,
+      attempts,
+      (currentProblem.difficulty || 1) as DifficultyLevel
+    );
 
     if (isCorrect) {
       setCorrectCount((prev) => prev + 1);
@@ -234,6 +249,7 @@ export default function MathLessonPage() {
   if (phase === "complete") {
     const finalScore = Math.round((correctCount / lesson.problems.length) * 100);
     const stars = calculateStars(finalScore);
+    const performance = getPerformanceSummary();
 
     return (
       <main className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 p-4 sm:p-6 flex items-center justify-center">
@@ -283,7 +299,7 @@ export default function MathLessonPage() {
           </div>
 
           {/* Stats */}
-          <div className="bg-gray-50 rounded-xl p-4 mb-6">
+          <div className="bg-gray-50 rounded-xl p-4 mb-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center">
                 <p className="text-3xl font-black text-emerald-600">
@@ -298,6 +314,18 @@ export default function MathLessonPage() {
                 <p className="text-sm text-gray-400">Score</p>
               </div>
             </div>
+          </div>
+
+          {/* Performance feedback */}
+          <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-4 mb-6">
+            <p className="text-sm font-medium text-purple-700 text-center">
+              {performance.recommendation}
+            </p>
+            {performance.difficultyTrend === "increasing" && (
+              <p className="text-xs text-purple-500 text-center mt-1">
+                📈 You're getting better!
+              </p>
+            )}
           </div>
 
           {/* Actions */}
@@ -360,10 +388,22 @@ export default function MathLessonPage() {
             </p>
           </div>
 
-          {/* Score */}
-          <div className="bg-white px-3 py-1 rounded-full shadow-md">
-            <span className="font-bold text-emerald-600">{correctCount}</span>
-            <span className="text-gray-400"> / {lesson.problems.length}</span>
+          {/* Score + Streak */}
+          <div className="flex items-center gap-2">
+            {streak >= 2 && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="bg-orange-100 px-2 py-1 rounded-full flex items-center gap-1"
+              >
+                <span className="text-sm">🔥</span>
+                <span className="text-xs font-bold text-orange-600">{streak}</span>
+              </motion.div>
+            )}
+            <div className="bg-white px-3 py-1 rounded-full shadow-md">
+              <span className="font-bold text-emerald-600">{correctCount}</span>
+              <span className="text-gray-400"> / {lesson.problems.length}</span>
+            </div>
           </div>
         </div>
 
@@ -378,7 +418,7 @@ export default function MathLessonPage() {
             <MathProblemCard
               problem={currentProblem}
               onAnswer={handleAnswer}
-              showHint={true}
+              showHint={adaptiveShowHints || true}
               autoSpeak={true}
             />
           </motion.div>

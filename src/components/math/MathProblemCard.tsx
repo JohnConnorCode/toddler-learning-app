@@ -64,6 +64,154 @@ function EmojiCounter({ count, emoji, animate = true, crossedOut = 0, color }: E
 }
 
 // ============================================
+// TEN FRAME COMPONENT
+// ============================================
+
+interface TenFrameProps {
+  count: number;
+  showSecondFrame?: boolean;
+  secondCount?: number;
+  highlightFilled?: boolean;
+  animate?: boolean;
+}
+
+function TenFrame({
+  count,
+  showSecondFrame = false,
+  secondCount = 0,
+  highlightFilled = true,
+  animate = true,
+}: TenFrameProps) {
+  const { shouldReduceMotion } = useAccessibility();
+  const shouldAnimate = animate && !shouldReduceMotion;
+
+  // Render a single ten frame
+  const renderFrame = (filled: number, startDelay: number = 0, color: string = "bg-purple-500") => (
+    <div className="bg-gray-100 rounded-xl p-2 inline-block">
+      <div className="grid grid-cols-5 gap-1.5">
+        {Array.from({ length: 10 }).map((_, i) => {
+          const isFilled = i < filled;
+          return (
+            <motion.div
+              key={i}
+              initial={shouldAnimate ? { scale: 0 } : {}}
+              animate={{ scale: 1 }}
+              transition={{ delay: shouldAnimate ? startDelay + i * 0.05 : 0 }}
+              className={`
+                w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2
+                ${isFilled
+                  ? `${color} border-transparent shadow-sm`
+                  : "bg-white border-gray-300"
+                }
+                ${highlightFilled && isFilled ? "ring-2 ring-purple-200" : ""}
+              `}
+            >
+              {isFilled && (
+                <motion.div
+                  initial={shouldAnimate ? { opacity: 0 } : {}}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: shouldAnimate ? startDelay + i * 0.05 + 0.1 : 0 }}
+                  className="w-full h-full flex items-center justify-center"
+                >
+                  <span className="text-white text-xs font-bold">{i + 1}</span>
+                </motion.div>
+              )}
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex flex-wrap justify-center items-center gap-3">
+      {renderFrame(Math.min(count, 10), 0)}
+      {(showSecondFrame || count > 10) && (
+        <>
+          {count > 10 && (
+            <motion.span
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="text-2xl font-bold text-gray-400"
+            >
+              +
+            </motion.span>
+          )}
+          {renderFrame(
+            count > 10 ? count - 10 : secondCount,
+            0.5,
+            count > 10 ? "bg-purple-500" : "bg-teal-500"
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ============================================
+// FINGER COUNTING COMPONENT
+// ============================================
+
+interface FingerCountProps {
+  count: number;
+  animate?: boolean;
+}
+
+function FingerCount({ count, animate = true }: FingerCountProps) {
+  const { shouldReduceMotion } = useAccessibility();
+  const shouldAnimate = animate && !shouldReduceMotion;
+
+  // Use hand emojis for 5s and finger emojis for 1s
+  const hands = Math.floor(count / 5);
+  const fingers = count % 5;
+
+  // Finger emojis for 1-4
+  const fingerEmojis = ["☝️", "✌️", "🤟", "🖖"];
+  const handEmoji = "🖐️";
+
+  return (
+    <div className="flex flex-wrap justify-center items-center gap-2">
+      {/* Show full hands (5 fingers each) */}
+      {Array.from({ length: hands }).map((_, i) => (
+        <motion.span
+          key={`hand-${i}`}
+          initial={shouldAnimate ? { scale: 0, rotate: -20 } : {}}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ delay: shouldAnimate ? i * 0.15 : 0 }}
+          className="text-4xl sm:text-5xl"
+        >
+          {handEmoji}
+        </motion.span>
+      ))}
+
+      {/* Show remaining fingers */}
+      {fingers > 0 && (
+        <motion.span
+          initial={shouldAnimate ? { scale: 0, rotate: -20 } : {}}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ delay: shouldAnimate ? hands * 0.15 : 0 }}
+          className="text-4xl sm:text-5xl"
+        >
+          {fingerEmojis[fingers - 1]}
+        </motion.span>
+      )}
+
+      {/* Label */}
+      <motion.div
+        initial={shouldAnimate ? { opacity: 0 } : {}}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+        className="w-full text-center mt-2"
+      >
+        <span className="text-sm text-gray-500 font-medium">
+          {count} finger{count !== 1 ? "s" : ""}
+        </span>
+      </motion.div>
+    </div>
+  );
+}
+
+// ============================================
 // NUMBER LINE COMPONENT
 // ============================================
 
@@ -161,9 +309,138 @@ interface MathVisualizerProps {
 function MathVisualizer({ problem, emoji }: MathVisualizerProps) {
   const { shouldReduceMotion } = useAccessibility();
 
+  // Check for specific visual hint preferences first
+  const visualHint = problem.visualHint;
+
+  // Ten Frame visualization
+  if (visualHint === "tenframe") {
+    if (problem.operands.length === 1) {
+      return (
+        <div className="my-4">
+          <TenFrame count={problem.operands[0]} animate={!shouldReduceMotion} />
+        </div>
+      );
+    }
+    // For addition with ten frame
+    if (problem.operator === "+") {
+      const [a, b] = problem.operands;
+      return (
+        <div className="my-4">
+          <TenFrame count={a} showSecondFrame secondCount={b} animate={!shouldReduceMotion} />
+          <div className="text-center mt-2 text-sm text-gray-500">
+            {a} + {b} = {problem.answer}
+          </div>
+        </div>
+      );
+    }
+  }
+
+  // Finger counting visualization
+  if (visualHint === "fingers") {
+    const total = problem.operands.length === 1
+      ? problem.operands[0]
+      : problem.operator === "+"
+        ? problem.operands.reduce((sum, n) => sum + n, 0)
+        : problem.answer;
+
+    if (total <= 10) {
+      return (
+        <div className="my-4">
+          <FingerCount count={total} animate={!shouldReduceMotion} />
+        </div>
+      );
+    }
+  }
+
+  // Number bond visualization
+  if (visualHint === "numberbond" && problem.operator === "+") {
+    const [a, b] = problem.operands;
+    const total = a + b;
+    return (
+      <div className="my-4 flex flex-col items-center">
+        {/* Total at top */}
+        <div className="w-14 h-14 rounded-full bg-purple-500 text-white flex items-center justify-center text-2xl font-bold shadow-lg">
+          {total}
+        </div>
+        {/* Lines */}
+        <div className="flex items-center justify-center gap-8 -mt-2">
+          <div className="w-8 h-8 border-l-2 border-b-2 border-purple-300 -rotate-45" />
+          <div className="w-8 h-8 border-r-2 border-b-2 border-purple-300 rotate-45" />
+        </div>
+        {/* Parts at bottom */}
+        <div className="flex items-center gap-8 -mt-2">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2 }}
+            className="w-12 h-12 rounded-full bg-teal-500 text-white flex items-center justify-center text-xl font-bold shadow-md"
+          >
+            {a}
+          </motion.div>
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.3 }}
+            className="w-12 h-12 rounded-full bg-orange-500 text-white flex items-center justify-center text-xl font-bold shadow-md"
+          >
+            {b}
+          </motion.div>
+        </div>
+        <p className="text-sm text-gray-500 mt-3">{a} and {b} make {total}</p>
+      </div>
+    );
+  }
+
+  // Number line visualization (explicit or for larger numbers)
+  if (visualHint === "numberline") {
+    const total = problem.operands.length === 1
+      ? problem.operands[0]
+      : problem.operator === "+"
+        ? problem.operands.reduce((sum, n) => sum + n, 0)
+        : problem.operands[0];
+    return (
+      <div className="my-4">
+        <NumberLine
+          min={0}
+          max={Math.min(total + 3, 20)}
+          current={problem.operands[0]}
+          highlight={problem.operator === "+"
+            ? [problem.operands[0], problem.answer]
+            : [problem.operands[0], problem.answer]
+          }
+        />
+        {problem.operands.length > 1 && (
+          <div className="text-center mt-2 text-sm text-gray-500">
+            Start at {problem.operands[0]}, {problem.operator === "+" ? "jump forward" : "jump back"} {problem.operands[1]}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Default visualizations based on problem type
+
   // Counting (single operand)
   if (problem.operands.length === 1) {
     const count = problem.operands[0];
+
+    // Use ten frame for counts up to 10 (better for learning)
+    if (count <= 10 && count > 5) {
+      return (
+        <div className="my-4">
+          <TenFrame count={count} animate={!shouldReduceMotion} />
+        </div>
+      );
+    }
+
+    // Use finger counting for very small numbers
+    if (count <= 5) {
+      return (
+        <div className="my-4">
+          <FingerCount count={count} animate={!shouldReduceMotion} />
+        </div>
+      );
+    }
 
     // Use number line for larger numbers
     if (count > 10) {
@@ -179,7 +456,7 @@ function MathVisualizer({ problem, emoji }: MathVisualizerProps) {
       );
     }
 
-    // Use emoji counter for smaller numbers
+    // Use emoji counter as fallback
     return (
       <div className="my-4">
         <EmojiCounter count={count} emoji={emoji} animate={!shouldReduceMotion} />
@@ -192,6 +469,18 @@ function MathVisualizer({ problem, emoji }: MathVisualizerProps) {
     const [a, b, c] = problem.operands;
     const hasThreeOperands = problem.operands.length === 3;
     const total = problem.operands.reduce((sum, n) => sum + n, 0);
+
+    // Use ten frame for totals up to 20
+    if (total <= 10) {
+      return (
+        <div className="my-4">
+          <TenFrame count={a} showSecondFrame secondCount={b} animate={!shouldReduceMotion} />
+          <div className="text-center mt-2 text-sm text-gray-500">
+            {a} + {b} = ?
+          </div>
+        </div>
+      );
+    }
 
     // Use number line for larger totals
     if (total > 12) {
