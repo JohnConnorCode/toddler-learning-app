@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { BookOpen, Music, Star, Settings, Eye, Users, ClipboardCheck, Sparkles, BarChart3, Rocket, Map, Book } from "lucide-react";
+import { BookOpen, Music, Star, Settings, Eye, Users, ClipboardCheck, Sparkles, BarChart3, Rocket, Map, Book, Trophy } from "lucide-react";
 import { useState } from "react";
 import { HelpModal } from "@/components/ui/HelpModal";
 import { InstallButton } from "@/components/InstallButton";
@@ -232,6 +232,13 @@ export default function Home() {
 
                 {/* Icon Buttons */}
                 <div className="flex gap-3 sm:gap-4">
+                    <Link
+                        href="/achievements"
+                        className="p-3 sm:p-4 rounded-full bg-white shadow-md text-yellow-400 hover:text-yellow-600 hover:scale-110 transition-all group"
+                        title="Achievements & Badges"
+                    >
+                        <Trophy className="w-5 h-5 sm:w-6 sm:h-6 group-hover:scale-110 transition-transform duration-300" />
+                    </Link>
                     <Link
                         href="/parent-dashboard"
                         className="p-3 sm:p-4 rounded-full bg-white shadow-md text-purple-400 hover:text-purple-600 hover:scale-110 transition-all group"

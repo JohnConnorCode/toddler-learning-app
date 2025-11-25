@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
 import { type Level, type Lesson, type Activity } from "@/lib/levels-data";
 import { useLevelProgress } from "@/hooks/use-level-progress";
+import { useAchievements } from "@/hooks/use-achievements";
 
 // Activity component imports (to be created/connected)
 import { ActivityPhonics } from "@/components/activities/ActivityPhonics";
@@ -22,6 +23,12 @@ interface LessonPlayerProps {
 export function LessonPlayer({ level, lesson }: LessonPlayerProps) {
   const router = useRouter();
   const { completeLesson, startLesson } = useLevelProgress();
+  const {
+    updateStreak,
+    trackActivity,
+    trackLessonComplete,
+    trackLevelVisit,
+  } = useAchievements();
 
   const [currentActivityIndex, setCurrentActivityIndex] = useState(0);
   const [completedActivities, setCompletedActivities] = useState<Set<string>>(new Set());
@@ -35,13 +42,20 @@ export function LessonPlayer({ level, lesson }: LessonPlayerProps) {
   // Mark lesson as started
   useEffect(() => {
     startLesson(lesson.id);
-  }, [lesson.id, startLesson]);
+    // Track level visit for achievements
+    trackLevelVisit(level.levelNumber);
+    // Update daily streak
+    updateStreak();
+  }, [lesson.id, startLesson, level.levelNumber, trackLevelVisit, updateStreak]);
 
   const handleActivityComplete = (stars: number = 3) => {
     // Award stars (max 3 per activity)
     const actualStars = Math.min(3, Math.max(1, stars));
     setStarsEarned(prev => prev + actualStars);
     setCompletedActivities(prev => new Set([...prev, currentActivity.id]));
+
+    // Track activity type for explorer badges
+    trackActivity(currentActivity.type);
 
     // Show confetti
     confetti({
@@ -53,6 +67,13 @@ export function LessonPlayer({ level, lesson }: LessonPlayerProps) {
     // Move to next activity or show completion
     if (isLastActivity) {
       // Lesson complete!
+      const totalStars = starsEarned + actualStars;
+      const maxStars = lesson.activities.length * 3;
+      const isPerfect = totalStars === maxStars;
+
+      // Track lesson completion for achievements & XP
+      trackLessonComplete(isPerfect);
+
       setTimeout(() => {
         setShowCompletion(true);
         confetti({
