@@ -1142,7 +1142,7 @@ export function getWordsByDifficulty(difficulty: 1 | 2 | 3): DigraphWord[] {
 }
 
 export function getRandomDigraphWords(count: number, digraphId?: string): DigraphWord[] {
-  let words = digraphId ? getWordsByDigraph(digraphId) : [...DIGRAPH_WORDS];
+  const words = digraphId ? getWordsByDigraph(digraphId) : [...DIGRAPH_WORDS];
   const shuffled = words.sort(() => Math.random() - 0.5);
   return shuffled.slice(0, count);
 }

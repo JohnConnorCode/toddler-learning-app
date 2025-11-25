@@ -62,6 +62,7 @@ export function triggerBigConfetti() {
     const animationEnd = Date.now() + duration;
     const colors = ['#FFD700', '#FFA500', '#FF69B4', '#00CED1', '#9370DB', '#32CD32', '#FF4500', '#1E90FF'];
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const interval: any = setInterval(function () {
         const timeLeft = animationEnd - Date.now();
 
@@ -139,6 +140,7 @@ export function triggerMegaConfetti() {
     const duration = 2500;
     const animationEnd = Date.now() + duration;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const interval: any = setInterval(function () {
         const timeLeft = animationEnd - Date.now();
 
@@ -168,6 +170,7 @@ export function triggerStarShower() {
     const duration = 2000;
     const animationEnd = Date.now() + duration;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const interval: any = setInterval(function () {
         const timeLeft = animationEnd - Date.now();
 

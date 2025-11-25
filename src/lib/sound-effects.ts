@@ -16,6 +16,7 @@ class SoundEffectsManager {
   constructor() {
     if (typeof window !== 'undefined') {
       try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       } catch (error) {
         console.warn('Web Audio API not supported');

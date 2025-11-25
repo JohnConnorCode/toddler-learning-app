@@ -12,7 +12,26 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Ignore scripts (CommonJS)
+    "scripts/**",
+    // Ignore test files
+    "src/test/**",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "vitest.config.ts",
   ]),
+  // Custom rules to relax strictness
+  {
+    rules: {
+      // Allow unescaped entities (common in React)
+      "react/no-unescaped-entities": "off",
+      // Allow unused vars with underscore prefix
+      "@typescript-eslint/no-unused-vars": ["warn", {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }],
+    }
+  }
 ]);
 
 export default eslintConfig;

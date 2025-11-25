@@ -148,7 +148,7 @@ export const useProfiles = create<ProfileState>()(
             (s) => s.date === today && s.profileId === profileId
           );
 
-          let newDailyStats = [...state.dailyStats];
+          const newDailyStats = [...state.dailyStats];
 
           if (existingStatIndex >= 0) {
             // Update existing stat

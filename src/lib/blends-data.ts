@@ -629,7 +629,7 @@ export function getFinalBlends(): BlendItem[] {
 }
 
 export function getRandomBlendWords(count: number, blendId?: string): BlendWord[] {
-  let words = blendId ? getWordsByBlend(blendId) : [...BLEND_WORDS];
+  const words = blendId ? getWordsByBlend(blendId) : [...BLEND_WORDS];
   const shuffled = words.sort(() => Math.random() - 0.5);
   return shuffled.slice(0, count);
 }

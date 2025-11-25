@@ -319,7 +319,7 @@ export function getWordsByDifficulty(difficulty: 1 | 2 | 3): VowelTeamWord[] {
 }
 
 export function getRandomVowelTeamWords(count: number, vowelTeamId?: string): VowelTeamWord[] {
-  let words = vowelTeamId ? getWordsByVowelTeam(vowelTeamId) : [...VOWEL_TEAM_WORDS];
+  const words = vowelTeamId ? getWordsByVowelTeam(vowelTeamId) : [...VOWEL_TEAM_WORDS];
   const shuffled = words.sort(() => Math.random() - 0.5);
   return shuffled.slice(0, count);
 }
