@@ -1,10 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { PhonicsItem } from "@/lib/phonics-data";
-import { Volume2, Repeat } from "lucide-react";
+import { Volume2 } from "lucide-react";
 import { useAudio } from "@/hooks/use-audio";
 import { usePhonicsStore } from "@/hooks/use-phonics-store";
 
@@ -15,45 +15,66 @@ interface LetterCardProps {
 
 export function LetterCard({ item, onComplete }: LetterCardProps) {
     const [isFlipped, setIsFlipped] = useState(false);
-    const { playLetterSound } = useAudio();
+    const { playLetterSound, stopAll, playSequence } = useAudio();
     const { mode } = usePhonicsStore();
+    const isPlayingSequence = useRef(false);
+    const isMounted = useRef(true);
 
-    // Reset flip state when item changes
+    // Reset flip state when item changes and cleanup
     useEffect(() => {
         setIsFlipped(false);
+        isPlayingSequence.current = false;
+        return () => {
+            isMounted.current = false;
+        };
     }, [item]);
 
-    const handleTap = () => {
+    // Cleanup on unmount
+    useEffect(() => {
+        isMounted.current = true;
+        return () => {
+            isMounted.current = false;
+            stopAll();
+        };
+    }, [stopAll]);
+
+    const handleTap = useCallback(async () => {
         if (!isFlipped) {
             setIsFlipped(true);
 
-            // Play complete sequence: phonics → letter name → word
-            // Example: "ah" → "A" → "A is for Apple"
-            playLetterSound(item.letter, "phonics", () => {
-                // Small pause, then letter name
-                setTimeout(() => {
-                    playLetterSound(item.letter, "name", () => {
-                        // Then the example
-                        setTimeout(() => {
-                            playLetterSound(item.letter, "example");
-                        }, 400);
-                    });
-                }, 400);
-            });
+            // Prevent overlapping audio sequences
+            if (isPlayingSequence.current) return;
+            isPlayingSequence.current = true;
+
+            // Stop any currently playing audio
+            stopAll();
+
+            // Play complete sequence: phonics → letter name → example
+            await playSequence([
+                { type: "letter-phonics", value: item.letter },
+                { type: "letter-name", value: item.letter },
+                { type: "letter-example", value: item.letter },
+            ], 400);
+
+            if (isMounted.current) {
+                isPlayingSequence.current = false;
+            }
 
             if (onComplete) onComplete();
         } else {
             setIsFlipped(false);
+            stopAll();
             // When flipping back, just play phonics sound
             playLetterSound(item.letter, "phonics");
         }
-    };
+    }, [isFlipped, item.letter, onComplete, playLetterSound, playSequence, stopAll]);
 
-    const handleSoundOnly = (e: React.MouseEvent) => {
+    const handleSoundOnly = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
+        stopAll();
         const type = mode === "phonics" ? "phonics" : "name";
         playLetterSound(item.letter, type);
-    };
+    }, [mode, item.letter, playLetterSound, stopAll]);
 
     return (
         <div className="perspective-1000 w-64 h-80 sm:w-72 sm:h-96 md:w-80 md:h-[400px] cursor-pointer group" onClick={handleTap}>

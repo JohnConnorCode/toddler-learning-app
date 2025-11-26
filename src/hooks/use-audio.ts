@@ -70,6 +70,16 @@ export function useAudio() {
   const currentlyPlaying = useRef<Howl | null>(null);
   const isUnmounted = useRef(false);
 
+  // Use refs for volume/muted so getHowl doesn't need to be recreated
+  const volumeRef = useRef(volume);
+  const isMutedRef = useRef(isMuted);
+
+  // Keep refs in sync
+  useEffect(() => {
+    volumeRef.current = volume;
+    isMutedRef.current = isMuted;
+  }, [volume, isMuted]);
+
   // Cleanup on unmount
   useEffect(() => {
     isUnmounted.current = false;
@@ -107,12 +117,13 @@ export function useAudio() {
     }
 
     // Create new Howl with promise-based loading
+    // Use refs for volume to avoid recreating this callback
     const loadPromise = new Promise<Howl>((resolve, reject) => {
       const howl = new Howl({
         src: [src],
         html5: true,
         preload: true,
-        volume: isMuted ? 0 : volume,
+        volume: isMutedRef.current ? 0 : volumeRef.current,
         onload: () => {
           audioCache.set(src, howl);
           loadingPromises.delete(src);
@@ -134,7 +145,7 @@ export function useAudio() {
     } catch {
       return null;
     }
-  }, [volume, isMuted]);
+  }, []); // Now stable - doesn't depend on volume/isMuted
 
   /**
    * Play audio with error handling and cancellation support
@@ -144,8 +155,8 @@ export function useAudio() {
     onEnd?: () => void,
     onError?: (error: Error) => void
   ): Promise<boolean> => {
-    // Don't play if muted
-    if (isMuted) {
+    // Don't play if muted (use ref for stable callback)
+    if (isMutedRef.current) {
       onEnd?.();
       return false;
     }
@@ -187,7 +198,7 @@ export function useAudio() {
       howl.once("playerror", errorHandler);
       howl.play();
     });
-  }, [getHowl, isMuted]);
+  }, [getHowl]); // Stable - no longer depends on isMuted
 
   /**
    * Build audio path based on type

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePhonicsProgress } from "@/hooks/use-phonics-progress";
 import { getPhonicsItemsForUnit, getUnitById } from "@/lib/systematic-phonics-data";
@@ -22,7 +22,7 @@ export function UnitPractice({ unitId, onExit, onComplete }: UnitPracticeProps) 
     getUnitProgress,
   } = usePhonicsProgress();
 
-  const { playLetterSound } = useAudio();
+  const { playLetterSound, stopAll } = useAudio();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showCompletion, setShowCompletion] = useState(false);
   const [teachingPhase, setTeachingPhase] = useState<"intro" | "sound" | "word" | "practice" | "quiz">("intro");
@@ -32,10 +32,24 @@ export function UnitPractice({ unitId, onExit, onComplete }: UnitPracticeProps) 
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [letterMastery, setLetterMastery] = useState<Record<string, boolean>>({});
 
+  // Refs to prevent re-render issues
+  const hasPlayedForIndex = useRef<number>(-1);
+  const isPlayingRef = useRef(false);
+  const isMountedRef = useRef(true);
+
   const unit = getUnitById(unitId);
   const phonicsItems = getPhonicsItemsForUnit(unitId);
   const currentItem = phonicsItems[currentIndex];
   const unitProgress = getUnitProgress(unitId);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      stopAll();
+    };
+  }, [stopAll]);
 
   // Generate quiz options (correct letter + 3 random distractors)
   const generateQuizOptions = useCallback(() => {
@@ -57,31 +71,41 @@ export function UnitPractice({ unitId, onExit, onComplete }: UnitPracticeProps) 
 
   // Play the full teaching sequence for current letter
   const playTeachingSequence = useCallback(async () => {
-    if (!currentItem || isPlaying) return;
+    if (!currentItem) return;
 
+    // Use ref to prevent overlapping plays
+    if (isPlayingRef.current) return;
+    isPlayingRef.current = true;
     setIsPlaying(true);
+
     setTeachingPhase("intro");
     setSelectedAnswer(null);
     setIsCorrect(null);
 
     // Wait a moment, then play phonics sound
     await new Promise(r => setTimeout(r, 500));
+    if (!isMountedRef.current) return;
+
     setTeachingPhase("sound");
 
     await playLetterSound(currentItem.letter, "phonics");
+    if (!isMountedRef.current) return;
     await new Promise(r => setTimeout(r, 300));
 
     // Play letter name
     await playLetterSound(currentItem.letter, "name");
+    if (!isMountedRef.current) return;
     await new Promise(r => setTimeout(r, 300));
 
     // Play example
     setTeachingPhase("word");
     await playLetterSound(currentItem.letter, "example");
+    if (!isMountedRef.current) return;
 
     setTeachingPhase("practice");
     setIsPlaying(false);
-  }, [currentItem, playLetterSound, isPlaying]);
+    isPlayingRef.current = false;
+  }, [currentItem, playLetterSound]);
 
   // Start the quiz for current letter
   const startQuiz = useCallback(() => {
@@ -115,18 +139,27 @@ export function UnitPractice({ unitId, onExit, onComplete }: UnitPracticeProps) 
     }
   }, [selectedAnswer, currentItem, playLetterSound]);
 
-  // Auto-play when letter changes
+  // Auto-play when letter changes - only once per index
   useEffect(() => {
-    if (currentItem) {
+    if (currentItem && hasPlayedForIndex.current !== currentIndex) {
+      hasPlayedForIndex.current = currentIndex;
+
+      // Mark progress
       markLetterPracticed(currentItem.letter);
       updateUnitLetterCompletion(unitId);
-      // Auto-play the teaching sequence
+
+      // Auto-play the teaching sequence with a small delay
       const timer = setTimeout(() => {
-        playTeachingSequence();
+        if (isMountedRef.current && !isPlayingRef.current) {
+          playTeachingSequence();
+        }
       }, 300);
+
       return () => clearTimeout(timer);
     }
-  }, [currentIndex, currentItem, markLetterPracticed, updateUnitLetterCompletion, unitId, playTeachingSequence]);
+    // Note: intentionally limited dependencies to prevent re-triggers
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex, unitId]);
 
   if (!unit || phonicsItems.length === 0) {
     return (
