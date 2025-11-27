@@ -32,6 +32,7 @@ export default function MathPage() {
       setExpandedUnit(units[0].id);
     }
     setIsReady(true);
+    // Note: One-time initialization after hydration - other deps excluded as they're stable
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasHydrated]);
 

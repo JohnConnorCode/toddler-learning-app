@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Volume2, ArrowRight, RotateCcw, Sparkles } from "lucide-react";
 import { useAccessibility } from "@/hooks/use-accessibility";
@@ -41,15 +41,9 @@ export function DigraphCard({
   const { speak } = useSpeech();
   const sizeClasses = SIZE_CLASSES[size];
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const lastSpokenDigraphRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (autoSpeak) {
-      handleSpeak();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [digraph.id]);
-
-  const handleSpeak = () => {
+  const handleSpeak = useCallback(() => {
     if (isSpeaking) return;
     setIsSpeaking(true);
     speak(
@@ -57,7 +51,14 @@ export function DigraphCard({
       { rate: 0.85, onEnd: () => setIsSpeaking(false) }
     );
     playFeedback("pop", "light");
-  };
+  }, [isSpeaking, digraph.digraph, digraph.phonemeSpelling, digraph.description, digraph.exampleWord, speak]);
+
+  useEffect(() => {
+    if (autoSpeak && digraph.id !== lastSpokenDigraphRef.current) {
+      lastSpokenDigraphRef.current = digraph.id;
+      handleSpeak();
+    }
+  }, [autoSpeak, digraph.id, handleSpeak]);
 
   return (
     <motion.div
@@ -178,6 +179,7 @@ export function DigraphWordQuiz({
       .slice(0, 2);
 
     return [currentWord, ...otherWords].sort(() => Math.random() - 0.5);
+    // Note: optionsSeed controls when reshuffling occurs; DIGRAPH_WORDS is a module constant
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex, questions, digraphId, optionsSeed]);
 

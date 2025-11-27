@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   STORIES,
@@ -12,6 +12,8 @@ import {
 } from "@/lib/stories-data";
 import { useStoryProgress } from "@/hooks/use-story-progress";
 import { useLevelProgress } from "@/hooks/use-level-progress";
+import { useTheme } from "@/hooks/use-theme";
+import { getStoriesPrioritizedByInterests, storyMatchesInterests, getInterestLabel } from "@/lib/interest-content";
 import { StoryReader } from "./StoryReader";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 import {
@@ -27,7 +29,7 @@ import {
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
-type FilterType = "all" | "unlocked" | "favorites" | "completed";
+type FilterType = "all" | "unlocked" | "favorites" | "completed" | "for-you";
 
 export function StoryLibrary() {
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
@@ -36,13 +38,27 @@ export function StoryLibrary() {
 
   const { currentLevel } = useLevelProgress();
   const { getStoryProgress, favorites } = useStoryProgress();
+  const { interests, hasInterests } = useTheme();
+
+  // Get interest-matched stories for "For You" section
+  const forYouStories = useMemo(() => {
+    if (!hasInterests) return [];
+    return getStoriesPrioritizedByInterests(interests).filter(s =>
+      storyMatchesInterests(s, interests)
+    ).slice(0, 6);
+  }, [interests, hasInterests]);
+
+  const interestLabel = useMemo(() => getInterestLabel(interests), [interests]);
 
   // Filter stories based on selected filters
   const getFilteredStories = (): Story[] => {
     let stories = STORIES;
 
     // Apply main filter
-    if (filter === "unlocked") {
+    if (filter === "for-you") {
+      // Return interest-prioritized stories
+      stories = getStoriesPrioritizedByInterests(interests);
+    } else if (filter === "unlocked") {
       // Convert level ID like "level-1" to number
       const levelNumber = currentLevel ? parseInt(currentLevel.replace("level-", ""), 10) : 1;
       stories = getUnlockedStories(levelNumber);
@@ -121,6 +137,20 @@ export function StoryLibrary() {
               <Filter className="w-4 h-4" />
               Show:
             </span>
+            {hasInterests && (
+              <button
+                onClick={() => setFilter("for-you")}
+                className={cn(
+                  "px-4 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-1",
+                  filter === "for-you"
+                    ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-md scale-105"
+                    : "bg-gradient-to-r from-pink-100 to-purple-100 text-purple-600 hover:from-pink-200 hover:to-purple-200"
+                )}
+              >
+                <Heart className="w-4 h-4" />
+                For You
+              </button>
+            )}
             {(["all", "unlocked", "favorites", "completed"] as FilterType[]).map((f) => (
               <button
                 key={f}
@@ -157,6 +187,30 @@ export function StoryLibrary() {
           </div>
         </div>
       </div>
+
+      {/* For You Section - Shows stories matching interests */}
+      {filter === "all" && !difficultyFilter && hasInterests && forYouStories.length > 0 && (
+        <div className="max-w-7xl mx-auto mb-8">
+          <div className="flex items-center gap-2 mb-2">
+            <Heart className="w-6 h-6 text-pink-500 fill-pink-500" />
+            <h2 className="text-2xl font-black text-gray-800">For You</h2>
+          </div>
+          <p className="text-sm text-gray-500 mb-4 ml-8">{interestLabel}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {forYouStories.map((story, index) => (
+              <StoryCard
+                key={story.id}
+                story={story}
+                index={index}
+                isUnlocked={isStoryUnlocked(story)}
+                progress={getStoryProgress(story.id)}
+                onClick={() => isStoryUnlocked(story) && setSelectedStory(story)}
+                isForYou
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Featured Stories */}
       {filter === "all" && !difficultyFilter && featuredStories.length > 0 && (
@@ -216,9 +270,10 @@ interface StoryCardProps {
   isUnlocked: boolean;
   progress: any;
   onClick: () => void;
+  isForYou?: boolean;
 }
 
-function StoryCard({ story, index, isUnlocked, progress, onClick }: StoryCardProps) {
+function StoryCard({ story, index, isUnlocked, progress, onClick, isForYou }: StoryCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -229,7 +284,8 @@ function StoryCard({ story, index, isUnlocked, progress, onClick }: StoryCardPro
         "relative bg-white rounded-2xl shadow-xl overflow-hidden transition-all",
         isUnlocked
           ? "cursor-pointer hover:shadow-2xl hover:scale-[1.02]"
-          : "opacity-60 cursor-not-allowed"
+          : "opacity-60 cursor-not-allowed",
+        isForYou && "ring-2 ring-pink-400 ring-offset-2"
       )}
     >
       {/* Cover Image */}
@@ -240,6 +296,14 @@ function StoryCard({ story, index, isUnlocked, progress, onClick }: StoryCardPro
           fallbackText="📚"
           className="w-full h-full object-cover"
         />
+
+        {/* For You Badge */}
+        {isForYou && (
+          <div className="absolute top-2 left-2 bg-gradient-to-r from-pink-500 to-purple-500 px-3 py-1 rounded-full shadow-lg flex items-center gap-1">
+            <Heart className="w-3 h-3 text-white fill-white" />
+            <span className="text-xs font-bold text-white">For You</span>
+          </div>
+        )}
 
         {/* Status Badges */}
         <div className="absolute top-2 right-2 flex flex-col gap-2">

@@ -421,13 +421,13 @@ export function LetterTracing({
         animate={{ scale: 1, opacity: 1 }}
         className="text-center"
       >
-        {/* Case Toggle (for "both" mode) */}
+        {/* TODDLER: Big 60px case toggle buttons */}
         {letterCase === "both" && (
-          <div className="flex justify-center gap-2 mb-2">
+          <div className="flex justify-center gap-3 mb-3">
             <button
               onClick={() => activeCase !== "upper" && handleToggleCase()}
               className={cn(
-                "px-3 py-1 rounded-full text-sm font-bold transition-colors",
+                "w-16 h-16 sm:w-20 sm:h-20 rounded-full text-2xl sm:text-3xl font-black transition-colors flex items-center justify-center",
                 activeCase === "upper"
                   ? "bg-purple-500 text-white"
                   : "bg-gray-200 text-gray-600 hover:bg-gray-300"
@@ -438,7 +438,7 @@ export function LetterTracing({
             <button
               onClick={() => activeCase !== "lower" && handleToggleCase()}
               className={cn(
-                "px-3 py-1 rounded-full text-sm font-bold transition-colors",
+                "w-16 h-16 sm:w-20 sm:h-20 rounded-full text-2xl sm:text-3xl font-black transition-colors flex items-center justify-center",
                 activeCase === "lower"
                   ? "bg-purple-500 text-white"
                   : "bg-gray-200 text-gray-600 hover:bg-gray-300"
@@ -451,11 +451,12 @@ export function LetterTracing({
         <span className="text-6xl sm:text-7xl font-black text-gray-800">
           {displayLetter}
         </span>
+        {/* TODDLER: Big 60px speak button */}
         <button
           onClick={handleSpeak}
-          className="ml-3 p-2 bg-blue-100 rounded-full hover:bg-blue-200 transition-colors"
+          className="ml-3 p-4 sm:p-5 bg-blue-100 rounded-full hover:bg-blue-200 transition-colors min-w-[60px] min-h-[60px] flex items-center justify-center"
         >
-          <Volume2 className="w-6 h-6 text-blue-600" />
+          <Volume2 className="w-8 h-8 sm:w-10 sm:h-10 text-blue-600" />
         </button>
       </motion.div>
 
@@ -509,23 +510,34 @@ export function LetterTracing({
         )}
       </div>
 
-      {/* Instructions */}
-      <p className="text-gray-600 text-center font-medium">
-        {hasDrawn
-          ? `Strokes: ${strokeCount}`
-          : "Trace the letter with your finger"}
-      </p>
+      {/* TODDLER: Visual indicator instead of text instructions */}
+      <div className="flex justify-center">
+        {hasDrawn ? (
+          <div className="flex gap-1">
+            {Array.from({ length: Math.min(strokeCount, 5) }).map((_, i) => (
+              <div key={i} className="w-3 h-3 rounded-full bg-purple-400" />
+            ))}
+          </div>
+        ) : (
+          <motion.div
+            animate={{ y: [0, 5, 0] }}
+            transition={{ duration: 1, repeat: Infinity }}
+            className="text-4xl"
+          >
+            ✏️
+          </motion.div>
+        )}
+      </div>
 
-      {/* Action Buttons */}
+      {/* TODDLER: Big 70px+ action buttons with icons only */}
       <div className="flex gap-4">
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleReset}
-          className="px-5 py-3 bg-gray-200 text-gray-700 font-bold rounded-full flex items-center gap-2"
+          className="p-5 sm:p-6 bg-gray-200 text-gray-700 font-bold rounded-full flex items-center justify-center min-w-[70px] min-h-[70px]"
         >
-          <RotateCcw className="w-5 h-5" />
-          <span>Clear</span>
+          <RotateCcw className="w-8 h-8 sm:w-10 sm:h-10" />
         </motion.button>
 
         {hasDrawn && !isComplete && (
@@ -535,10 +547,9 @@ export function LetterTracing({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleComplete}
-            className="px-5 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-full flex items-center gap-2"
+            className="p-5 sm:p-6 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-full flex items-center justify-center min-w-[70px] min-h-[70px]"
           >
-            <span>Done</span>
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight className="w-8 h-8 sm:w-10 sm:h-10" />
           </motion.button>
         )}
       </div>

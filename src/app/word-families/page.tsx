@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { ArrowLeft, Volume2, BookOpen, Check, X, Trophy, Star } from "lucide-react";
 import { useAccessibility } from "@/hooks/use-accessibility";
+import { useSpeech } from "@/hooks/use-audio";
 import { WORD_FAMILIES_DATA, WordFamily, getWordFamiliesByDifficulty } from "@/lib/word-families-data";
 import { triggerConfetti } from "@/lib/confetti";
 
@@ -13,6 +14,7 @@ type Difficulty = 1 | 2 | 3;
 
 export default function WordFamiliesPage() {
   const { shouldReduceMotion } = useAccessibility();
+  const { speak, stop: stopSpeech } = useSpeech();
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [selectedFamily, setSelectedFamily] = useState<WordFamily | null>(null);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
@@ -35,13 +37,9 @@ export default function WordFamiliesPage() {
   const allWordsRevealed = revealedWords.size >= currentWords.length;
 
   const handlePlaySound = useCallback((text: string) => {
-    if ("speechSynthesis" in window) {
-      speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text.toLowerCase());
-      utterance.rate = 0.7;
-      speechSynthesis.speak(utterance);
-    }
-  }, []);
+    stopSpeech();
+    speak(text.toLowerCase(), { rate: 0.7 });
+  }, [speak, stopSpeech]);
 
   const selectFamily = (family: WordFamily) => {
     setSelectedFamily(family);

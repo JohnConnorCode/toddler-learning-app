@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Volume2, ArrowRight, RotateCcw, Sparkles, ChevronLeft } from "lucide-react";
 import { useAccessibility } from "@/hooks/use-accessibility";
@@ -42,15 +42,9 @@ export function BlendCard({
   const { speak } = useSpeech();
   const sizeClasses = SIZE_CLASSES[size];
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const lastSpokenBlendRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (autoSpeak) {
-      handleSpeak();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [blend.id]);
-
-  const handleSpeak = () => {
+  const handleSpeak = useCallback(() => {
     if (isSpeaking) return;
     setIsSpeaking(true);
     const letters = blend.blend.split("").join(" and ");
@@ -59,7 +53,14 @@ export function BlendCard({
       { rate: 0.85, onEnd: () => setIsSpeaking(false) }
     );
     playFeedback("pop", "light");
-  };
+  }, [isSpeaking, blend.blend, blend.description, blend.exampleWord, speak]);
+
+  useEffect(() => {
+    if (autoSpeak && blend.id !== lastSpokenBlendRef.current) {
+      lastSpokenBlendRef.current = blend.id;
+      handleSpeak();
+    }
+  }, [autoSpeak, blend.id, handleSpeak]);
 
   return (
     <motion.div
@@ -422,6 +423,7 @@ export function BlendWordQuiz({
       .slice(0, 2);
 
     return [currentWord, ...otherWords].sort(() => Math.random() - 0.5);
+    // Note: optionsSeed controls when reshuffling occurs; BLEND_WORDS is a module constant
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex, questions, blendId, optionsSeed]);
 

@@ -1,13 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { WORDS_DATA, WordCategory } from "@/lib/words-data";
+import { WORDS_DATA, WordCategory, WordItem } from "@/lib/words-data";
+import { useTheme } from "@/hooks/use-theme";
+import { getWordsPrioritizedByInterests, wordMatchesInterests } from "@/lib/interest-content";
 import { WordBuilder } from "@/components/game/WordBuilder";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 import Link from "next/link";
-import { ArrowLeft, ChevronRight, ChevronLeft, Filter } from "lucide-react";
+import { ArrowLeft, ChevronRight, ChevronLeft, Filter, Heart } from "lucide-react";
+
+type CategoryFilter = WordCategory | "for-you" | null;
 
 export function WordsGame() {
     const searchParams = useSearchParams();
@@ -16,12 +20,33 @@ export function WordsGame() {
     const returnTo = searchParams.get("returnTo");
 
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [selectedCategory, setSelectedCategory] = useState<WordCategory | null>(null);
+    const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>(null);
     const [initialized, setInitialized] = useState(false);
 
-    const filteredWords = selectedCategory
-        ? WORDS_DATA.filter(w => w.category === selectedCategory)
-        : WORDS_DATA;
+    const { interests, hasInterests } = useTheme();
+
+    // Get words based on selected filter
+    const filteredWords = useMemo((): WordItem[] => {
+        if (selectedCategory === "for-you") {
+            // Show interest-matched words first, then others
+            return getWordsPrioritizedByInterests(interests);
+        }
+        if (selectedCategory !== null) {
+            // It's a WordCategory
+            return WORDS_DATA.filter(w => w.category === selectedCategory);
+        }
+        // Default (null): show all words, but prioritize by interests if user has them
+        if (hasInterests) {
+            return getWordsPrioritizedByInterests(interests);
+        }
+        return WORDS_DATA;
+    }, [selectedCategory, interests, hasInterests]);
+
+    // Check if current word matches user interests
+    const currentWordMatchesInterest = useMemo(() => {
+        if (!hasInterests || filteredWords.length === 0) return false;
+        return wordMatchesInterests(filteredWords[currentIndex], interests);
+    }, [filteredWords, currentIndex, interests, hasInterests]);
 
     // Auto-select word if specified in query params
     useEffect(() => {
@@ -51,7 +76,7 @@ export function WordsGame() {
         }
     };
 
-    const handleCategoryChange = (category: WordCategory | null) => {
+    const handleCategoryChange = (category: CategoryFilter) => {
         setSelectedCategory(category);
         setCurrentIndex(0);
     };
@@ -90,6 +115,20 @@ export function WordsGame() {
                         <Filter className="w-4 h-4" />
                         Category:
                     </span>
+                    {/* For You button - only shows if user has interests */}
+                    {hasInterests && (
+                        <button
+                            onClick={() => handleCategoryChange("for-you")}
+                            className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all flex items-center gap-1 ${
+                                selectedCategory === "for-you"
+                                    ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-md scale-105"
+                                    : "bg-gradient-to-r from-pink-100 to-purple-100 text-purple-600 hover:from-pink-200 hover:to-purple-200 shadow-sm"
+                            }`}
+                        >
+                            <Heart className="w-3 h-3" />
+                            For You
+                        </button>
+                    )}
                     {categories.map((cat) => (
                         <button
                             key={cat || "all"}
@@ -116,7 +155,9 @@ export function WordsGame() {
                         key={`${selectedCategory}-${currentIndex}`}
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        className="w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 bg-white rounded-2xl sm:rounded-3xl shadow-lg mx-auto overflow-hidden border-4 sm:border-6 md:border-8 border-white"
+                        className={`relative w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 bg-white rounded-2xl sm:rounded-3xl shadow-lg mx-auto overflow-hidden border-4 sm:border-6 md:border-8 ${
+                            currentWordMatchesInterest ? "border-pink-300 ring-2 ring-pink-400" : "border-white"
+                        }`}
                     >
                         <ImageWithFallback
                             src={filteredWords[currentIndex].image}
@@ -124,6 +165,13 @@ export function WordsGame() {
                             fallbackText={filteredWords[currentIndex].word}
                             className="w-full h-full"
                         />
+                        {/* For You badge on image */}
+                        {currentWordMatchesInterest && (
+                            <div className="absolute top-2 left-2 bg-gradient-to-r from-pink-500 to-purple-500 px-2 py-1 rounded-full shadow-lg flex items-center gap-1">
+                                <Heart className="w-3 h-3 text-white fill-white" />
+                                <span className="text-xs font-bold text-white">For You</span>
+                            </div>
+                        )}
                     </motion.div>
                 </div>
 

@@ -32,6 +32,10 @@ export interface ParentPreferences {
 }
 
 interface OnboardingState {
+  // Hydration state - CRITICAL for SSR
+  _hasHydrated: boolean;
+  setHasHydrated: (state: boolean) => void;
+
   // Onboarding progress
   isOnboardingComplete: boolean;
   currentStep: OnboardingStep;
@@ -77,6 +81,10 @@ const DEFAULT_GUIDED_PROGRESS = {
 export const useOnboarding = create<OnboardingState>()(
   persist(
     (set, get) => ({
+      // Hydration state
+      _hasHydrated: false,
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
+
       // Initial state
       isOnboardingComplete: false,
       currentStep: "welcome",
@@ -149,6 +157,9 @@ export const useOnboarding = create<OnboardingState>()(
     {
       name: "little-learner-onboarding",
       version: 2,
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
       migrate: (persistedState: unknown, version: number) => {
         const state = persistedState as OnboardingState;
 
@@ -170,6 +181,13 @@ export const useOnboarding = create<OnboardingState>()(
     }
   )
 );
+
+/**
+ * Hook to check if onboarding store has hydrated
+ */
+export function useOnboardingHydrated() {
+  return useOnboarding((state) => state._hasHydrated);
+}
 
 // Helper hooks for specific onboarding data
 export function useChildName(): string {

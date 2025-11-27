@@ -23,6 +23,11 @@ export const MATH_EMOJI_THEMES = {
   cars: ['🚗', '🚙', '🏎️', '🚕', '🚓'],
   rockets: ['🚀', '🛸', '🌙', '⭐', '🌍'],
   spaceships: ['🛸', '🚀', '👽', '🛰️', '🌌'],
+  // New interest-based themes
+  bugs: ['🦋', '🐛', '🐝', '🐞', '🦗'],
+  princesses: ['👑', '🏰', '✨', '💎', '🌸'],
+  ocean: ['🐠', '🐙', '🦀', '🐚', '🌊'],
+  construction: ['🏗️', '🔨', '🚜', '🧱', '👷'],
 } as const;
 
 export type EmojiTheme = keyof typeof MATH_EMOJI_THEMES;
@@ -202,7 +207,7 @@ export const NUMBERS: NumberItem[] = [
 // PROBLEM GENERATORS
 // ============================================
 
-function generateAdditionProblems(
+function _generateAdditionProblems(
   maxSum: number,
   count: number,
   difficulty: MathDifficulty,
@@ -250,7 +255,7 @@ function generateAdditionProblems(
   return problems;
 }
 
-function generateSubtractionProblems(
+function _generateSubtractionProblems(
   maxNumber: number,
   count: number,
   difficulty: MathDifficulty,
@@ -300,7 +305,7 @@ function generateSubtractionProblems(
 /**
  * Generate comparison problems (greater than, less than, equal)
  */
-function generateComparisonProblems(
+function _generateComparisonProblems(
   maxNumber: number,
   count: number,
   difficulty: MathDifficulty
@@ -349,7 +354,7 @@ function generateComparisonProblems(
 /**
  * Generate pattern problems (find the missing number in a sequence)
  */
-function generatePatternProblems(
+function _generatePatternProblems(
   maxNumber: number,
   count: number,
   difficulty: MathDifficulty
@@ -403,7 +408,7 @@ function generatePatternProblems(
 /**
  * Generate missing number problems (3 + ? = 7)
  */
-function generateMissingNumberProblems(
+function _generateMissingNumberProblems(
   maxSum: number,
   count: number,
   difficulty: MathDifficulty
@@ -425,14 +430,11 @@ function generateMissingNumberProblems(
     const position = positions[Math.floor(Math.random() * positions.length)];
 
     let equation: string;
-    let operands: number[];
 
     if (position === "left") {
       equation = `? + ${known} = ${total}`;
-      operands = [missing, known];
     } else {
       equation = `${known} + ? = ${total}`;
-      operands = [known, missing];
     }
 
     problems.push({
@@ -454,7 +456,7 @@ function generateMissingNumberProblems(
 /**
  * Generate ten-frame counting problems
  */
-function generateTenFrameProblems(
+function _generateTenFrameProblems(
   maxNumber: number,
   count: number,
   difficulty: MathDifficulty

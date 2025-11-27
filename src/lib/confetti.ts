@@ -1,8 +1,29 @@
 "use client";
 
 import confetti from "canvas-confetti";
+import { InterestThemeId, INTEREST_THEMES } from "./theme-data";
 
 type CelebrationLevel = 'small' | 'medium' | 'big' | 'mega';
+
+// ============ INTEREST-THEMED COLORS ============
+
+/**
+ * Get confetti colors based on user's interest theme
+ */
+export function getThemedColors(interest?: InterestThemeId | null): string[] {
+    if (!interest) {
+        return ['#FFD700', '#FFA500', '#FF69B4', '#00CED1', '#9370DB', '#32CD32'];
+    }
+
+    const theme = INTEREST_THEMES[interest];
+    return [
+        theme.colors.primary,
+        theme.colors.secondary,
+        theme.colors.accent,
+        '#FFD700', // Always include gold for celebration feel
+        '#FFFFFF', // White sparkle
+    ];
+}
 
 /**
  * Enhanced confetti celebration system
@@ -242,6 +263,144 @@ export function triggerConfetti(level: CelebrationLevel = 'big') {
     }
 }
 
+// ============ INTEREST-THEMED CELEBRATIONS ============
+
+/**
+ * Themed confetti celebration - uses interest colors
+ */
+export function triggerThemedConfetti(
+    interest?: InterestThemeId | null,
+    level: CelebrationLevel = 'big'
+) {
+    const colors = getThemedColors(interest);
+
+    switch (level) {
+        case 'small':
+            confetti({
+                particleCount: 30,
+                spread: 60,
+                startVelocity: 25,
+                scalar: 1.2,
+                origin: { y: 0.6 },
+                colors,
+            });
+            break;
+        case 'medium':
+            confetti({
+                particleCount: 60,
+                spread: 100,
+                startVelocity: 35,
+                scalar: 1.4,
+                origin: { x: 0.3, y: 0.5 },
+                colors,
+            });
+            setTimeout(() => {
+                confetti({
+                    particleCount: 60,
+                    spread: 100,
+                    startVelocity: 35,
+                    scalar: 1.4,
+                    origin: { x: 0.7, y: 0.5 },
+                    colors,
+                });
+            }, 150);
+            break;
+        case 'mega':
+            // Initial burst
+            confetti({
+                particleCount: 100,
+                spread: 160,
+                startVelocity: 55,
+                scalar: 2.0,
+                shapes: ['star', 'circle', 'square'],
+                colors,
+                origin: { y: 0.8 },
+            });
+            // Side bursts
+            setTimeout(() => {
+                confetti({
+                    particleCount: 70,
+                    angle: 60,
+                    spread: 55,
+                    startVelocity: 50,
+                    scalar: 1.8,
+                    shapes: ['star', 'circle'],
+                    colors,
+                    origin: { x: 0, y: 0.6 },
+                });
+                confetti({
+                    particleCount: 70,
+                    angle: 120,
+                    spread: 55,
+                    startVelocity: 50,
+                    scalar: 1.8,
+                    shapes: ['star', 'circle'],
+                    colors,
+                    origin: { x: 1, y: 0.6 },
+                });
+            }, 200);
+            break;
+        case 'big':
+        default:
+            const duration = 2000;
+            const animationEnd = Date.now() + duration;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const interval: any = setInterval(function () {
+                const timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) return clearInterval(interval);
+                const particleCount = 50 * (timeLeft / duration);
+                confetti({
+                    particleCount,
+                    startVelocity: 40,
+                    spread: 360,
+                    ticks: 80,
+                    scalar: 1.5,
+                    shapes: ['circle', 'square'],
+                    colors,
+                    origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+                });
+                confetti({
+                    particleCount,
+                    startVelocity: 40,
+                    spread: 360,
+                    ticks: 80,
+                    scalar: 1.5,
+                    shapes: ['circle', 'square'],
+                    colors,
+                    origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+                });
+            }, 250);
+            break;
+    }
+}
+
+/**
+ * Themed emoji shower - shows interest-specific emojis falling
+ * (Using circles with theme colors as a proxy for emoji shapes)
+ */
+export function triggerThemedShower(interest?: InterestThemeId | null) {
+    const colors = getThemedColors(interest);
+    const duration = 2000;
+    const animationEnd = Date.now() + duration;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const interval: any = setInterval(function () {
+        const timeLeft = animationEnd - Date.now();
+        if (timeLeft <= 0) return clearInterval(interval);
+
+        confetti({
+            particleCount: 4,
+            spread: 30,
+            startVelocity: 20,
+            scalar: 2.0,
+            shapes: ['circle', 'star'],
+            colors,
+            origin: { x: Math.random(), y: -0.1 },
+            gravity: 0.8,
+        });
+    }, 100);
+}
+
 // Export all celebration types
 export {
     triggerSmallConfetti as celebrateSmall,
@@ -250,4 +409,6 @@ export {
     triggerMegaConfetti as celebrateMega,
     triggerStarShower as celebrateStars,
     triggerHeartExplosion as celebrateHearts,
+    triggerThemedConfetti as celebrateThemed,
+    triggerThemedShower as celebrateThemedShower,
 };

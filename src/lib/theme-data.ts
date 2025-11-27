@@ -7,8 +7,8 @@
 
 // ============ TYPES ============
 
-export type InterestThemeId = 'robots' | 'dinosaurs' | 'lizards' | 'cars' | 'rockets' | 'spaceships';
-export type MascotId = 'owl' | 'robot' | 'dinosaur' | 'lizard' | 'car' | 'rocket' | 'spaceship';
+export type InterestThemeId = 'robots' | 'dinosaurs' | 'lizards' | 'cars' | 'rockets' | 'spaceships' | 'animals' | 'bugs' | 'princesses' | 'ocean' | 'construction';
+export type MascotId = 'owl' | 'robot' | 'dinosaur' | 'lizard' | 'car' | 'rocket' | 'spaceship' | 'puppy' | 'butterfly' | 'princess' | 'fish' | 'builder';
 
 export interface ThemeColors {
   primary: string;
@@ -146,6 +146,86 @@ export const INTEREST_THEMES: Record<InterestThemeId, InterestTheme> = {
     mascot: 'spaceship',
     celebrationEmojis: ['🛸', '👽', '🎉', '🌟', '✨'],
     description: 'Explore the universe of learning!',
+  },
+  animals: {
+    id: 'animals',
+    name: 'Animals',
+    icon: '🐶',
+    emojis: ['🐶', '🐱', '🐰', '🐻', '🦊'],
+    colors: {
+      primary: '#F59E0B',     // Amber
+      secondary: '#FBBF24',   // Light amber
+      background: '#FFFBEB',  // Very light amber
+      accent: '#EC4899',      // Pink for contrast
+      gradient: 'from-amber-400 via-orange-400 to-yellow-400',
+    },
+    mascot: 'puppy',
+    celebrationEmojis: ['🐶', '🐾', '🎉', '⭐', '💛'],
+    description: 'Woof! Learn with furry friends!',
+  },
+  bugs: {
+    id: 'bugs',
+    name: 'Bugs',
+    icon: '🦋',
+    emojis: ['🦋', '🐛', '🐝', '🐞', '🦗'],
+    colors: {
+      primary: '#84CC16',     // Lime
+      secondary: '#A3E635',   // Light lime
+      background: '#F7FEE7',  // Very light lime
+      accent: '#EC4899',      // Pink for contrast
+      gradient: 'from-lime-400 via-green-400 to-emerald-400',
+    },
+    mascot: 'butterfly',
+    celebrationEmojis: ['🦋', '🐝', '🎉', '🌸', '✨'],
+    description: 'Flutter into fun learning!',
+  },
+  princesses: {
+    id: 'princesses',
+    name: 'Princesses',
+    icon: '👑',
+    emojis: ['👑', '🏰', '✨', '💎', '🌸'],
+    colors: {
+      primary: '#EC4899',     // Pink
+      secondary: '#F472B6',   // Light pink
+      background: '#FDF2F8',  // Very light pink
+      accent: '#8B5CF6',      // Purple for contrast
+      gradient: 'from-pink-400 via-rose-400 to-fuchsia-400',
+    },
+    mascot: 'princess',
+    celebrationEmojis: ['👑', '✨', '🎉', '💖', '🌟'],
+    description: 'Royal learning adventures await!',
+  },
+  ocean: {
+    id: 'ocean',
+    name: 'Ocean',
+    icon: '🐠',
+    emojis: ['🐠', '🐙', '🦀', '🐚', '🌊'],
+    colors: {
+      primary: '#0EA5E9',     // Sky blue
+      secondary: '#38BDF8',   // Light sky blue
+      background: '#F0F9FF',  // Very light blue
+      accent: '#F97316',      // Orange for contrast
+      gradient: 'from-sky-400 via-cyan-400 to-blue-400',
+    },
+    mascot: 'fish',
+    celebrationEmojis: ['🐠', '🌊', '🎉', '⭐', '🐚'],
+    description: 'Dive into learning adventures!',
+  },
+  construction: {
+    id: 'construction',
+    name: 'Construction',
+    icon: '🏗️',
+    emojis: ['🏗️', '🔨', '🚜', '🧱', '👷'],
+    colors: {
+      primary: '#F97316',     // Orange
+      secondary: '#FB923C',   // Light orange
+      background: '#FFF7ED',  // Very light orange
+      accent: '#3B82F6',      // Blue for contrast
+      gradient: 'from-orange-400 via-amber-400 to-yellow-400',
+    },
+    mascot: 'builder',
+    celebrationEmojis: ['🏗️', '🔨', '🎉', '⭐', '🚜'],
+    description: 'Build your way to learning!',
   },
 };
 
@@ -471,6 +551,236 @@ export const MASCOTS: Record<MascotId, MascotConfig> = {
         "Zorp come in peace!",
         "Take me to your learning!",
         "Human friend! Let's explore!",
+      ],
+    },
+  },
+  puppy: {
+    id: 'puppy',
+    name: 'Buddy',
+    emoji: '🐶',
+    personality: 'Loyal and playful',
+    tagline: 'Woof woof! Your best learning friend!',
+    relatedThemes: ['animals'],
+    messages: {
+      happy: [
+        "WOOF! Great job!",
+        "Tail wagging for you!",
+        "Good human! Good!",
+        "Paws up for awesome!",
+      ],
+      excited: [
+        "BARK BARK! Amazing!",
+        "Jumping with joy!",
+        "You deserve all the treats!",
+        "Best friend award!",
+      ],
+      encouraging: [
+        "Fetch that answer!",
+        "Good dogs never give up!",
+        "Sniff out the right one!",
+        "Pawsitive you can do it!",
+      ],
+      celebrating: [
+        "WOOF WOOF! CHAMPION!",
+        "Top dog status!",
+        "Golden retriever of learning!",
+        "Best in show!",
+      ],
+      thinking: [
+        "Sniff sniff... thinking...",
+        "Tilting head in thought...",
+        "Pawsing to think...",
+        "What would a good dog do?",
+      ],
+      greeting: [
+        "WOOF! Hello, friend!",
+        "Buddy is here to help!",
+        "Ready to fetch some learning?",
+        "Tail-wagging hello!",
+      ],
+    },
+  },
+  butterfly: {
+    id: 'butterfly',
+    name: 'Flutter',
+    emoji: '🦋',
+    personality: 'Gentle and curious',
+    tagline: 'Flutter by to learn and fly!',
+    relatedThemes: ['bugs'],
+    messages: {
+      happy: [
+        "Flutter flutter! Great!",
+        "Beautiful work!",
+        "Your brain is blooming!",
+        "Spread your wings!",
+      ],
+      excited: [
+        "FLUTTER! Amazing!",
+        "Flying high with joy!",
+        "You're transforming!",
+        "Butterfly kisses!",
+      ],
+      encouraging: [
+        "Every caterpillar learns to fly!",
+        "Flutter up and try again!",
+        "Gentle wings, strong mind!",
+        "Keep growing!",
+      ],
+      celebrating: [
+        "BEAUTIFUL VICTORY!",
+        "Metamorphosis complete!",
+        "You've earned your wings!",
+        "Soaring success!",
+      ],
+      thinking: [
+        "Landing on a thought...",
+        "Fluttering through ideas...",
+        "Gently considering...",
+        "Wings folded, thinking...",
+      ],
+      greeting: [
+        "Flutter flutter! Hello!",
+        "Let's explore together!",
+        "Ready to spread your wings?",
+        "Beautiful day to learn!",
+      ],
+    },
+  },
+  princess: {
+    id: 'princess',
+    name: 'Rosie',
+    emoji: '👸',
+    personality: 'Kind and magical',
+    tagline: 'Every learner is royalty!',
+    relatedThemes: ['princesses'],
+    messages: {
+      happy: [
+        "Royally wonderful!",
+        "You sparkle so bright!",
+        "Crown-worthy work!",
+        "Magical job!",
+      ],
+      excited: [
+        "MAGNIFICENT!",
+        "Fairy tale amazing!",
+        "You're enchanting!",
+        "True royalty!",
+      ],
+      encouraging: [
+        "Every royal learns!",
+        "Your crown awaits!",
+        "Magic takes practice!",
+        "Believe in yourself!",
+      ],
+      celebrating: [
+        "ROYAL VICTORY!",
+        "Crown of knowledge!",
+        "Fairy tale ending!",
+        "Princess of learning!",
+      ],
+      thinking: [
+        "The royal thinks...",
+        "Consulting the magic mirror...",
+        "What would a wise queen do?",
+        "Pondering royally...",
+      ],
+      greeting: [
+        "Greetings, young royal!",
+        "Welcome to the castle of learning!",
+        "Ready for magical adventures?",
+        "Your royal journey awaits!",
+      ],
+    },
+  },
+  fish: {
+    id: 'fish',
+    name: 'Splash',
+    emoji: '🐠',
+    personality: 'Cheerful and bubbly',
+    tagline: 'Dive into learning!',
+    relatedThemes: ['ocean'],
+    messages: {
+      happy: [
+        "SPLASH! Great job!",
+        "Swimming in success!",
+        "Making waves!",
+        "Fin-tastic work!",
+      ],
+      excited: [
+        "BUBBLES! Amazing!",
+        "Ocean-deep awesome!",
+        "You're a star-fish!",
+        "Whale of a job!",
+      ],
+      encouraging: [
+        "Keep swimming!",
+        "Dive back in!",
+        "Every fish learns to swim!",
+        "Ride the wave!",
+      ],
+      celebrating: [
+        "SPLASH! VICTORY!",
+        "King of the sea!",
+        "Deep sea champion!",
+        "Treasure found!",
+      ],
+      thinking: [
+        "Bubbling with thoughts...",
+        "Swimming through ideas...",
+        "Deep in thought...",
+        "What's in the coral?",
+      ],
+      greeting: [
+        "SPLASH! Hello, friend!",
+        "Dive in with me!",
+        "Ready to explore the ocean?",
+        "Let's make waves!",
+      ],
+    },
+  },
+  builder: {
+    id: 'builder',
+    name: 'Hammer',
+    emoji: '👷',
+    personality: 'Hardworking and encouraging',
+    tagline: 'Build your brain!',
+    relatedThemes: ['construction'],
+    messages: {
+      happy: [
+        "Nailed it!",
+        "Solid work!",
+        "Building greatness!",
+        "Well constructed!",
+      ],
+      excited: [
+        "AMAZING BUILD!",
+        "Blueprint perfection!",
+        "Master builder!",
+        "Hard hat hero!",
+      ],
+      encouraging: [
+        "Rebuild and try again!",
+        "Every builder learns!",
+        "One brick at a time!",
+        "Keep constructing!",
+      ],
+      celebrating: [
+        "PROJECT COMPLETE!",
+        "Master craftsman!",
+        "You built success!",
+        "Tower of triumph!",
+      ],
+      thinking: [
+        "Measuring twice...",
+        "Reading the blueprints...",
+        "Planning the build...",
+        "What tool do we need?",
+      ],
+      greeting: [
+        "Hard hat on! Let's build!",
+        "Ready to construct?",
+        "Time to build some knowledge!",
+        "Let's get to work!",
       ],
     },
   },

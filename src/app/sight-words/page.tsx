@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { ArrowLeft, Volume2, BookOpen, Check, X, Trophy, Star } from "lucide-react";
 import { useAccessibility } from "@/hooks/use-accessibility";
+import { useSpeech } from "@/hooks/use-audio";
 import { SIGHT_WORDS_DATA, SightWord, getSightWordsByDifficulty } from "@/lib/sight-words-data";
 import { triggerConfetti } from "@/lib/confetti";
 
@@ -13,6 +14,7 @@ type Difficulty = 1 | 2;
 
 export default function SightWordsPage() {
   const { shouldReduceMotion } = useAccessibility();
+  const { speak, stop: stopSpeech } = useSpeech();
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [lessonPhase, setLessonPhase] = useState<LessonPhase>("learn");
@@ -36,13 +38,9 @@ export default function SightWordsPage() {
   const allWordsLearned = learnedWords.size >= Math.min(6, currentWords.length);
 
   const handlePlaySound = useCallback((text: string) => {
-    if ("speechSynthesis" in window) {
-      speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text.toLowerCase());
-      utterance.rate = 0.7;
-      speechSynthesis.speak(utterance);
-    }
-  }, []);
+    stopSpeech();
+    speak(text.toLowerCase(), { rate: 0.7 });
+  }, [speak, stopSpeech]);
 
   // Auto-play word when revealed
   useEffect(() => {

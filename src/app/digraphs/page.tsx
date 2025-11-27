@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { ArrowLeft, Volume2, BookOpen, Check, X, Trophy } from "lucide-react";
 import { useAccessibility } from "@/hooks/use-accessibility";
+import { useSpeech } from "@/hooks/use-audio";
 import { DIGRAPHS, getWordsByDigraph, DigraphItem, DigraphWord } from "@/lib/digraphs-data";
 import { PhonicsActivityCard } from "@/components/phonics/PhonicsActivityCard";
 import { triggerConfetti } from "@/lib/confetti";
@@ -13,6 +14,7 @@ type LessonPhase = "intro" | "practice" | "quiz" | "complete";
 
 export default function DigraphsPage() {
   const { shouldReduceMotion } = useAccessibility();
+  const { speak, stop: stopSpeech } = useSpeech();
   const [selectedDigraph, setSelectedDigraph] = useState<DigraphItem | null>(null);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
 
@@ -42,13 +44,9 @@ export default function DigraphsPage() {
   };
 
   const handlePlaySound = useCallback((text: string) => {
-    if ("speechSynthesis" in window) {
-      speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.8;
-      speechSynthesis.speak(utterance);
-    }
-  }, []);
+    stopSpeech();
+    speak(text, { rate: 0.8 });
+  }, [speak, stopSpeech]);
 
   // Auto-play digraph sound on intro
   useEffect(() => {

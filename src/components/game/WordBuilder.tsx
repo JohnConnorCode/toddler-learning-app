@@ -270,13 +270,14 @@ export function WordBuilder({ item, onComplete }: WordBuilderProps) {
 
             {/* Available Letters Bank */}
             <div className="bg-white/30 p-4 sm:p-5 md:p-6 rounded-2xl md:rounded-[2rem] w-full max-w-lg backdrop-blur-sm relative">
+                {/* TODDLER: Big 60px hint button */}
                 {showHints && (
                     <button
                         onClick={handleHint}
-                        className="absolute -top-4 sm:-top-5 md:-top-6 right-4 sm:right-6 bg-yellow-400 text-white p-2 sm:p-2.5 md:p-3 rounded-full shadow-lg hover:scale-110 transition-transform"
+                        className="absolute -top-6 sm:-top-7 md:-top-8 right-4 sm:right-6 bg-yellow-400 text-white p-4 sm:p-5 rounded-full shadow-lg hover:scale-110 transition-transform min-w-[60px] min-h-[60px] flex items-center justify-center"
                         aria-label="Hint"
                     >
-                        <Lightbulb className="w-5 h-5 sm:w-6 sm:h-6 fill-white" />
+                        <Lightbulb className="w-8 h-8 sm:w-10 sm:h-10 fill-white" />
                     </button>
                 )}
 
@@ -303,7 +304,7 @@ export function WordBuilder({ item, onComplete }: WordBuilderProps) {
                                 onClick={() => handleLetterClick(letter, i)}
                                 disabled={isUsed}
                                 className={cn(
-                                    "w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-white rounded-xl sm:rounded-2xl shadow-[0_3px_0_rgba(0,0,0,0.1)] sm:shadow-[0_4px_0_rgba(0,0,0,0.1)] flex items-center justify-center text-2xl sm:text-3xl font-bold border-b-3 sm:border-b-4 transition-all",
+                                    "w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 min-w-[64px] min-h-[64px] bg-white rounded-xl sm:rounded-2xl shadow-[0_3px_0_rgba(0,0,0,0.1)] sm:shadow-[0_4px_0_rgba(0,0,0,0.1)] flex items-center justify-center text-3xl sm:text-4xl font-bold border-b-3 sm:border-b-4 transition-all",
                                     !isUsed && !isHinted && "text-gray-700 border-gray-200 hover:shadow-lg cursor-pointer active:border-b-0 active:translate-y-1 active:shadow-none",
                                     isUsed && "text-gray-300 opacity-40 cursor-not-allowed border-gray-200",
                                     isHinted && "text-yellow-600 border-yellow-400 bg-yellow-50"
@@ -316,12 +317,13 @@ export function WordBuilder({ item, onComplete }: WordBuilderProps) {
                 </div>
             </div>
 
+            {/* TODDLER: Big 60px reset button */}
             <button
                 onClick={handleReset}
-                className="text-gray-400 hover:text-gray-600 p-2 sm:p-3 rounded-full hover:bg-black/5 transition-colors"
+                className="text-gray-400 hover:text-gray-600 p-4 sm:p-5 rounded-full hover:bg-black/5 transition-colors min-w-[60px] min-h-[60px] flex items-center justify-center"
                 aria-label="Reset word"
             >
-                <RefreshCw className="w-6 h-6 sm:w-8 sm:h-8" />
+                <RefreshCw className="w-8 h-8 sm:w-10 sm:h-10" />
             </button>
         </div>
     );

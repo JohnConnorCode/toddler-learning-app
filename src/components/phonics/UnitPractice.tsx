@@ -3,10 +3,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePhonicsProgress } from "@/hooks/use-phonics-progress";
-import { getPhonicsItemsForUnit, getUnitById } from "@/lib/systematic-phonics-data";
-import { ArrowLeft, ChevronRight, ChevronLeft, CheckCircle, Award, Volume2, Repeat } from "lucide-react";
+import { getPhonicsItemsForUnit, getUnitById, MASTERY_THRESHOLD, MIN_MASTERY_FOR_PROGRESSION } from "@/lib/systematic-phonics-data";
+import { ArrowLeft, ChevronRight, ChevronLeft, CheckCircle, Award, Volume2, Repeat, RefreshCw, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAudio } from "@/hooks/use-audio";
+import { playFeedback } from "@/lib/sound-effects";
 
 interface UnitPracticeProps {
   unitId: number;
@@ -25,12 +26,15 @@ export function UnitPractice({ unitId, onExit, onComplete }: UnitPracticeProps) 
   const { playLetterSound, stopAll } = useAudio();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showCompletion, setShowCompletion] = useState(false);
+  const [showRetryScreen, setShowRetryScreen] = useState(false);
   const [teachingPhase, setTeachingPhase] = useState<"intro" | "sound" | "word" | "practice" | "quiz">("intro");
   const [isPlaying, setIsPlaying] = useState(false);
   const [quizOptions, setQuizOptions] = useState<string[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [letterMastery, setLetterMastery] = useState<Record<string, boolean>>({});
+  const [attemptCount, setAttemptCount] = useState(1);
+  const [strugglingLetters, setStrugglingLetters] = useState<string[]>([]);
 
   // Refs to prevent re-render issues
   const hasPlayedForIndex = useRef<number>(-1);
@@ -119,9 +123,12 @@ export function UnitPractice({ unitId, onExit, onComplete }: UnitPracticeProps) 
     }
   }, [generateQuizOptions, currentItem, playLetterSound]);
 
-  // Handle quiz answer
+  // Handle quiz answer - with tap feedback for toddlers
   const handleQuizAnswer = useCallback((answer: string) => {
     if (selectedAnswer !== null || !currentItem) return; // Already answered
+
+    // Immediate tap feedback - toddlers need instant response!
+    playFeedback("pop", "light");
 
     setSelectedAnswer(answer);
     const correct = answer === currentItem.letter;
@@ -133,9 +140,12 @@ export function UnitPractice({ unitId, onExit, onComplete }: UnitPracticeProps) 
       [currentItem.letter]: correct
     }));
 
-    // Play feedback sound
+    // Play feedback sound - success or encouragement
     if (correct) {
+      playFeedback("success", "medium");
       playLetterSound(currentItem.letter, "name");
+    } else {
+      playFeedback("snap", "light"); // Gentle "try again" sound
     }
   }, [selectedAnswer, currentItem, playLetterSound]);
 
@@ -189,16 +199,24 @@ export function UnitPractice({ unitId, onExit, onComplete }: UnitPracticeProps) 
     } else {
       // All letters completed - calculate actual mastery score
       const masteredCount = Object.values(letterMastery).filter(Boolean).length;
-      const masteryScore = Math.round((masteredCount / phonicsItems.length) * 100);
-      // Only complete unit if score >= 75%
-      if (masteryScore >= 75) {
+      const masteryScore = masteredCount / phonicsItems.length;
+
+      // Track which letters were missed
+      const missed = phonicsItems
+        .filter(item => !letterMastery[item.letter])
+        .map(item => item.letter);
+      setStrugglingLetters(missed);
+
+      // Check against mastery threshold (90%)
+      if (masteryScore >= MASTERY_THRESHOLD) {
+        // Perfect or near-perfect - celebrate and complete!
+        setShowCompletion(true);
+      } else if (masteryScore >= MIN_MASTERY_FOR_PROGRESSION && attemptCount >= 3) {
+        // After 3 attempts with 75%+, allow progression with encouragement
         setShowCompletion(true);
       } else {
-        // Not enough mastery - show retry message
-        alert(`You got ${masteredCount}/${phonicsItems.length} correct. Try again to master all letters!`);
-        setCurrentIndex(0);
-        setLetterMastery({});
-        setTeachingPhase("intro");
+        // Need more practice - show encouraging retry screen
+        setShowRetryScreen(true);
       }
     }
   };
@@ -216,6 +234,146 @@ export function UnitPractice({ unitId, onExit, onComplete }: UnitPracticeProps) 
     completeUnit(unitId, masteryScore);
     onComplete();
   };
+
+  // Handle retry - with tap feedback
+  const handleRetry = () => {
+    playFeedback("pop", "medium"); // Tap sound for toddlers!
+    setAttemptCount(prev => prev + 1);
+    setShowRetryScreen(false);
+    setCurrentIndex(0);
+    setLetterMastery({});
+    setTeachingPhase("intro");
+    hasPlayedForIndex.current = -1; // Reset play tracking
+  };
+
+  // Retry screen - TODDLER FRIENDLY (no text, visual stars only)
+  if (showRetryScreen) {
+    const masteredCount = Object.values(letterMastery).filter(Boolean).length;
+    const masteryPercent = masteredCount / phonicsItems.length;
+    const totalStars = phonicsItems.length;
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-50 to-pink-100 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="max-w-lg w-full bg-white rounded-3xl shadow-xl p-6 sm:p-8 text-center"
+        >
+          {/* Big encouraging emoji - toddlers understand this! */}
+          <motion.div
+            animate={{
+              scale: [1, 1.2, 1],
+              rotate: [0, -10, 10, 0]
+            }}
+            transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 1 }}
+            className="text-7xl sm:text-8xl mb-6"
+          >
+            {masteredCount === 0 ? "🤗" : masteredCount < totalStars / 2 ? "💪" : "🌟"}
+          </motion.div>
+
+          {/* VISUAL PROGRESS: Stars instead of percentages! */}
+          <div className="flex justify-center gap-2 sm:gap-3 mb-6 flex-wrap">
+            {phonicsItems.map((item, i) => {
+              const isMastered = letterMastery[item.letter];
+              return (
+                <motion.div
+                  key={item.letter}
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  className="relative"
+                >
+                  {/* Star */}
+                  <Star
+                    className={cn(
+                      "w-10 h-10 sm:w-12 sm:h-12",
+                      isMastered
+                        ? "text-yellow-400 fill-yellow-400 drop-shadow-lg"
+                        : "text-gray-300"
+                    )}
+                  />
+                  {/* Letter inside star area */}
+                  <span className={cn(
+                    "absolute inset-0 flex items-center justify-center text-xs sm:text-sm font-black",
+                    isMastered ? "text-yellow-700" : "text-gray-400"
+                  )}>
+                    {item.letter}
+                  </span>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {/* Show letters to practice - VISUAL, minimal text */}
+          {strugglingLetters.length > 0 && (
+            <div className="bg-purple-50 rounded-2xl p-4 sm:p-6 mb-6">
+              {/* Arrow pointing at letters - visual cue */}
+              <div className="text-4xl mb-3">👇</div>
+              <div className="flex flex-wrap justify-center gap-3">
+                {strugglingLetters.map((letter, i) => {
+                  const item = phonicsItems.find(p => p.letter === letter);
+                  return (
+                    <motion.div
+                      key={letter}
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: i * 0.1 }}
+                      className={cn(
+                        "w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center font-black text-3xl sm:text-4xl text-white shadow-lg",
+                        item?.color || "bg-gray-400"
+                      )}
+                    >
+                      {letter}
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* BIG TRY AGAIN BUTTON - 60px+ tap target */}
+          <div className="flex flex-col gap-4 justify-center">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleRetry}
+              className="w-full py-6 sm:py-8 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full font-black text-2xl sm:text-3xl shadow-lg flex items-center justify-center gap-3"
+            >
+              <RefreshCw className="w-8 h-8 sm:w-10 sm:h-10" />
+              <span>🔄</span>
+            </motion.button>
+
+            {attemptCount >= 3 && masteryPercent >= MIN_MASTERY_FOR_PROGRESSION && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  setShowRetryScreen(false);
+                  setShowCompletion(true);
+                }}
+                className="w-full py-5 sm:py-6 bg-gray-200 text-gray-600 rounded-full font-bold text-xl flex items-center justify-center gap-2"
+              >
+                <ChevronRight className="w-8 h-8" />
+              </motion.button>
+            )}
+          </div>
+
+          {/* Visual attempt indicator - dots not text */}
+          <div className="flex justify-center gap-2 mt-6">
+            {[1, 2, 3].map((num) => (
+              <div
+                key={num}
+                className={cn(
+                  "w-4 h-4 rounded-full",
+                  num <= attemptCount ? "bg-purple-500" : "bg-gray-200"
+                )}
+              />
+            ))}
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   // Completion screen
   if (showCompletion) {
@@ -307,11 +465,12 @@ export function UnitPractice({ unitId, onExit, onComplete }: UnitPracticeProps) 
     <div className="min-h-screen bg-blue-50 flex flex-col">
       {/* Header */}
       <header className="p-3 sm:p-4 md:p-6 flex items-center justify-between">
+        {/* TODDLER-FRIENDLY: Big 60px+ back button */}
         <button
           onClick={onExit}
-          className="bg-white p-2 sm:p-3 rounded-full shadow-sm hover:bg-gray-50 transition-colors"
+          className="bg-white p-4 sm:p-5 rounded-full shadow-md hover:bg-gray-50 transition-colors min-w-[60px] min-h-[60px] flex items-center justify-center"
         >
-          <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
+          <ArrowLeft className="w-8 h-8 sm:w-10 sm:h-10 text-gray-600" />
         </button>
 
         {/* Unit info & progress */}
@@ -473,8 +632,8 @@ export function UnitPractice({ unitId, onExit, onComplete }: UnitPracticeProps) 
                       </p>
                     </div>
 
-                    {/* Quiz Options */}
-                    <div className="grid grid-cols-2 gap-3">
+                    {/* Quiz Options - TODDLER: Big 80px+ tap targets */}
+                    <div className="grid grid-cols-2 gap-4">
                       {quizOptions.map((letter) => {
                         const isSelected = selectedAnswer === letter;
                         const isCorrectAnswer = letter === currentItem.letter;
@@ -486,7 +645,7 @@ export function UnitPractice({ unitId, onExit, onComplete }: UnitPracticeProps) 
                             onClick={() => handleQuizAnswer(letter)}
                             disabled={showResult}
                             className={cn(
-                              "p-4 rounded-2xl font-black text-4xl transition-all border-4",
+                              "p-6 sm:p-8 rounded-2xl font-black text-5xl sm:text-6xl transition-all border-4 min-h-[80px] sm:min-h-[100px]",
                               !showResult && "bg-white border-gray-200 hover:border-blue-400 hover:scale-105 active:scale-95",
                               showResult && isSelected && isCorrect && "bg-green-100 border-green-500 scale-105",
                               showResult && isSelected && !isCorrect && "bg-red-100 border-red-500",
@@ -500,7 +659,7 @@ export function UnitPractice({ unitId, onExit, onComplete }: UnitPracticeProps) 
                       })}
                     </div>
 
-                    {/* Feedback */}
+                    {/* Feedback - Specific praise based on letter */}
                     {selectedAnswer !== null && (
                       <motion.div
                         initial={{ opacity: 0, scale: 0.8 }}
@@ -509,18 +668,31 @@ export function UnitPractice({ unitId, onExit, onComplete }: UnitPracticeProps) 
                       >
                         {isCorrect ? (
                           <div className="text-green-600">
-                            <p className="text-2xl font-black">Correct! 🎉</p>
-                            <p className="text-lg">Great job!</p>
+                            <p className="text-2xl font-black">Correct!</p>
+                            <p className="text-lg">
+                              You know the <span className="font-bold">/{currentItem.sound || currentItem.letter.toLowerCase()}/</span> sound!
+                            </p>
+                            <div className="flex items-center justify-center gap-1 mt-2">
+                              <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                              <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                              <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                            </div>
                           </div>
                         ) : (
                           <div className="text-orange-600">
-                            <p className="text-xl font-bold">Not quite!</p>
-                            <p className="text-lg">The answer is "{currentItem.letter}"</p>
+                            <p className="text-xl font-bold">Almost!</p>
+                            <p className="text-base text-gray-600">
+                              "{currentItem.letter}" makes the <span className="font-bold text-purple-600">/{currentItem.sound || currentItem.letter.toLowerCase()}/</span> sound
+                            </p>
+                            <p className="text-sm text-gray-500 mt-1">
+                              Like in "{currentItem.word}"
+                            </p>
                             <button
                               onClick={playTeachingSequence}
-                              className="mt-2 px-4 py-2 bg-orange-100 text-orange-700 rounded-full font-bold hover:bg-orange-200"
+                              className="mt-3 px-4 py-2 bg-orange-100 text-orange-700 rounded-full font-bold hover:bg-orange-200 flex items-center gap-2 mx-auto"
                             >
-                              Learn Again
+                              <Volume2 className="w-4 h-4" />
+                              Hear it again
                             </button>
                           </div>
                         )}
@@ -550,21 +722,21 @@ export function UnitPractice({ unitId, onExit, onComplete }: UnitPracticeProps) 
           </motion.div>
         </AnimatePresence>
 
-        {/* Navigation Controls */}
+        {/* Navigation Controls - TODDLER: Big 70px+ buttons */}
         <div className="flex items-center gap-6 sm:gap-8 mt-6 sm:mt-8 md:mt-12">
           <button
             onClick={prevLetter}
             disabled={currentIndex === 0}
-            className="p-3 sm:p-4 bg-white rounded-full shadow-md hover:shadow-lg disabled:opacity-30 disabled:cursor-not-allowed active:scale-90 transition-all"
+            className="p-5 sm:p-6 bg-white rounded-full shadow-md hover:shadow-lg disabled:opacity-30 disabled:cursor-not-allowed active:scale-90 transition-all min-w-[70px] min-h-[70px] flex items-center justify-center"
           >
-            <ChevronLeft className="w-6 h-6 sm:w-8 sm:h-8 text-gray-600" />
+            <ChevronLeft className="w-10 h-10 sm:w-12 sm:h-12 text-gray-600" />
           </button>
 
           <button
             onClick={nextLetter}
             disabled={teachingPhase !== "quiz" || !isCorrect}
             className={cn(
-              "p-4 sm:p-5 md:p-6 rounded-full shadow-lg transition-all",
+              "p-6 sm:p-7 md:p-8 rounded-full shadow-lg transition-all min-w-[80px] min-h-[80px] sm:min-w-[90px] sm:min-h-[90px] flex items-center justify-center",
               teachingPhase === "quiz" && isCorrect
                 ? currentIndex === phonicsItems.length - 1
                   ? "bg-green-500 hover:shadow-xl active:scale-90"
@@ -573,9 +745,9 @@ export function UnitPractice({ unitId, onExit, onComplete }: UnitPracticeProps) 
             )}
           >
             {currentIndex === phonicsItems.length - 1 ? (
-              <CheckCircle className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 text-white" />
+              <CheckCircle className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
             ) : (
-              <ChevronRight className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 text-white" />
+              <ChevronRight className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
             )}
           </button>
         </div>

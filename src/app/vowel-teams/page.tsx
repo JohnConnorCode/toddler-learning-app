@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { ArrowLeft, Volume2, BookOpen, Filter, Check, X, Trophy } from "lucide-react";
 import { useAccessibility } from "@/hooks/use-accessibility";
+import { useSpeech } from "@/hooks/use-audio";
 import {
   VOWEL_TEAMS,
   VOWEL_TEAM_WORDS,
@@ -22,6 +23,7 @@ type LessonPhase = "intro" | "practice" | "quiz" | "complete";
 
 export default function VowelTeamsPage() {
   const { shouldReduceMotion } = useAccessibility();
+  const { speak, stop: stopSpeech } = useSpeech();
   const [selectedTeam, setSelectedTeam] = useState<VowelTeam | null>(null);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [filter, setFilter] = useState<FilterType>("all");
@@ -67,13 +69,9 @@ export default function VowelTeamsPage() {
   };
 
   const handlePlaySound = useCallback((text: string) => {
-    if ("speechSynthesis" in window) {
-      speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.8;
-      speechSynthesis.speak(utterance);
-    }
-  }, []);
+    stopSpeech();
+    speak(text, { rate: 0.8 });
+  }, [speak, stopSpeech]);
 
   // Auto-play vowel team sound on intro
   useEffect(() => {

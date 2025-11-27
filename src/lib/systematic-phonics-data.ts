@@ -15,6 +15,16 @@
 
 import { PhonicsItem, PHONICS_DATA } from "./phonics-data";
 
+/**
+ * Mastery threshold for phonics units
+ *
+ * Research-backed: Foundational phonics skills require 90%+ mastery
+ * before progression to ensure solid building blocks for reading.
+ * Lower thresholds (75%) lead to gaps in phonemic awareness.
+ */
+export const MASTERY_THRESHOLD = 0.90; // 90% required for unit completion
+export const MIN_MASTERY_FOR_PROGRESSION = 0.75; // 75% allows progression with warning
+
 export interface PhonicsUnit {
   id: number;
   title: string;

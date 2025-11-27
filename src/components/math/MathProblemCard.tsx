@@ -5,10 +5,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Volume2, Check, X, HelpCircle, ArrowRight, RotateCcw } from "lucide-react";
 import { useAccessibility } from "@/hooks/use-accessibility";
 import { useTheme } from "@/hooks/use-theme";
+import { useSpeech } from "@/hooks/use-audio";
 import type { MathProblem } from "@/lib/math-data";
 import { formatProblem, checkAnswer, getEmojiForProblem, MATH_EMOJI_THEMES, type EmojiTheme } from "@/lib/math-data";
 import { playSound, playFeedback } from "@/lib/sound-effects";
 import { triggerSmallConfetti, triggerMediumConfetti, triggerStarShower } from "@/lib/confetti";
+import { pickRandom } from "@/lib/utils/array-helpers";
 
 interface MathProblemCardProps {
   problem: MathProblem;
@@ -612,6 +614,7 @@ export function MathProblemCard({
 }: MathProblemCardProps) {
   const { shouldReduceMotion } = useAccessibility();
   const { themeId, hasInterests } = useTheme();
+  const { speak, stop: stopSpeech } = useSpeech();
   const [attempts, setAttempts] = useState(0);
   const [showFeedback, setShowFeedback] = useState<"correct" | "incorrect" | null>(null);
   const [showHintText, setShowHintText] = useState(false);
@@ -660,27 +663,21 @@ export function MathProblemCard({
 
   // Speak the problem with improved phrasing
   const speakProblem = useCallback(() => {
-    if ("speechSynthesis" in window) {
-      // Cancel any ongoing speech
-      speechSynthesis.cancel();
+    stopSpeech();
 
-      let text: string;
-      if (problem.operands.length === 1) {
-        text = `How many is ${problem.operands[0]}?`;
-      } else if (problem.operands.length === 3) {
-        const operatorWord = problem.operator === "+" ? "plus" : "minus";
-        text = `What is ${problem.operands[0]}... ${operatorWord}... ${problem.operands[1]}... ${operatorWord}... ${problem.operands[2]}?`;
-      } else {
-        const operatorWord = problem.operator === "+" ? "plus" : "minus";
-        text = `What is ${problem.operands[0]}... ${operatorWord}... ${problem.operands[1]}?`;
-      }
-
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.7; // Slower for better comprehension
-      utterance.pitch = 1.1; // Slightly higher pitch for friendliness
-      speechSynthesis.speak(utterance);
+    let text: string;
+    if (problem.operands.length === 1) {
+      text = `How many is ${problem.operands[0]}?`;
+    } else if (problem.operands.length === 3) {
+      const operatorWord = problem.operator === "+" ? "plus" : "minus";
+      text = `What is ${problem.operands[0]}... ${operatorWord}... ${problem.operands[1]}... ${operatorWord}... ${problem.operands[2]}?`;
+    } else {
+      const operatorWord = problem.operator === "+" ? "plus" : "minus";
+      text = `What is ${problem.operands[0]}... ${operatorWord}... ${problem.operands[1]}?`;
     }
-  }, [problem]);
+
+    speak(text, { rate: 0.7 });
+  }, [problem, speak, stopSpeech]);
 
   useEffect(() => {
     if (autoSpeak) {
@@ -704,14 +701,9 @@ export function MathProblemCard({
       celebrateCorrectAnswer(problem.difficulty, shouldReduceMotion);
 
       // Speak encouragement
-      if ("speechSynthesis" in window) {
-        const phrases = ["Great job!", "Awesome!", "Perfect!", "You got it!", "Amazing!"];
-        const text = phrases[Math.floor(Math.random() * phrases.length)];
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 0.9;
-        utterance.pitch = 1.2;
-        setTimeout(() => speechSynthesis.speak(utterance), 300);
-      }
+      const encouragementPhrases = ["Great job!", "Awesome!", "Perfect!", "You got it!", "Amazing!"];
+      const text = pickRandom(encouragementPhrases) ?? "Great job!";
+      setTimeout(() => speak(text, { rate: 0.9 }), 300);
 
       setTimeout(() => {
         onAnswer(true, newAttempts);
@@ -728,21 +720,16 @@ export function MathProblemCard({
         // Show visual explanation
         setShowExplanation(true);
 
-        if ("speechSynthesis" in window) {
-          speechSynthesis.cancel();
-          // Explain the correct answer
-          const operatorWord = problem.operator === "+" ? "plus" : "minus";
-          let explanation: string;
-          if (problem.operands.length === 1) {
-            explanation = `Let's count together. ${problem.answer}!`;
-          } else {
-            explanation = `${problem.operands[0]} ${operatorWord} ${problem.operands[1]} equals ${problem.answer}. Let's try again!`;
-          }
-          const utterance = new SpeechSynthesisUtterance(explanation);
-          utterance.rate = 0.7;
-          utterance.pitch = 1.1;
-          setTimeout(() => speechSynthesis.speak(utterance), 300);
+        stopSpeech();
+        // Explain the correct answer
+        const operatorWord = problem.operator === "+" ? "plus" : "minus";
+        let explanation: string;
+        if (problem.operands.length === 1) {
+          explanation = `Let's count together. ${problem.answer}!`;
+        } else {
+          explanation = `${problem.operands[0]} ${operatorWord} ${problem.operands[1]} equals ${problem.answer}. Let's try again!`;
         }
+        setTimeout(() => speak(explanation, { rate: 0.7 }), 300);
 
         // Reset after showing explanation
         setTimeout(() => {
@@ -752,13 +739,9 @@ export function MathProblemCard({
         }, 4000);
       } else {
         // First wrong attempt - just encourage retry
-        if ("speechSynthesis" in window) {
-          const phrases = ["Almost!", "Try again!", "Not quite!", "Keep trying!"];
-          const text = phrases[Math.floor(Math.random() * phrases.length)];
-          const utterance = new SpeechSynthesisUtterance(text);
-          utterance.rate = 0.9;
-          setTimeout(() => speechSynthesis.speak(utterance), 200);
-        }
+        const retryPhrases = ["Almost!", "Try again!", "Not quite!", "Keep trying!"];
+        const text = pickRandom(retryPhrases) ?? "Try again!";
+        setTimeout(() => speak(text, { rate: 0.9 }), 200);
 
         setTimeout(() => {
           setShowFeedback(null);

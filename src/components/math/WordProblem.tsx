@@ -73,13 +73,14 @@ export function WordProblem({
   const firstNumber = storyNumbers[0] || 0;
   const secondNumber = storyNumbers[1] || 0;
 
-  // Speak the story on mount - setState is intentional for tracking async speech state
+  // Speak the story on mount - speak function excluded to prevent re-triggers on rerender
   useEffect(() => {
     if (autoSpeak) {
       const fullText = `${context.story} ${context.question}`;
       setIsSpeaking(true);
       speak(fullText, { onEnd: () => setIsSpeaking(false) });
     }
+    // Note: speak excluded - stable from useSpeech hook, would cause re-triggers if included
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoSpeak, context.story, context.question]);
 

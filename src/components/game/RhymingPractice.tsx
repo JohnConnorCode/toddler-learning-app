@@ -6,6 +6,7 @@ import { Volume2, Sparkles, ChevronRight, HelpCircle } from "lucide-react";
 import { useSpeech } from "@/hooks/use-audio";
 import { triggerConfetti, triggerSmallConfetti } from "@/lib/confetti";
 import { cn } from "@/lib/utils";
+import { QuizOptionButton, QuizOptionGrid } from "@/components/ui/QuizOption";
 
 interface RhymingPracticeProps {
   targetWord: string;
@@ -189,54 +190,51 @@ export function RhymingPractice({
       </p>
 
       {/* Word Options */}
-      <div className="grid grid-cols-2 gap-3 w-full">
+      <QuizOptionGrid columns={2} gap="md" className="w-full">
         {allOptions.map((word, index) => {
           const isSelected = selectedWords.has(word);
           const isRhyming = rhymingWords.includes(word);
 
-          // Show results styling
-          let resultStyle = "";
+          // Determine feedback state
+          let feedback: "correct" | "incorrect" | "missed" | "neutral" | null = null;
           if (showResults) {
             if (isRhyming && isSelected) {
-              resultStyle = "bg-green-500 text-white border-green-700"; // Correct
+              feedback = "correct";
             } else if (isRhyming && !isSelected) {
-              resultStyle = "bg-green-100 text-green-800 border-green-400"; // Missed
+              feedback = "missed";
             } else if (!isRhyming && isSelected) {
-              resultStyle = "bg-red-400 text-white border-red-600"; // Wrong
+              feedback = "incorrect";
             } else {
-              resultStyle = "bg-gray-100 text-gray-400 border-gray-200"; // Correct non-selection
+              feedback = "neutral";
             }
           }
 
           return (
-            <motion.button
+            <motion.div
               key={word}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: index * 0.1 }}
-              whileHover={!showResults ? { scale: 1.05 } : {}}
-              whileTap={!showResults ? { scale: 0.95 } : {}}
-              onClick={() => handleWordClick(word)}
-              disabled={showResults}
-              className={cn(
-                "py-4 px-4 rounded-2xl font-black text-xl uppercase transition-all border-b-4",
-                showResults
-                  ? resultStyle
-                  : isSelected
-                  ? "bg-purple-500 text-white border-purple-700 shadow-lg"
-                  : "bg-white text-gray-800 border-gray-200 hover:border-purple-300 shadow-md"
-              )}
             >
-              {word}
-              {showResults && isRhyming && (
-                <span className="ml-2 text-sm">
-                  {isSelected ? "✓" : "(rhymes)"}
-                </span>
-              )}
-            </motion.button>
+              <QuizOptionButton
+                selected={isSelected}
+                feedback={feedback}
+                onClick={() => handleWordClick(word)}
+                disabled={showResults}
+                size="md"
+                className="w-full"
+              >
+                {word}
+                {showResults && isRhyming && (
+                  <span className="ml-2 text-sm font-normal">
+                    {isSelected ? "✓" : "(rhymes)"}
+                  </span>
+                )}
+              </QuizOptionButton>
+            </motion.div>
           );
         })}
-      </div>
+      </QuizOptionGrid>
 
       {/* Selected Count */}
       {!showResults && (

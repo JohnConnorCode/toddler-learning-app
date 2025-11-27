@@ -270,6 +270,104 @@ export function useAudio() {
   }, [getAudioPath, playAudio]);
 
   /**
+   * Play a phoneme with TTS fallback for missing audio files
+   * Uses pre-recorded audio when available, falls back to TTS pronunciation
+   */
+  const playPhonemeWithFallback = useCallback(async (
+    phoneme: string,
+    onEnd?: () => void
+  ): Promise<boolean> => {
+    const path = getAudioPath("phoneme", phoneme);
+
+    // First try the audio file
+    if (!failedPaths.has(path)) {
+      const success = await playAudio(path, onEnd);
+      if (success) return true;
+    }
+
+    // Fall back to TTS with phonetic pronunciation
+    // Map phoneme to a pronounceable representation
+    const phonemeMap: Record<string, string> = {
+      // Vowels - use short/long vowel sounds
+      a: "ah",
+      e: "eh",
+      i: "ih",
+      o: "oh",
+      u: "uh",
+      // Consonants - just the sound
+      b: "buh",
+      c: "kuh",
+      d: "duh",
+      f: "fff",
+      g: "guh",
+      h: "huh",
+      j: "juh",
+      k: "kuh",
+      l: "lll",
+      m: "mmm",
+      n: "nnn",
+      p: "puh",
+      q: "kwuh",
+      r: "rrr",
+      s: "sss",
+      t: "tuh",
+      v: "vvv",
+      w: "wuh",
+      x: "ks",
+      y: "yuh",
+      z: "zzz",
+      // Digraphs
+      sh: "shh",
+      ch: "chh",
+      th: "thh",
+      wh: "wh",
+      ph: "fff",
+      // Common blends
+      bl: "bl",
+      cl: "cl",
+      fl: "fl",
+      gl: "gl",
+      pl: "pl",
+      sl: "sl",
+      br: "br",
+      cr: "cr",
+      dr: "dr",
+      fr: "fr",
+      gr: "gr",
+      pr: "pr",
+      tr: "tr",
+    };
+
+    const pronunciation = phonemeMap[phoneme.toLowerCase()] || phoneme;
+
+    // Use browser TTS with settings optimized for phoneme pronunciation
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      return new Promise((resolve) => {
+        const utterance = new SpeechSynthesisUtterance(pronunciation);
+        utterance.rate = 0.6; // Very slow for clear phoneme
+        utterance.pitch = 1.0;
+        utterance.volume = isMutedRef.current ? 0 : volumeRef.current;
+
+        utterance.onend = () => {
+          onEnd?.();
+          resolve(true);
+        };
+
+        utterance.onerror = () => {
+          onEnd?.();
+          resolve(false);
+        };
+
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utterance);
+      });
+    }
+
+    onEnd?.();
+    return false;
+  }, [getAudioPath, playAudio]);
+
+  /**
    * Stop all currently playing sounds
    */
   const stopAll = useCallback(() => {
@@ -374,6 +472,7 @@ export function useAudio() {
     playWordSound,
     playSentenceSound,
     playPhonemeSound,
+    playPhonemeWithFallback,
     playSequence,
     playAudio,
     stopAll,
@@ -527,5 +626,125 @@ export function useSpeech() {
     speakWords,
     stop,
     isSupported,
+  };
+}
+
+/**
+ * Unified Audio System Hook
+ * Combines file playback (Howler.js) and text-to-speech (Web Speech API)
+ * into a single, easy-to-use API with unified volume control.
+ */
+export function useAudioSystem() {
+  const audio = useAudio();
+  const speech = useSpeech();
+  const { volume, isMuted, setVolume, toggleMute } = useAudioSettings();
+  const isUnmounted = useRef(false);
+
+  useEffect(() => {
+    isUnmounted.current = false;
+    return () => {
+      isUnmounted.current = true;
+    };
+  }, []);
+
+  /**
+   * Stop all audio (both file playback and TTS)
+   */
+  const stopAll = useCallback(() => {
+    audio.stopAll();
+    speech.stop();
+  }, [audio, speech]);
+
+  /**
+   * Speak text using TTS with unified volume
+   * Shorthand for speech.speak with simpler API
+   */
+  const speak = useCallback(
+    async (
+      text: string,
+      options?: {
+        rate?: number;
+        pitch?: number;
+        onEnd?: () => void;
+      }
+    ): Promise<boolean> => {
+      return speech.speak(text, options);
+    },
+    [speech]
+  );
+
+  /**
+   * Play audio file
+   * Shorthand for audio.playAudio
+   */
+  const playFile = useCallback(
+    async (
+      src: string,
+      onEnd?: () => void
+    ): Promise<boolean> => {
+      return audio.playAudio(src, onEnd);
+    },
+    [audio]
+  );
+
+  /**
+   * Auto-detect and play: if path starts with "/" it's a file, otherwise use TTS
+   * Convenience method for simple use cases
+   */
+  const play = useCallback(
+    async (
+      input: string,
+      options?: {
+        type?: "file" | "tts" | "auto";
+        onEnd?: () => void;
+        rate?: number;
+      }
+    ): Promise<boolean> => {
+      const type = options?.type ?? "auto";
+      const isFile = type === "file" || (type === "auto" && input.startsWith("/"));
+
+      if (isFile) {
+        return audio.playAudio(input, options?.onEnd);
+      } else {
+        return speech.speak(input, {
+          rate: options?.rate ?? 0.8,
+          onEnd: options?.onEnd
+        });
+      }
+    },
+    [audio, speech]
+  );
+
+  return {
+    // Unified controls
+    play,
+    playFile,
+    speak,
+    stopAll,
+
+    // Volume control (affects both systems)
+    volume,
+    isMuted,
+    setVolume,
+    toggleMute,
+
+    // File playback (Howler.js)
+    playLetterSound: audio.playLetterSound,
+    playWordSound: audio.playWordSound,
+    playSentenceSound: audio.playSentenceSound,
+    playPhonemeSound: audio.playPhonemeSound,
+    playPhonemeWithFallback: audio.playPhonemeWithFallback,
+    playSequence: audio.playSequence,
+    playAudio: audio.playAudio,
+    preload: audio.preload,
+    preloadForActivity: audio.preloadForActivity,
+    cacheAudioFiles: audio.cacheAudioFiles,
+    isPlaying: audio.isPlaying,
+    getErrors: audio.getErrors,
+
+    // Text-to-speech (Web Speech API)
+    speakWords: speech.speakWords,
+    stopSpeech: speech.stop,
+    isTTSSupported: speech.isSupported,
   };
 }

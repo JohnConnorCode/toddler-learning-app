@@ -6,6 +6,8 @@ import { Volume2, CheckCircle, XCircle, ArrowRight, Award, Repeat } from "lucide
 import { Howl } from "howler";
 import { CVCWord, generateBlendingQuestions, BlendingQuestion } from "@/lib/blending-data";
 import { cn } from "@/lib/utils";
+import { useAudio, useSpeech } from "@/hooks/use-audio";
+import { playFeedback } from "@/lib/sound-effects";
 
 interface SoundBlendingGameProps {
   completedUnits: number[];
@@ -25,6 +27,13 @@ export function SoundBlendingGame({
   const [totalCorrect, setTotalCorrect] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
   const [wrongAnswers, setWrongAnswers] = useState<string[]>([]);
+  const [isStretching, setIsStretching] = useState(false);
+  const [activeStretchIndex, setActiveStretchIndex] = useState<number>(-1);
+  const [showStretchHint, setShowStretchHint] = useState(true);
+
+  // Use audio hook with TTS fallback for missing phoneme files
+  const { playPhonemeWithFallback } = useAudio();
+  const { speak } = useSpeech();
 
   // Generate questions on mount
   useEffect(() => {
@@ -44,16 +53,12 @@ export function SoundBlendingGame({
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
   const isCorrect = selectedAnswer === currentQuestion?.word.word;
 
-  // Play individual sound
+  // Play individual sound with TTS fallback for missing audio files
   const playSound = useCallback((sound: string) => {
-    const phoneme = new Howl({
-      src: [`/audio/phonemes/${sound}.mp3`],
-      volume: 1.0,
-    });
-    phoneme.play();
-  }, []);
+    playPhonemeWithFallback(sound);
+  }, [playPhonemeWithFallback]);
 
-  // Play all sounds in sequence
+  // Play all sounds in sequence (normal speed)
   const playAllSounds = useCallback(() => {
     if (!currentQuestion) return;
 
@@ -68,6 +73,55 @@ export function SoundBlendingGame({
     });
   }, [currentQuestion, playSound]);
 
+  // STRETCH AND BLEND - Research-backed explicit blending instruction
+  // First stretches each sound slowly (800ms gaps), then blends them together
+  const playStretchAndBlend = useCallback(() => {
+    if (!currentQuestion || isStretching) return;
+
+    setIsStretching(true);
+    setShowStretchHint(false);
+    const sounds = currentQuestion.word.sounds;
+    let delay = 0;
+
+    // Phase 1: Stretch - play each sound slowly with visual highlight
+    sounds.forEach((sound, index) => {
+      setTimeout(() => {
+        setActiveStretchIndex(index);
+        playSound(sound);
+      }, delay);
+      delay += 900; // 900ms between sounds for stretching
+    });
+
+    // Small pause after all sounds
+    delay += 400;
+
+    // Phase 2: Quick blend - replay sounds faster
+    setTimeout(() => {
+      setActiveStretchIndex(-1);
+      let blendDelay = 0;
+      sounds.forEach((sound, index) => {
+        setTimeout(() => {
+          setActiveStretchIndex(index);
+          playSound(sound);
+        }, blendDelay);
+        blendDelay += 350; // Faster for blending effect
+      });
+
+      // Play the full word after blending
+      setTimeout(() => {
+        setActiveStretchIndex(-1);
+        const wordSound = new Howl({
+          src: [currentQuestion.word.audioPath],
+          volume: 1.0,
+          onend: () => {
+            setIsStretching(false);
+          },
+        });
+        wordSound.play();
+      }, blendDelay + 300);
+    }, delay);
+  }, [currentQuestion, playSound, isStretching]);
+
   // Play word audio
   const playWordAudio = useCallback((audioPath: string) => {
     const sound = new Howl({
@@ -77,15 +131,17 @@ export function SoundBlendingGame({
     sound.play();
   }, []);
 
-  // Auto-play sounds on question load
+  // Auto-play sounds on question load with audio instruction for toddlers
   useEffect(() => {
     if (currentQuestion) {
       const timer = setTimeout(() => {
-        playAllSounds();
+        // TODDLER: Speak simple instruction then play sounds
+        speak("Listen!", { rate: 0.8 });
+        setTimeout(() => playAllSounds(), 800);
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [currentQuestionIndex, currentQuestion, playAllSounds]);
+  }, [currentQuestionIndex, currentQuestion, playAllSounds, speak]);
 
   // Generate wrong answer options
   const generateOptions = useCallback((correctWord: CVCWord): string[] => {
@@ -102,15 +158,20 @@ export function SoundBlendingGame({
     return options;
   }, [questions]);
 
-  // Handle answer
+  // Handle answer - with tap feedback for toddlers
   const handleAnswer = (answer: string) => {
+    // Immediate tap feedback!
+    playFeedback("pop", "light");
+
     setSelectedAnswer(answer);
     setShowFeedback(true);
 
     if (answer === currentQuestion.word.word) {
       setTotalCorrect((prev) => prev + 1);
+      playFeedback("success", "medium");
       playWordAudio(currentQuestion.word.audioPath);
     } else {
+      playFeedback("snap", "light");
       setWrongAnswers((prev) => [...prev, currentQuestion.word.word]);
     }
   };
@@ -241,38 +302,93 @@ export function SoundBlendingGame({
               <p className="text-sm text-gray-500">Listen and blend the sounds together</p>
             </div>
 
-            {/* Sound Buttons */}
-            <div className="flex justify-center gap-4 mb-8">
+            {/* TODDLER: Visual hint with pointing hand instead of text */}
+            {showStretchHint && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex flex-col items-center mb-4"
+              >
+                <motion.div
+                  animate={{ y: [0, 10, 0] }}
+                  transition={{ duration: 1, repeat: 3 }}
+                  className="text-5xl"
+                >
+                  👇
+                </motion.div>
+              </motion.div>
+            )}
+
+            {/* Sound Buttons with stretch highlighting */}
+            <div className="flex justify-center gap-4 mb-6">
               {currentQuestion.word.sounds.map((sound, index) => (
                 <motion.button
                   key={index}
                   initial={{ opacity: 0, scale: 0.5 }}
-                  animate={{ opacity: 1, scale: 1 }}
+                  animate={{
+                    opacity: 1,
+                    scale: activeStretchIndex === index ? 1.2 : 1,
+                    y: activeStretchIndex === index ? -8 : 0,
+                  }}
                   transition={{ delay: index * 0.1 }}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => playSound(sound)}
-                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-blue-400 to-purple-500 text-white font-black text-3xl sm:text-4xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center"
+                  disabled={isStretching}
+                  className={cn(
+                    "w-20 h-20 sm:w-24 sm:h-24 rounded-2xl text-white font-black text-3xl sm:text-4xl shadow-lg transition-all flex items-center justify-center",
+                    activeStretchIndex === index
+                      ? "bg-gradient-to-br from-yellow-400 to-orange-500 ring-4 ring-yellow-300 shadow-xl"
+                      : "bg-gradient-to-br from-blue-400 to-purple-500 hover:shadow-xl"
+                  )}
                 >
                   {sound}
                 </motion.button>
               ))}
             </div>
 
-            {/* Replay All Button */}
-            <div className="text-center mb-8">
+            {/* Stretch indicator line */}
+            {isStretching && (
+              <motion.div
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                className="h-2 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 rounded-full mb-6 mx-auto max-w-xs"
+              />
+            )}
+
+            {/* Audio Control Buttons */}
+            <div className="flex flex-wrap justify-center gap-3 mb-8">
+              {/* STRETCH AND BLEND - Primary action */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={playStretchAndBlend}
+                disabled={isStretching}
+                className={cn(
+                  "inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold shadow-lg transition-all",
+                  isStretching
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-gradient-to-r from-yellow-400 to-orange-500 text-white hover:shadow-xl"
+                )}
+              >
+                <Volume2 className="w-5 h-5" />
+                <span>{isStretching ? "Blending..." : "Stretch & Blend"}</span>
+              </motion.button>
+
+              {/* Quick replay */}
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={playAllSounds}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gray-200 text-gray-700 rounded-full font-bold hover:bg-gray-300 transition-colors"
+                disabled={isStretching}
+                className="inline-flex items-center gap-2 px-5 py-3 bg-gray-200 text-gray-700 rounded-full font-bold hover:bg-gray-300 transition-colors disabled:opacity-50"
               >
                 <Repeat className="w-5 h-5" />
-                <span>Play Sounds Again</span>
+                <span>Quick Play</span>
               </motion.button>
             </div>
 
-            {/* Answer Options */}
+            {/* Answer Options - TODDLER: Big 80px+ buttons */}
             {!showFeedback ? (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -289,7 +405,7 @@ export function SoundBlendingGame({
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => handleAnswer(option)}
-                    className="py-6 sm:py-8 rounded-2xl bg-gradient-to-br from-green-400 to-blue-500 text-white font-black text-2xl sm:text-3xl shadow-lg hover:shadow-xl transition-all"
+                    className="py-8 sm:py-10 min-h-[80px] sm:min-h-[100px] rounded-2xl bg-gradient-to-br from-green-400 to-blue-500 text-white font-black text-3xl sm:text-4xl shadow-lg hover:shadow-xl transition-all"
                   >
                     {option}
                   </motion.button>

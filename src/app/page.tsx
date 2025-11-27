@@ -7,25 +7,34 @@ import { motion } from "framer-motion";
 import { BookOpen, Star, Settings, Eye, Users, ClipboardCheck, Sparkles, BarChart3, Rocket, Map, Book, Trophy, Pencil, Calculator, Edit3, Play } from "lucide-react";
 import { InstallButton } from "@/components/InstallButton";
 import { useLevelProgress, useLevelProgressHydrated } from "@/hooks/use-level-progress";
-import { useAccessibility, getMotionProps } from "@/hooks/use-accessibility";
-import { useOnboarding, useChildName } from "@/hooks/use-onboarding";
+import { useAccessibility } from "@/hooks/use-accessibility";
+import { useOnboarding, useChildName, useOnboardingHydrated } from "@/hooks/use-onboarding";
 import { useMascot } from "@/hooks/use-mascot";
-import { useTheme } from "@/hooks/use-theme";
 import { useSession } from "@/hooks/use-session";
+import { useTheme } from "@/hooks/use-theme";
 import { UnifiedProgress } from "@/components/home/UnifiedProgress";
+import { getPersonalizedRecommendations, getInterestLabel } from "@/lib/interest-content";
+import { Heart } from "lucide-react";
 
 export default function Home() {
     const router = useRouter();
-    const hasHydrated = useLevelProgressHydrated();
+    const levelProgressHydrated = useLevelProgressHydrated();
+    const onboardingHydrated = useOnboardingHydrated();
     const { getTotalProgress, currentLevel } = useLevelProgress();
     const { shouldReduceMotion } = useAccessibility();
     const { isOnboardingComplete, childProfile } = useOnboarding();
     const childName = useChildName();
-    const motionProps = getMotionProps(shouldReduceMotion);
     const { mascot, greet } = useMascot();
-    const { theme, hasInterests } = useTheme();
     const { hasActiveSession, getResumeUrl, getResumeLabel, activeSession } = useSession();
+    const { interests, hasInterests, theme, gradientClass } = useTheme();
     const [isReady, setIsReady] = useState(false);
+
+    // Get personalized recommendations
+    const recommendations = hasInterests ? getPersonalizedRecommendations(interests, { maxWords: 6, maxStories: 3 }) : null;
+    const interestLabel = hasInterests ? getInterestLabel(interests) : "";
+
+    // Wait for ALL stores to hydrate before making decisions
+    const hasHydrated = levelProgressHydrated && onboardingHydrated;
 
     // Check for active session
     const showResumeCard = hasActiveSession();
@@ -160,6 +169,58 @@ export default function Home() {
 
             {/* Unified Progress Dashboard */}
             {childProfile && <UnifiedProgress />}
+
+            {/* For You Section - Personalized recommendations based on interests */}
+            {childProfile && hasInterests && recommendations && (
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 }}
+                    className="w-full max-w-4xl mb-6 sm:mb-8 relative z-10"
+                >
+                    <div className={`${gradientClass || 'bg-gradient-to-br from-pink-400 to-purple-400'} rounded-2xl sm:rounded-[2rem] p-5 sm:p-6 shadow-xl border-b-4 sm:border-b-6 border-black/10`}>
+                        <div className="flex items-center gap-2 mb-3">
+                            <Heart className="w-6 h-6 text-white fill-white" />
+                            <h2 className="text-xl sm:text-2xl font-black text-white">For You</h2>
+                        </div>
+                        <p className="text-white/80 text-sm mb-4">{interestLabel}</p>
+
+                        {/* Quick access to personalized content */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <Link href="/words?filter=for-you" className="group">
+                                <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 hover:bg-white/30 transition-all">
+                                    <div className="text-3xl mb-2">
+                                        {recommendations.words.slice(0, 3).map((w, i) => (
+                                            <span key={i} className="mr-1">{w.word.charAt(0)}</span>
+                                        ))}
+                                    </div>
+                                    <p className="text-white font-bold text-sm">Your Words</p>
+                                    <p className="text-white/70 text-xs">{recommendations.words.length} words to learn</p>
+                                </div>
+                            </Link>
+                            <Link href="/stories?filter=for-you" className="group">
+                                <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 hover:bg-white/30 transition-all">
+                                    <div className="text-3xl mb-2">📚</div>
+                                    <p className="text-white font-bold text-sm">Your Stories</p>
+                                    <p className="text-white/70 text-xs">{recommendations.stories.length} stories for you</p>
+                                </div>
+                            </Link>
+                        </div>
+
+                        {/* Interest badges */}
+                        <div className="flex flex-wrap gap-2 mt-4">
+                            {interests.map((interest) => (
+                                <span
+                                    key={interest}
+                                    className="bg-white/30 backdrop-blur-sm px-3 py-1 rounded-full text-white text-xs font-bold flex items-center gap-1"
+                                >
+                                    {theme?.icon || '⭐'} {interest}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                </motion.div>
+            )}
 
             {/* Resume Session Card - shown when there's an active session */}
             {showResumeCard && resumeUrl && (
