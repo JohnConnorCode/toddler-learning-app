@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { BookOpen, Star, Settings, Eye, Users, ClipboardCheck, Sparkles, BarChart3, Rocket, Map, Book, Trophy, Pencil, Calculator, Edit3, Play } from "lucide-react";
+import { BookOpen, Star, Settings, Eye, Users, ClipboardCheck, Sparkles, BarChart3, Rocket, Map, Book, Trophy, Pencil, Calculator, Edit3, Play, RefreshCw, Lightbulb, CheckCircle2, AlertCircle } from "lucide-react";
 import { InstallButton } from "@/components/InstallButton";
 import { useLevelProgress, useLevelProgressHydrated } from "@/hooks/use-level-progress";
 import { useAccessibility } from "@/hooks/use-accessibility";
@@ -12,6 +12,7 @@ import { useOnboarding, useChildName, useOnboardingHydrated } from "@/hooks/use-
 import { useMascot } from "@/hooks/use-mascot";
 import { useSession } from "@/hooks/use-session";
 import { useTheme } from "@/hooks/use-theme";
+import { useLearningProgress, useLearningProgressHydrated } from "@/hooks/use-learning-progress";
 import { UnifiedProgress } from "@/components/home/UnifiedProgress";
 import { getPersonalizedRecommendations, getInterestLabel } from "@/lib/interest-content";
 import { Heart } from "lucide-react";
@@ -20,6 +21,7 @@ export default function Home() {
     const router = useRouter();
     const levelProgressHydrated = useLevelProgressHydrated();
     const onboardingHydrated = useOnboardingHydrated();
+    const learningProgressHydrated = useLearningProgressHydrated();
     const { getTotalProgress, currentLevel } = useLevelProgress();
     const { shouldReduceMotion } = useAccessibility();
     const { isOnboardingComplete, childProfile } = useOnboarding();
@@ -27,14 +29,31 @@ export default function Home() {
     const { mascot, greet } = useMascot();
     const { hasActiveSession, getResumeUrl, getResumeLabel, activeSession } = useSession();
     const { interests, hasInterests, theme, gradientClass } = useTheme();
+    const { getRecommendations, getActivityReadiness, getReviewItems, getLearningStats } = useLearningProgress();
     const [isReady, setIsReady] = useState(false);
 
     // Get personalized recommendations
     const recommendations = hasInterests ? getPersonalizedRecommendations(interests, { maxWords: 6, maxStories: 3 }) : null;
     const interestLabel = hasInterests ? getInterestLabel(interests) : "";
 
+    // Get learning recommendations
+    const learningRecommendations = learningProgressHydrated ? getRecommendations() : [];
+    const reviewItems = learningProgressHydrated ? getReviewItems() : [];
+    const learningStats = learningProgressHydrated ? getLearningStats() : null;
+    const topRecommendation = learningRecommendations[0];
+
+    // Get readiness for each activity
+    const activityReadiness = {
+        phonics: learningProgressHydrated ? getActivityReadiness("phonics") : null,
+        words: learningProgressHydrated ? getActivityReadiness("words") : null,
+        blending: learningProgressHydrated ? getActivityReadiness("blending") : null,
+        sightWords: learningProgressHydrated ? getActivityReadiness("sight-words") : null,
+        stories: learningProgressHydrated ? getActivityReadiness("stories") : null,
+        wordFamilies: learningProgressHydrated ? getActivityReadiness("word-families") : null,
+    };
+
     // Wait for ALL stores to hydrate before making decisions
-    const hasHydrated = levelProgressHydrated && onboardingHydrated;
+    const hasHydrated = levelProgressHydrated && onboardingHydrated && learningProgressHydrated;
 
     // Check for active session
     const showResumeCard = hasActiveSession();
@@ -282,6 +301,100 @@ export default function Home() {
                 </motion.div>
             )}
 
+            {/* Recommended Next Card - Smart learning recommendation */}
+            {childProfile && topRecommendation && (
+                <motion.div
+                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ delay: 0.18, type: "spring", stiffness: 200 }}
+                    className="w-full max-w-4xl mb-4 sm:mb-6 relative z-10"
+                >
+                    <Link href={topRecommendation.href} className="group block">
+                        <div className={`relative rounded-2xl sm:rounded-[2rem] p-5 sm:p-6 shadow-xl border-b-4 sm:border-b-6 group-hover:scale-[1.02] transition-all overflow-hidden ${
+                            topRecommendation.type === "review"
+                                ? "bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 border-amber-700"
+                                : topRecommendation.type === "continue"
+                                ? "bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 border-blue-700"
+                                : topRecommendation.type === "celebrate"
+                                ? "bg-gradient-to-br from-yellow-400 via-amber-400 to-orange-400 border-yellow-600"
+                                : "bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 border-teal-700"
+                        }`}>
+                            {/* Animated background */}
+                            <motion.div
+                                animate={{ opacity: [0.2, 0.4, 0.2] }}
+                                transition={{ duration: 3, repeat: Infinity }}
+                                className="absolute inset-0 bg-white/10"
+                            />
+
+                            {/* Badge */}
+                            <motion.div
+                                animate={{ scale: [1, 1.05, 1] }}
+                                transition={{ duration: 2, repeat: Infinity }}
+                                className="absolute top-3 right-3 bg-white text-gray-800 px-3 py-1.5 rounded-full font-black text-xs flex items-center gap-1.5 shadow-lg"
+                            >
+                                <Lightbulb className="w-3 h-3" />
+                                RECOMMENDED
+                            </motion.div>
+
+                            <div className="relative flex items-center gap-4">
+                                <div className="bg-white/20 backdrop-blur-sm p-4 rounded-xl">
+                                    {topRecommendation.type === "review" ? (
+                                        <RefreshCw className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+                                    ) : topRecommendation.type === "celebrate" ? (
+                                        <Trophy className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+                                    ) : (
+                                        <Lightbulb className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+                                    )}
+                                </div>
+
+                                <div className="flex-1">
+                                    <h2 className="text-xl sm:text-2xl font-black text-white mb-1">
+                                        {topRecommendation.title}
+                                    </h2>
+                                    <p className="text-white/90 text-sm sm:text-base font-medium">
+                                        {topRecommendation.description}
+                                    </p>
+                                    {reviewItems.length > 0 && topRecommendation.type === "review" && (
+                                        <div className="mt-2 flex flex-wrap gap-1">
+                                            {reviewItems.slice(0, 5).map((item) => (
+                                                <span
+                                                    key={item.item}
+                                                    className="bg-white/30 px-2 py-0.5 rounded text-white text-xs font-bold"
+                                                >
+                                                    {item.item}
+                                                </span>
+                                            ))}
+                                            {reviewItems.length > 5 && (
+                                                <span className="text-white/70 text-xs font-medium">
+                                                    +{reviewItems.length - 5} more
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Learning progress bar */}
+                            {learningStats && (
+                                <div className="relative mt-4 pt-3 border-t border-white/20">
+                                    <div className="flex items-center justify-between text-white/80 text-xs font-medium mb-1">
+                                        <span>Letter mastery</span>
+                                        <span>{learningStats.mastered}/26 letters</span>
+                                    </div>
+                                    <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                                        <motion.div
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${(learningStats.mastered / 26) * 100}%` }}
+                                            className="h-full bg-white rounded-full"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </Link>
+                </motion.div>
+            )}
+
             {/* Featured Learning Journey Card */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -407,6 +520,20 @@ export default function Home() {
                         className="bg-white rounded-2xl sm:rounded-[2rem] md:rounded-[2.5rem] p-6 sm:p-8 flex flex-col items-center justify-center shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] border-b-4 sm:border-b-6 md:border-b-8 border-gray-100 group-hover:border-green-400/30 transition-all h-52 sm:h-60 md:h-64 relative overflow-hidden"
                     >
                         <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-transparent opacity-50" aria-hidden="true" />
+                        {/* Readiness indicator */}
+                        {activityReadiness.blending && (
+                            <div className={`absolute top-3 right-3 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${
+                                activityReadiness.blending.ready
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-amber-100 text-amber-700"
+                            }`}>
+                                {activityReadiness.blending.ready ? (
+                                    <><CheckCircle2 className="w-3 h-3" /> Ready</>
+                                ) : (
+                                    <><AlertCircle className="w-3 h-3" /> {Math.round(activityReadiness.blending.readinessScore)}%</>
+                                )}
+                            </div>
+                        )}
                         <div className="bg-green-100 p-4 sm:p-5 md:p-6 rounded-full mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
                             <Sparkles className="w-10 h-10 sm:w-12 sm:h-12 text-green-500" aria-hidden="true" />
                         </div>
@@ -422,6 +549,20 @@ export default function Home() {
                         className="bg-white rounded-2xl sm:rounded-[2rem] md:rounded-[2.5rem] p-6 sm:p-8 flex flex-col items-center justify-center shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] border-b-4 sm:border-b-6 md:border-b-8 border-gray-100 group-hover:border-accent/30 transition-all h-52 sm:h-60 md:h-64 relative overflow-hidden"
                     >
                         <div className="absolute inset-0 bg-gradient-to-br from-pink-50 to-transparent opacity-50" aria-hidden="true" />
+                        {/* Readiness indicator */}
+                        {activityReadiness.words && (
+                            <div className={`absolute top-3 right-3 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${
+                                activityReadiness.words.ready
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-amber-100 text-amber-700"
+                            }`}>
+                                {activityReadiness.words.ready ? (
+                                    <><CheckCircle2 className="w-3 h-3" /> Ready</>
+                                ) : (
+                                    <><AlertCircle className="w-3 h-3" /> {Math.round(activityReadiness.words.readinessScore)}%</>
+                                )}
+                            </div>
+                        )}
                         <div className="bg-pink-100 p-4 sm:p-5 md:p-6 rounded-full mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
                             <BookOpen className="w-10 h-10 sm:w-12 sm:h-12 text-pink-500 fill-pink-500" aria-hidden="true" />
                         </div>
@@ -452,6 +593,20 @@ export default function Home() {
                         className="bg-white rounded-2xl sm:rounded-[2rem] md:rounded-[2.5rem] p-6 sm:p-8 flex flex-col items-center justify-center shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] border-b-4 sm:border-b-6 md:border-b-8 border-gray-100 group-hover:border-blue-400/30 transition-all h-52 sm:h-60 md:h-64 relative overflow-hidden"
                     >
                         <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent opacity-50" aria-hidden="true" />
+                        {/* Readiness indicator */}
+                        {activityReadiness.wordFamilies && (
+                            <div className={`absolute top-3 right-3 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${
+                                activityReadiness.wordFamilies.ready
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-amber-100 text-amber-700"
+                            }`}>
+                                {activityReadiness.wordFamilies.ready ? (
+                                    <><CheckCircle2 className="w-3 h-3" /> Ready</>
+                                ) : (
+                                    <><AlertCircle className="w-3 h-3" /> {Math.round(activityReadiness.wordFamilies.readinessScore)}%</>
+                                )}
+                            </div>
+                        )}
                         <div className="bg-blue-100 p-4 sm:p-5 md:p-6 rounded-full mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
                             <Users className="w-10 h-10 sm:w-12 sm:h-12 text-blue-500" aria-hidden="true" />
                         </div>
@@ -467,6 +622,20 @@ export default function Home() {
                         className="bg-white rounded-2xl sm:rounded-[2rem] md:rounded-[2.5rem] p-6 sm:p-8 flex flex-col items-center justify-center shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] border-b-4 sm:border-b-6 md:border-b-8 border-gray-100 group-hover:border-orange-400/30 transition-all h-52 sm:h-60 md:h-64 relative overflow-hidden"
                     >
                         <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-transparent opacity-50" aria-hidden="true" />
+                        {/* Readiness indicator */}
+                        {activityReadiness.stories && (
+                            <div className={`absolute top-3 right-3 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${
+                                activityReadiness.stories.ready
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-amber-100 text-amber-700"
+                            }`}>
+                                {activityReadiness.stories.ready ? (
+                                    <><CheckCircle2 className="w-3 h-3" /> Ready</>
+                                ) : (
+                                    <><AlertCircle className="w-3 h-3" /> {Math.round(activityReadiness.stories.readinessScore)}%</>
+                                )}
+                            </div>
+                        )}
                         <div className="bg-orange-100 p-4 sm:p-5 md:p-6 rounded-full mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
                             <Book className="w-10 h-10 sm:w-12 sm:h-12 text-orange-500 fill-orange-500" aria-hidden="true" />
                         </div>

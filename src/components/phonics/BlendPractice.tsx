@@ -619,3 +619,236 @@ export function BlendLesson({ blendId, onComplete, onBack }: BlendLessonProps) {
     </div>
   );
 }
+
+// ============================================
+// STRETCH BLEND WORD - SCAFFOLDED BLENDING
+// ============================================
+
+interface StretchBlendWordProps {
+  word: string;
+  phonemes: string[];
+  onComplete?: () => void;
+  autoStart?: boolean;
+}
+
+type StretchPhase = "ready" | "stretch" | "faster" | "blend" | "practice" | "done";
+
+/**
+ * StretchBlendWord provides scaffolded blending instruction:
+ * 1. STRETCH: Each sound is said slowly, letters spread apart
+ * 2. FASTER: Sounds said faster, letters move closer
+ * 3. BLEND: Letters come together, word is blended smoothly
+ * 4. PRACTICE: Child taps to practice blending themselves
+ */
+export function StretchBlendWord({
+  word,
+  phonemes,
+  onComplete,
+  autoStart = true,
+}: StretchBlendWordProps) {
+  const { shouldReduceMotion } = useAccessibility();
+  const { speak } = useSpeech();
+  const [phase, setPhase] = useState<StretchPhase>("ready");
+  const [highlightIndex, setHighlightIndex] = useState(-1);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  // Letter spacing based on phase
+  const getSpacing = () => {
+    switch (phase) {
+      case "ready":
+      case "stretch":
+        return 60; // Wide apart
+      case "faster":
+        return 30; // Closer
+      case "blend":
+      case "practice":
+      case "done":
+        return 4; // Together
+      default:
+        return 60;
+    }
+  };
+
+  // Run the blending sequence
+  const runSequence = useCallback(async () => {
+    if (isPlaying) return;
+    setIsPlaying(true);
+
+    // STRETCH PHASE - slow, spread apart
+    setPhase("stretch");
+    for (let i = 0; i < phonemes.length; i++) {
+      setHighlightIndex(i);
+      speak(phonemes[i], { rate: 0.5 });
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+    setHighlightIndex(-1);
+    await new Promise((r) => setTimeout(r, 500));
+
+    // FASTER PHASE - quicker, closer
+    setPhase("faster");
+    for (let i = 0; i < phonemes.length; i++) {
+      setHighlightIndex(i);
+      speak(phonemes[i], { rate: 0.8 });
+      await new Promise((r) => setTimeout(r, 500));
+    }
+    setHighlightIndex(-1);
+    await new Promise((r) => setTimeout(r, 300));
+
+    // BLEND PHASE - together, smooth word
+    setPhase("blend");
+    playFeedback("success", "medium");
+    speak(word, { rate: 0.9 });
+    await new Promise((r) => setTimeout(r, 1500));
+
+    // PRACTICE PHASE
+    setPhase("practice");
+    setIsPlaying(false);
+  }, [isPlaying, phonemes, speak, word]);
+
+  // Auto-start if enabled
+  useEffect(() => {
+    if (autoStart && phase === "ready") {
+      const timer = setTimeout(runSequence, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [autoStart, phase, runSequence]);
+
+  // Handle practice attempt
+  const handlePractice = () => {
+    if (phase !== "practice") return;
+    playFeedback("pop", "medium");
+
+    // Play the whole word
+    speak(word, { rate: 0.85 });
+
+    // After speaking, mark as done
+    setTimeout(() => {
+      setPhase("done");
+      playFeedback("success", "heavy");
+      setTimeout(() => {
+        onComplete?.();
+      }, 1000);
+    }, 1000);
+  };
+
+  // Handle replay
+  const handleReplay = () => {
+    setPhase("ready");
+    setHighlightIndex(-1);
+    setTimeout(runSequence, 300);
+  };
+
+  const spacing = getSpacing();
+
+  return (
+    <div className="flex flex-col items-center gap-6 p-4 sm:p-6 w-full max-w-lg">
+      {/* Phase indicator */}
+      <div className="flex items-center gap-2 mb-2">
+        {["stretch", "faster", "blend", "practice"].map((p, i) => (
+          <div
+            key={p}
+            className={cn(
+              "w-3 h-3 rounded-full transition-all duration-300",
+              phase === p
+                ? "bg-purple-500 scale-125"
+                : ["done"].includes(phase) || (phase !== "ready" && ["stretch", "faster", "blend"].indexOf(phase) > i)
+                ? "bg-green-400"
+                : "bg-gray-300"
+            )}
+          />
+        ))}
+      </div>
+
+      {/* Phase label */}
+      <p className="text-lg font-bold text-gray-600">
+        {phase === "ready" && "Get ready to blend!"}
+        {phase === "stretch" && "S-t-r-e-t-c-h the sounds..."}
+        {phase === "faster" && "Now a little faster..."}
+        {phase === "blend" && "Blend them together!"}
+        {phase === "practice" && "Now you try!"}
+        {phase === "done" && "Great blending!"}
+      </p>
+
+      {/* Letter display with animation */}
+      <motion.div
+        className="flex items-center justify-center min-h-[120px]"
+        animate={{ gap: spacing }}
+        transition={{ duration: 0.5, ease: "easeInOut" }}
+      >
+        {phonemes.map((phoneme, i) => (
+          <motion.div
+            key={i}
+            animate={{
+              scale: highlightIndex === i ? 1.2 : 1,
+              y: highlightIndex === i ? -10 : 0,
+            }}
+            transition={{ duration: 0.2 }}
+            className={cn(
+              "px-4 py-3 rounded-xl text-4xl sm:text-5xl font-black transition-all duration-300",
+              highlightIndex === i
+                ? "bg-yellow-400 text-yellow-900 shadow-lg"
+                : phase === "blend" || phase === "done"
+                ? "bg-green-500 text-white"
+                : "bg-purple-500 text-white"
+            )}
+          >
+            {phoneme}
+          </motion.div>
+        ))}
+      </motion.div>
+
+      {/* Word display (shows during blend phase) */}
+      <AnimatePresence>
+        {(phase === "blend" || phase === "practice" || phase === "done") && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center"
+          >
+            <p className="text-5xl sm:text-6xl font-black text-gray-800">
+              {word}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Practice button */}
+      {phase === "practice" && (
+        <motion.button
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handlePractice}
+          className="mt-4 px-8 py-6 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl font-black text-2xl shadow-lg flex items-center gap-3"
+        >
+          <Volume2 className="w-8 h-8" />
+          Say "{word}"
+        </motion.button>
+      )}
+
+      {/* Done celebration */}
+      {phase === "done" && (
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          className="flex flex-col items-center gap-4"
+        >
+          <Sparkles className="w-12 h-12 text-yellow-400" />
+          <p className="text-xl font-bold text-green-600">Excellent blending!</p>
+        </motion.div>
+      )}
+
+      {/* Replay button */}
+      {(phase === "practice" || phase === "done") && (
+        <button
+          onClick={handleReplay}
+          className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800"
+        >
+          <RotateCcw className="w-4 h-4" />
+          Watch again
+        </button>
+      )}
+    </div>
+  );
+}

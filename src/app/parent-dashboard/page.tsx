@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { usePhonicsProgress } from "@/hooks/use-phonics-progress";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import { useStoryProgress } from "@/hooks/use-story-progress";
 import { useGlobalProgress, useMathProgress } from "@/lib/framework/progress-store";
 import { useProgress } from "@/hooks/use-progress";
+import { useLearningProgress, useLearningProgressHydrated } from "@/hooks/use-learning-progress";
 import { STORIES } from "@/lib/stories-data";
 import {
   getOverallBlendingStats,
@@ -30,6 +31,8 @@ import {
   Calculator,
   Sparkles,
   Trophy,
+  RefreshCw,
+  Brain,
 } from "lucide-react";
 
 export default function ParentDashboardPage() {
@@ -55,6 +58,12 @@ export default function ParentDashboardPage() {
   // Word progress
   const { getStats } = useProgress();
   const wordStats = getStats();
+
+  // Learning progress (honest mastery tracking)
+  const { getLearningStats, getReviewItems } = useLearningProgress();
+  const learningProgressHydrated = useLearningProgressHydrated();
+  const learningStats = learningProgressHydrated ? getLearningStats() : null;
+  const reviewItems = learningProgressHydrated ? getReviewItems() : [];
 
   const completedUnits = state.completedUnits;
   const maxUnit = completedUnits.length > 0 ? Math.max(...completedUnits) : 1;
@@ -347,11 +356,95 @@ export default function ParentDashboardPage() {
           </motion.div>
         </div>
 
+        {/* Honest Letter Mastery Progress */}
+        {learningStats && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 shadow-xl border-2 border-blue-100"
+          >
+            <h2 className="text-xl font-black text-gray-800 mb-4 flex items-center gap-2">
+              <Brain className="w-6 h-6 text-blue-500" />
+              Honest Letter Mastery Progress
+            </h2>
+
+            <p className="text-sm text-gray-600 mb-4">
+              Based on reading science: letters need 20-30 exposures with 90%+ accuracy to be truly mastered.
+            </p>
+
+            {/* Overall Progress Bar */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold text-gray-600">Overall Letter Mastery</span>
+                <span className="text-sm font-bold text-blue-600">{learningStats.overallScore}%</span>
+              </div>
+              <div className="bg-white rounded-full h-4 overflow-hidden shadow-inner">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${learningStats.overallScore}%` }}
+                  transition={{ duration: 1 }}
+                  className="bg-gradient-to-r from-blue-500 to-indigo-500 h-full"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-2">{learningStats.nextMilestone}</p>
+            </div>
+
+            {/* Mastery Level Breakdown */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+              <div className="bg-white rounded-xl p-3 text-center shadow-sm">
+                <p className="text-2xl font-black text-green-600">{learningStats.mastered}</p>
+                <p className="text-xs text-gray-500">Mastered</p>
+                <p className="text-xs text-green-600 font-medium">90%+ accuracy</p>
+              </div>
+              <div className="bg-white rounded-xl p-3 text-center shadow-sm">
+                <p className="text-2xl font-black text-blue-600">{learningStats.developing}</p>
+                <p className="text-xs text-gray-500">Developing</p>
+                <p className="text-xs text-blue-600 font-medium">80-89% accuracy</p>
+              </div>
+              <div className="bg-white rounded-xl p-3 text-center shadow-sm">
+                <p className="text-2xl font-black text-yellow-600">{learningStats.practicing}</p>
+                <p className="text-xs text-gray-500">Practicing</p>
+                <p className="text-xs text-yellow-600 font-medium">6-15 exposures</p>
+              </div>
+              <div className="bg-white rounded-xl p-3 text-center shadow-sm">
+                <p className="text-2xl font-black text-purple-600">{learningStats.introduced}</p>
+                <p className="text-xs text-gray-500">Introduced</p>
+                <p className="text-xs text-purple-600 font-medium">1-5 exposures</p>
+              </div>
+              <div className="bg-white rounded-xl p-3 text-center shadow-sm">
+                <p className="text-2xl font-black text-red-600">{learningStats.needsReview}</p>
+                <p className="text-xs text-gray-500">Needs Review</p>
+                <p className="text-xs text-red-600 font-medium">Overdue</p>
+              </div>
+            </div>
+
+            {/* Review Alert */}
+            {reviewItems.length > 0 && (
+              <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <RefreshCw className="w-6 h-6 text-amber-600" />
+                  <div>
+                    <p className="font-bold text-gray-800">{reviewItems.length} letters need review</p>
+                    <p className="text-sm text-gray-600">Spaced repetition keeps knowledge fresh!</p>
+                  </div>
+                </div>
+                <Link
+                  href="/daily-review"
+                  className="px-4 py-2 bg-amber-500 text-white font-bold rounded-xl hover:bg-amber-600 transition-colors"
+                >
+                  Start Review
+                </Link>
+              </div>
+            )}
+          </motion.div>
+        )}
+
         {/* Overall Stats */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.5 }}
           className="bg-white rounded-2xl p-6 shadow-xl"
         >
           <h2 className="text-2xl font-black text-gray-800 mb-4 flex items-center gap-2">

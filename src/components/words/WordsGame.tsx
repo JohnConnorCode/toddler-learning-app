@@ -5,11 +5,12 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { WORDS_DATA, WordCategory, WordItem } from "@/lib/words-data";
 import { useTheme } from "@/hooks/use-theme";
+import { useLearningProgress, useLearningProgressHydrated } from "@/hooks/use-learning-progress";
 import { getWordsPrioritizedByInterests, wordMatchesInterests } from "@/lib/interest-content";
 import { WordBuilder } from "@/components/game/WordBuilder";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 import Link from "next/link";
-import { ArrowLeft, ChevronRight, ChevronLeft, Filter, Heart } from "lucide-react";
+import { ArrowLeft, ChevronRight, ChevronLeft, Filter, Heart, Sparkles } from "lucide-react";
 
 type CategoryFilter = WordCategory | "for-you" | null;
 
@@ -24,23 +25,48 @@ export function WordsGame() {
     const [initialized, setInitialized] = useState(false);
 
     const { interests, hasInterests } = useTheme();
+    const { sortWordsByDecodability, getMasteredLetters } = useLearningProgress();
+    const learningProgressHydrated = useLearningProgressHydrated();
 
-    // Get words based on selected filter
+    // Get mastered letters for decodability indicator
+    const masteredLetters = useMemo(() => {
+        if (!learningProgressHydrated) return [];
+        return getMasteredLetters();
+    }, [learningProgressHydrated, getMasteredLetters]);
+
+    // Check if a word is fully decodable
+    const isWordDecodable = (wordItem: WordItem): boolean => {
+        if (masteredLetters.length === 0) return false;
+        const wordLetters = wordItem.word.toUpperCase().split("");
+        return wordLetters.every((l) => masteredLetters.includes(l));
+    };
+
+    // Get words based on selected filter, sorted by decodability
     const filteredWords = useMemo((): WordItem[] => {
+        let words: WordItem[];
+
         if (selectedCategory === "for-you") {
             // Show interest-matched words first, then others
-            return getWordsPrioritizedByInterests(interests);
-        }
-        if (selectedCategory !== null) {
+            words = getWordsPrioritizedByInterests(interests);
+        } else if (selectedCategory !== null) {
             // It's a WordCategory
-            return WORDS_DATA.filter(w => w.category === selectedCategory);
+            words = WORDS_DATA.filter(w => w.category === selectedCategory);
+        } else {
+            // Default (null): show all words, but prioritize by interests if user has them
+            if (hasInterests) {
+                words = getWordsPrioritizedByInterests(interests);
+            } else {
+                words = [...WORDS_DATA];
+            }
         }
-        // Default (null): show all words, but prioritize by interests if user has them
-        if (hasInterests) {
-            return getWordsPrioritizedByInterests(interests);
+
+        // Sort by decodability - decodable words first!
+        if (learningProgressHydrated && masteredLetters.length > 0) {
+            return sortWordsByDecodability(words);
         }
-        return WORDS_DATA;
-    }, [selectedCategory, interests, hasInterests]);
+
+        return words;
+    }, [selectedCategory, interests, hasInterests, learningProgressHydrated, masteredLetters, sortWordsByDecodability]);
 
     // Check if current word matches user interests
     const currentWordMatchesInterest = useMemo(() => {
@@ -170,6 +196,13 @@ export function WordsGame() {
                             <div className="absolute top-2 left-2 bg-gradient-to-r from-pink-500 to-purple-500 px-2 py-1 rounded-full shadow-lg flex items-center gap-1">
                                 <Heart className="w-3 h-3 text-white fill-white" />
                                 <span className="text-xs font-bold text-white">For You</span>
+                            </div>
+                        )}
+                        {/* Decodable badge - shows when child knows all letters */}
+                        {isWordDecodable(filteredWords[currentIndex]) && (
+                            <div className="absolute top-2 right-2 bg-gradient-to-r from-green-500 to-emerald-500 px-2 py-1 rounded-full shadow-lg flex items-center gap-1">
+                                <Sparkles className="w-3 h-3 text-white" />
+                                <span className="text-xs font-bold text-white">You can read!</span>
                             </div>
                         )}
                     </motion.div>
