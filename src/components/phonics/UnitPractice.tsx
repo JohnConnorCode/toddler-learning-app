@@ -8,6 +8,7 @@ import { ArrowLeft, ChevronRight, ChevronLeft, CheckCircle, Award, Volume2, Repe
 import { cn } from "@/lib/utils";
 import { useAudio } from "@/hooks/use-audio";
 import { playFeedback } from "@/lib/sound-effects";
+import { DiscoveryIntro, CharacterStory, AffirmationMoment } from "@/components/teaching";
 
 interface UnitPracticeProps {
   unitId: number;
@@ -27,7 +28,7 @@ export function UnitPractice({ unitId, onExit, onComplete }: UnitPracticeProps) 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showCompletion, setShowCompletion] = useState(false);
   const [showRetryScreen, setShowRetryScreen] = useState(false);
-  const [teachingPhase, setTeachingPhase] = useState<"intro" | "sound" | "word" | "practice" | "quiz">("intro");
+  const [teachingPhase, setTeachingPhase] = useState<"discovery" | "character" | "intro" | "sound" | "word" | "practice" | "affirmation" | "quiz">("discovery");
   const [isPlaying, setIsPlaying] = useState(false);
   const [quizOptions, setQuizOptions] = useState<string[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
@@ -123,6 +124,52 @@ export function UnitPractice({ unitId, onExit, onComplete }: UnitPracticeProps) 
     }
   }, [generateQuizOptions, currentItem, playLetterSound]);
 
+  // Handle discovery phase completion (Ms. Rachel methodology)
+  const handleDiscoveryComplete = useCallback(() => {
+    if (currentItem?.character) {
+      setTeachingPhase("character");
+    } else {
+      setTeachingPhase("intro");
+      // Delay to let state update before playing
+      setTimeout(() => playTeachingSequence(), 100);
+    }
+  }, [currentItem, playTeachingSequence]);
+
+  // Handle character story completion (Ms. Rachel methodology)
+  const handleCharacterComplete = useCallback(() => {
+    setTeachingPhase("intro");
+    // Delay to let state update before playing
+    setTimeout(() => playTeachingSequence(), 100);
+  }, [playTeachingSequence]);
+
+  // Handle affirmation completion - move to next letter
+  const handleAffirmationComplete = useCallback(() => {
+    if (currentIndex < phonicsItems.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+      // Reset to discovery phase for next letter
+      setTeachingPhase("discovery");
+    } else {
+      // All letters completed - calculate actual mastery score
+      const masteredCount = Object.values(letterMastery).filter(Boolean).length;
+      const masteryScore = masteredCount / phonicsItems.length;
+
+      // Track which letters were missed
+      const missed = phonicsItems
+        .filter(item => !letterMastery[item.letter])
+        .map(item => item.letter);
+      setStrugglingLetters(missed);
+
+      // Check against mastery threshold (90%)
+      if (masteryScore >= MASTERY_THRESHOLD) {
+        setShowCompletion(true);
+      } else if (masteryScore >= MIN_MASTERY_FOR_PROGRESSION && attemptCount >= 3) {
+        setShowCompletion(true);
+      } else {
+        setShowRetryScreen(true);
+      }
+    }
+  }, [currentIndex, phonicsItems, letterMastery, attemptCount]);
+
   // Handle quiz answer - with tap feedback for toddlers
   const handleQuizAnswer = useCallback((answer: string) => {
     if (selectedAnswer !== null || !currentItem) return; // Already answered
@@ -158,14 +205,23 @@ export function UnitPractice({ unitId, onExit, onComplete }: UnitPracticeProps) 
       markLetterPracticed(currentItem.letter);
       updateUnitLetterCompletion(unitId);
 
-      // Auto-play the teaching sequence with a small delay
-      const timer = setTimeout(() => {
-        if (isMountedRef.current && !isPlayingRef.current) {
-          playTeachingSequence();
-        }
-      }, 300);
-
-      return () => clearTimeout(timer);
+      // Determine starting phase based on available Ms. Rachel content
+      if (currentItem.discoveryObjects) {
+        // Has discovery intro - start with discovery phase (no auto-play needed)
+        setTeachingPhase("discovery");
+      } else if (currentItem.character) {
+        // Has character story but no discovery - start with character
+        setTeachingPhase("character");
+      } else {
+        // No enhanced content - use traditional teaching sequence
+        const timer = setTimeout(() => {
+          if (isMountedRef.current && !isPlayingRef.current) {
+            setTeachingPhase("intro");
+            playTeachingSequence();
+          }
+        }, 300);
+        return () => clearTimeout(timer);
+      }
     }
     // Note: intentionally limited dependencies to prevent re-triggers
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -193,32 +249,8 @@ export function UnitPractice({ unitId, onExit, onComplete }: UnitPracticeProps) 
       return; // Must pass quiz first
     }
 
-    if (currentIndex < phonicsItems.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-      setTeachingPhase("intro"); // Reset for next letter
-    } else {
-      // All letters completed - calculate actual mastery score
-      const masteredCount = Object.values(letterMastery).filter(Boolean).length;
-      const masteryScore = masteredCount / phonicsItems.length;
-
-      // Track which letters were missed
-      const missed = phonicsItems
-        .filter(item => !letterMastery[item.letter])
-        .map(item => item.letter);
-      setStrugglingLetters(missed);
-
-      // Check against mastery threshold (90%)
-      if (masteryScore >= MASTERY_THRESHOLD) {
-        // Perfect or near-perfect - celebrate and complete!
-        setShowCompletion(true);
-      } else if (masteryScore >= MIN_MASTERY_FOR_PROGRESSION && attemptCount >= 3) {
-        // After 3 attempts with 75%+, allow progression with encouragement
-        setShowCompletion(true);
-      } else {
-        // Need more practice - show encouraging retry screen
-        setShowRetryScreen(true);
-      }
-    }
+    // Show affirmation before advancing (Ms. Rachel methodology)
+    setTeachingPhase("affirmation");
   };
 
   const prevLetter = () => {
@@ -503,14 +535,42 @@ export function UnitPractice({ unitId, onExit, onComplete }: UnitPracticeProps) 
       <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 relative overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
-            key={currentIndex}
+            key={`${currentIndex}-${teachingPhase}`}
             initial={{ x: 300, opacity: 0, scale: 0.8 }}
             animate={{ x: 0, opacity: 1, scale: 1 }}
             exit={{ x: -300, opacity: 0, scale: 0.8 }}
             transition={{ type: "spring", stiffness: 260, damping: 20 }}
             className="w-full max-w-lg"
           >
-            {/* Teaching Card */}
+            {/* Ms. Rachel Methodology: Discovery Intro */}
+            {teachingPhase === "discovery" && currentItem.discoveryObjects && (
+              <DiscoveryIntro
+                letter={currentItem.letter}
+                objects={currentItem.discoveryObjects}
+                wrongGuesses={currentItem.wrongGuesses}
+                onComplete={handleDiscoveryComplete}
+              />
+            )}
+
+            {/* Ms. Rachel Methodology: Character Story */}
+            {teachingPhase === "character" && currentItem.character && (
+              <CharacterStory
+                letter={currentItem.letter}
+                character={currentItem.character}
+                onComplete={handleCharacterComplete}
+              />
+            )}
+
+            {/* Ms. Rachel Methodology: Affirmation */}
+            {teachingPhase === "affirmation" && (
+              <AffirmationMoment
+                type="proud-of-you"
+                onComplete={handleAffirmationComplete}
+              />
+            )}
+
+            {/* Traditional Teaching Card - for intro/sound/word/practice/quiz phases */}
+            {(teachingPhase === "intro" || teachingPhase === "sound" || teachingPhase === "word" || teachingPhase === "practice" || teachingPhase === "quiz") && (
             <div className={cn(
               "bg-white rounded-3xl shadow-2xl p-6 sm:p-8 text-center",
               "border-4 border-white"
@@ -719,6 +779,7 @@ export function UnitPractice({ unitId, onExit, onComplete }: UnitPracticeProps) 
                 </button>
               )}
             </div>
+            )}
           </motion.div>
         </AnimatePresence>
 

@@ -1,3 +1,18 @@
+// Character story for emotional learning (Ms. Rachel methodology)
+export type LetterCharacter = {
+    name: string;           // e.g., "Alex the Alligator"
+    emotion: 'sad' | 'confused' | 'curious' | 'excited' | 'shy';
+    problem: string;        // The character's problem that child helps solve
+    celebration: string;    // What they say when helped
+    memoryTrick?: string;   // Hand gesture or memory association
+};
+
+// Discovery objects for discovery-based learning
+export type DiscoveryObject = {
+    name: string;
+    image: string;
+};
+
 export type PhonicsItem = {
     letter: string;
     word: string;
@@ -8,6 +23,10 @@ export type PhonicsItem = {
     phonemeSpelling: string; // Better pronunciation for speech synthesis
     image: string;
     isVowel?: boolean;
+    // Ms. Rachel methodology additions
+    character?: LetterCharacter;
+    discoveryObjects?: [DiscoveryObject, DiscoveryObject];
+    wrongGuesses?: string[]; // Funny wrong guesses for discovery
 };
 
 export const PHONICS_DATA: PhonicsItem[] = [
@@ -20,7 +39,22 @@ export const PHONICS_DATA: PhonicsItem[] = [
         soundVariant: "ay", // long 'a' as in 'acorn'
         phonemeSpelling: "aah",
         isVowel: true,
-        image: "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=400&h=400&fit=crop",
+        character: {
+            name: "Alex the Alligator",
+            emotion: "curious",
+            problem: "I love apples so much! But what letter does Apple start with?",
+            celebration: "A! Apple starts with A! And so does my name - Alligator!",
+            memoryTrick: "Put your hands up and open like puppet mouths. When you see an alligator, you go 'Ahh!' A says 'ah'!"
+        },
+        discoveryObjects: [
+            { name: "Apple", image: "/images/discovery/apple.png" },
+            { name: "Alligator", image: "/images/discovery/alligator.png" }
+        ],
+        wrongGuesses: [
+            "Maybe the alligator is hungry and wants to eat the apple!",
+            "Maybe the alligator wants to balance the apple on his head!"
+        ]
     },
     {
         letter: "B",
@@ -29,7 +63,22 @@ export const PHONICS_DATA: PhonicsItem[] = [
         color: "bg-blue-400",
         sound: "b",
         phonemeSpelling: "buh",
-        image: "https://images.unsplash.com/photo-1589656966895-2f33e7653819?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1589656966895-2f33e7653819?w=400&h=400&fit=crop",
+        character: {
+            name: "Bella the Bear",
+            emotion: "shy",
+            problem: "I want to play ball, but I'm too shy to ask. What letter does Ball start with?",
+            celebration: "B! Ball starts with B! And Bear starts with B too! Let's play!",
+            memoryTrick: "Bounce a pretend ball - buh, buh, buh! B says 'buh'!"
+        },
+        discoveryObjects: [
+            { name: "Bear", image: "/images/discovery/bear.png" },
+            { name: "Ball", image: "/images/discovery/ball.png" }
+        ],
+        wrongGuesses: [
+            "Maybe the bear wants to eat the ball!",
+            "Maybe the bear is teaching the ball to dance!"
+        ]
     },
     {
         letter: "C",
@@ -38,7 +87,22 @@ export const PHONICS_DATA: PhonicsItem[] = [
         color: "bg-yellow-400",
         sound: "k",
         phonemeSpelling: "kuh",
-        image: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&h=400&fit=crop",
+        character: {
+            name: "Cleo the Cat",
+            emotion: "curious",
+            problem: "I found a cookie! What letter does Cookie start with?",
+            celebration: "C! Cookie starts with C! And Cat starts with C too! Yummy!",
+            memoryTrick: "Make your hand into a C shape - it's curvy like a cookie! C says 'kuh'!"
+        },
+        discoveryObjects: [
+            { name: "Cat", image: "/images/discovery/cat.png" },
+            { name: "Cookie", image: "/images/discovery/cookie.png" }
+        ],
+        wrongGuesses: [
+            "Maybe the cat wants to share the cookie with us!",
+            "Maybe the cat is going to hide the cookie!"
+        ]
     },
     {
         letter: "D",
@@ -188,7 +252,22 @@ export const PHONICS_DATA: PhonicsItem[] = [
         color: "bg-blue-400",
         sound: "s",
         phonemeSpelling: "sss",
-        image: "https://images.unsplash.com/photo-1531386151447-fd76ad50012f?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1531386151447-fd76ad50012f?w=400&h=400&fit=crop",
+        character: {
+            name: "Sammy the Snake",
+            emotion: "excited",
+            problem: "I love looking at stars! What letter does Star start with?",
+            celebration: "S! Star starts with S! And Snake starts with S too! Ssssuper!",
+            memoryTrick: "Slither like a snake and make the sound - sssss! S says 'sss'!"
+        },
+        discoveryObjects: [
+            { name: "Snake", image: "/images/discovery/snake.png" },
+            { name: "Star", image: "/images/discovery/star.png" }
+        ],
+        wrongGuesses: [
+            "Maybe the snake wants to catch the star!",
+            "Maybe the snake is wishing on the star!"
+        ]
     },
     {
         letter: "T",
@@ -197,7 +276,22 @@ export const PHONICS_DATA: PhonicsItem[] = [
         color: "bg-yellow-400",
         sound: "t",
         phonemeSpelling: "tuh",
-        image: "https://images.unsplash.com/photo-1561731216-c3a4d99437d5?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1561731216-c3a4d99437d5?w=400&h=400&fit=crop",
+        character: {
+            name: "Mr. Turtle",
+            emotion: "sad",
+            problem: "I don't know what letter my name starts with. Can you help me?",
+            celebration: "T! I feel so happy! Turtle starts with T! Thank you for helping me!",
+            memoryTrick: "Hold up your pointer finger near your mouth like a toothbrush. Move it away - tuh! T says 'tuh'!"
+        },
+        discoveryObjects: [
+            { name: "Turtle", image: "/images/discovery/turtle.png" },
+            { name: "Toothbrush", image: "/images/discovery/toothbrush.png" }
+        ],
+        wrongGuesses: [
+            "Maybe the turtle is sad because he doesn't know how to brush his teeth!",
+            "Maybe the turtle wants the toothbrush to tickle him!"
+        ]
     },
     {
         letter: "U",

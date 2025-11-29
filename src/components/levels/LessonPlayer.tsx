@@ -15,6 +15,7 @@ import { ConfirmDialog, useConfirmNavigation } from "@/components/ui/ConfirmDial
 import { ActivityPhonics } from "@/components/activities/ActivityPhonics";
 import { ActivityWordBuilding } from "@/components/activities/ActivityWordBuilding";
 import { ActivityPlaceholder } from "@/components/activities/ActivityPlaceholder";
+import { LessonWrapUp } from "@/components/teaching";
 
 interface LessonPlayerProps {
   level: Level;
@@ -37,10 +38,34 @@ export function LessonPlayer({ level, lesson }: LessonPlayerProps) {
   const [starsEarned, setStarsEarned] = useState(0);
   const [showCompletion, setShowCompletion] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [learnedItems, setLearnedItems] = useState<string[]>([]);
 
   const currentActivity = lesson.activities[currentActivityIndex];
   const isLastActivity = currentActivityIndex === lesson.activities.length - 1;
   const progress = ((currentActivityIndex + 1) / lesson.activities.length) * 100;
+
+  // Helper to get human-readable label for what was learned in an activity
+  const getActivityLabel = (activity: Activity): string | null => {
+    if (activity.type === "phonics" && activity.contentId) {
+      // contentId for phonics is usually the letter (e.g., "A", "B")
+      return `the letter ${activity.contentId}`;
+    }
+    if (activity.type === "blending" && activity.contentId) {
+      // contentId for blending is usually the word
+      return `the word "${activity.contentId}"`;
+    }
+    if (activity.type === "sight-words") {
+      return "sight words";
+    }
+    if (activity.type === "word-building") {
+      return "word building";
+    }
+    if (activity.type === "word-families") {
+      return "word families";
+    }
+    // Fallback to activity title
+    return activity.title ? activity.title.toLowerCase() : null;
+  };
 
   // Warn before leaving during lesson
   useConfirmNavigation(currentActivityIndex > 0 && !showCompletion);
@@ -78,6 +103,12 @@ export function LessonPlayer({ level, lesson }: LessonPlayerProps) {
     const actualStars = Math.min(3, Math.max(1, stars));
     setStarsEarned(prev => prev + actualStars);
     setCompletedActivities(prev => new Set([...prev, currentActivity.id]));
+
+    // Track what was learned for the Ms. Rachel wrap-up summary
+    const activityLabel = getActivityLabel(currentActivity);
+    if (activityLabel) {
+      setLearnedItems(prev => [...prev, activityLabel]);
+    }
 
     // Track activity type for explorer badges
     trackActivity(currentActivity.type);
@@ -148,13 +179,11 @@ export function LessonPlayer({ level, lesson }: LessonPlayerProps) {
   };
 
   if (showCompletion) {
+    // Use Ms. Rachel methodology emotional wrap-up
     return (
-      <LessonCompletionScreen
-        level={level}
-        lesson={lesson}
-        starsEarned={starsEarned}
-        totalStars={lesson.activities.length * 3}
-        onContinue={handleLessonComplete}
+      <LessonWrapUp
+        learnedItems={learnedItems.length > 0 ? learnedItems : ["today's lesson"]}
+        onComplete={handleLessonComplete}
       />
     );
   }
