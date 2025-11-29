@@ -44,13 +44,26 @@ export function ImageWithFallback({
   };
 
   // Map common words to emojis for toddler-friendly fallback
+  // Complete map for all 26 letter discovery objects
   const getEmoji = (text: string): string => {
     const emojiMap: Record<string, string> = {
+      // A-F
       apple: "🍎", alligator: "🐊", ball: "⚽", bear: "🐻",
       cat: "🐱", cookie: "🍪", dog: "🐕", dinosaur: "🦕",
       elephant: "🐘", egg: "🥚", fish: "🐟", frog: "🐸",
-      monkey: "🐵", moon: "🌙", penguin: "🐧", pizza: "🍕",
-      snake: "🐍", star: "⭐", turtle: "🐢", toothbrush: "🪥"
+      // G-L
+      giraffe: "🦒", grapes: "🍇", horse: "🐴", hat: "🎩",
+      igloo: "🏠", insect: "🐛", jellyfish: "🪼", juice: "🧃",
+      kangaroo: "🦘", kite: "🪁", lion: "🦁", lemon: "🍋",
+      // M-R
+      monkey: "🐵", moon: "🌙", nest: "🪺", nut: "🥜",
+      octopus: "🐙", orange: "🍊", penguin: "🐧", pizza: "🍕",
+      queen: "👑", quilt: "🛏️", rabbit: "🐰", rainbow: "🌈",
+      // S-Z
+      snake: "🐍", star: "⭐", turtle: "🐢", toothbrush: "🪥",
+      unicorn: "🦄", umbrella: "☂️", violin: "🎻", volcano: "🌋",
+      whale: "🐋", water: "💧", xylophone: "🎹", fox: "🦊",
+      yak: "🐃", yarn: "🧶", zebra: "🦓", zipper: "🔗"
     };
     return emojiMap[text.toLowerCase()] || "";
   };

@@ -185,7 +185,22 @@ export const PHONICS_DATA: PhonicsItem[] = [
         color: "bg-teal-400",
         sound: "g",
         phonemeSpelling: "guh",
-        image: "https://images.unsplash.com/photo-1547721064-da6cfb341d50?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1547721064-da6cfb341d50?w=400&h=400&fit=crop",
+        character: {
+            name: "Gary the Giraffe",
+            emotion: "curious",
+            problem: "I want to eat some grapes! What letter does Grapes start with?",
+            celebration: "G! Grapes starts with G! And Giraffe starts with G too! Yummy grapes!",
+            memoryTrick: "Open your throat and say 'guh' like you're swallowing grapes! G says 'guh'!"
+        },
+        discoveryObjects: [
+            { name: "Giraffe", image: "/images/discovery/giraffe.png" },
+            { name: "Grapes", image: "/images/discovery/grapes.png" }
+        ],
+        wrongGuesses: [
+            "Maybe the giraffe wants to juggle the grapes!",
+            "Maybe the giraffe is growing a grape vine on his neck!"
+        ]
     },
     {
         letter: "H",
@@ -194,7 +209,22 @@ export const PHONICS_DATA: PhonicsItem[] = [
         color: "bg-indigo-400",
         sound: "h",
         phonemeSpelling: "hhh",
-        image: "https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=400&h=400&fit=crop",
+        character: {
+            name: "Henry the Horse",
+            emotion: "excited",
+            problem: "I found a fancy hat! What letter does Hat start with?",
+            celebration: "H! Hat starts with H! And Horse starts with H too! Neigh!",
+            memoryTrick: "Breathe out like you're fogging up a window - hhh! H says 'hhh'!"
+        },
+        discoveryObjects: [
+            { name: "Horse", image: "/images/discovery/horse.png" },
+            { name: "Hat", image: "/images/discovery/hat.png" }
+        ],
+        wrongGuesses: [
+            "Maybe the horse wants to wear the hat!",
+            "Maybe the hat is too small for the horse's head!"
+        ]
     },
     {
         letter: "I",
@@ -205,7 +235,22 @@ export const PHONICS_DATA: PhonicsItem[] = [
         soundVariant: "eye", // long 'i' as in 'ice'
         phonemeSpelling: "ihh",
         isVowel: true,
-        image: "https://images.unsplash.com/photo-1516715094483-75da06a7e2cf?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1516715094483-75da06a7e2cf?w=400&h=400&fit=crop",
+        character: {
+            name: "Izzy the Insect",
+            emotion: "shy",
+            problem: "I live in this igloo! What letter does Igloo start with?",
+            celebration: "I! Igloo starts with I! And Insect starts with I too! It's so cozy!",
+            memoryTrick: "Make a short 'ih' sound like you're saying 'it' - ih! I says 'ih'!"
+        },
+        discoveryObjects: [
+            { name: "Igloo", image: "/images/discovery/igloo.png" },
+            { name: "Insect", image: "/images/discovery/insect.png" }
+        ],
+        wrongGuesses: [
+            "Maybe the insect is cold and needs the igloo!",
+            "Maybe there are lots of insects inside the igloo!"
+        ]
     },
     {
         letter: "J",
@@ -214,7 +259,22 @@ export const PHONICS_DATA: PhonicsItem[] = [
         color: "bg-rose-400",
         sound: "dʒ",
         phonemeSpelling: "juh",
-        image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=400&fit=crop",
+        character: {
+            name: "Jelly the Jellyfish",
+            emotion: "excited",
+            problem: "I love drinking juice! What letter does Juice start with?",
+            celebration: "J! Juice starts with J! And Jellyfish starts with J too! Yay!",
+            memoryTrick: "Jump and say 'juh' when you land! J says 'juh'!"
+        },
+        discoveryObjects: [
+            { name: "Jellyfish", image: "/images/discovery/jellyfish.png" },
+            { name: "Juice", image: "/images/discovery/juice.png" }
+        ],
+        wrongGuesses: [
+            "Maybe the jellyfish wants to swim in the juice!",
+            "Maybe the jellyfish is making juice with its tentacles!"
+        ]
     },
     {
         letter: "K",
@@ -223,7 +283,22 @@ export const PHONICS_DATA: PhonicsItem[] = [
         color: "bg-cyan-400",
         sound: "k",
         phonemeSpelling: "kuh",
-        image: "https://images.unsplash.com/photo-1507099985932-87a4520ed1d5?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1507099985932-87a4520ed1d5?w=400&h=400&fit=crop",
+        character: {
+            name: "Katie the Kangaroo",
+            emotion: "excited",
+            problem: "I want to fly my kite! What letter does Kite start with?",
+            celebration: "K! Kite starts with K! And Kangaroo starts with K too! Let's fly!",
+            memoryTrick: "Kick your leg like a kangaroo and say 'kuh'! K says 'kuh'!"
+        },
+        discoveryObjects: [
+            { name: "Kangaroo", image: "/images/discovery/kangaroo.png" },
+            { name: "Kite", image: "/images/discovery/kite.png" }
+        ],
+        wrongGuesses: [
+            "Maybe the kangaroo will hop with the kite!",
+            "Maybe the kite will carry the kangaroo into the sky!"
+        ]
     },
     {
         letter: "L",
@@ -232,7 +307,22 @@ export const PHONICS_DATA: PhonicsItem[] = [
         color: "bg-amber-400",
         sound: "l",
         phonemeSpelling: "lll",
-        image: "https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=400&h=400&fit=crop",
+        character: {
+            name: "Leo the Lion",
+            emotion: "curious",
+            problem: "I found a lemon! What letter does Lemon start with?",
+            celebration: "L! Lemon starts with L! And Lion starts with L too! Roar!",
+            memoryTrick: "Lift your tongue to the roof of your mouth - lll! L says 'lll'!"
+        },
+        discoveryObjects: [
+            { name: "Lion", image: "/images/discovery/lion.png" },
+            { name: "Lemon", image: "/images/discovery/lemon.png" }
+        ],
+        wrongGuesses: [
+            "Maybe the lion thinks the lemon is a ball!",
+            "Maybe the lion will make lemonade!"
+        ]
     },
     {
         letter: "M",
@@ -265,7 +355,22 @@ export const PHONICS_DATA: PhonicsItem[] = [
         color: "bg-emerald-400",
         sound: "n",
         phonemeSpelling: "nnn",
-        image: "https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=400&h=400&fit=crop",
+        character: {
+            name: "Nina the Nightingale",
+            emotion: "shy",
+            problem: "I built this nest! What letter does Nest start with?",
+            celebration: "N! Nest starts with N! And Nightingale starts with N too! Chirp!",
+            memoryTrick: "Hum through your nose - nnn! Like saying 'no no no'! N says 'nnn'!"
+        },
+        discoveryObjects: [
+            { name: "Nest", image: "/images/discovery/nest.png" },
+            { name: "Nut", image: "/images/discovery/nut.png" }
+        ],
+        wrongGuesses: [
+            "Maybe the bird hid the nut in the nest!",
+            "Maybe the nest is made of nuts!"
+        ]
     },
     {
         letter: "O",
@@ -276,7 +381,22 @@ export const PHONICS_DATA: PhonicsItem[] = [
         soundVariant: "oh", // long 'o' as in 'open'
         phonemeSpelling: "ahhh",
         isVowel: true,
-        image: "https://images.unsplash.com/photo-1535591273668-578e31182c4f?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1535591273668-578e31182c4f?w=400&h=400&fit=crop",
+        character: {
+            name: "Ollie the Octopus",
+            emotion: "curious",
+            problem: "I found an orange! What letter does Orange start with?",
+            celebration: "O! Orange starts with O! And Octopus starts with O too! Splashy!",
+            memoryTrick: "Open your mouth wide like an O and say 'ah'! O says 'ah'!"
+        },
+        discoveryObjects: [
+            { name: "Octopus", image: "/images/discovery/octopus.png" },
+            { name: "Orange", image: "/images/discovery/orange.png" }
+        ],
+        wrongGuesses: [
+            "Maybe the octopus will juggle the orange with all eight arms!",
+            "Maybe the octopus wants orange juice!"
+        ]
     },
     {
         letter: "P",
@@ -309,7 +429,22 @@ export const PHONICS_DATA: PhonicsItem[] = [
         color: "bg-fuchsia-400",
         sound: "kw",
         phonemeSpelling: "kwuh",
-        image: "https://images.unsplash.com/photo-1529257414772-1960b7bea4eb?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1529257414772-1960b7bea4eb?w=400&h=400&fit=crop",
+        character: {
+            name: "Queenie the Queen",
+            emotion: "shy",
+            problem: "I have a cozy quilt! What letter does Quilt start with?",
+            celebration: "Q! Quilt starts with Q! And Queen starts with Q too! Royal!",
+            memoryTrick: "Q always has a U friend! Say 'kwuh' together! Q says 'kwuh'!"
+        },
+        discoveryObjects: [
+            { name: "Queen", image: "/images/discovery/queen.png" },
+            { name: "Quilt", image: "/images/discovery/quilt.png" }
+        ],
+        wrongGuesses: [
+            "Maybe the queen made the quilt herself!",
+            "Maybe the quilt has the queen's picture on it!"
+        ]
     },
     {
         letter: "R",
@@ -318,7 +453,22 @@ export const PHONICS_DATA: PhonicsItem[] = [
         color: "bg-red-400",
         sound: "r",
         phonemeSpelling: "rrr",
-        image: "https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=400&h=400&fit=crop",
+        character: {
+            name: "Ruby the Rabbit",
+            emotion: "excited",
+            problem: "Look at the beautiful rainbow! What letter does Rainbow start with?",
+            celebration: "R! Rainbow starts with R! And Rabbit starts with R too! Hop hop!",
+            memoryTrick: "Growl like a pirate - rrr! Or rev like a race car! R says 'rrr'!"
+        },
+        discoveryObjects: [
+            { name: "Rabbit", image: "/images/discovery/rabbit.png" },
+            { name: "Rainbow", image: "/images/discovery/rainbow.png" }
+        ],
+        wrongGuesses: [
+            "Maybe the rabbit wants to hop over the rainbow!",
+            "Maybe the rainbow has carrots at the end!"
+        ]
     },
     {
         letter: "S",
@@ -377,7 +527,22 @@ export const PHONICS_DATA: PhonicsItem[] = [
         soundVariant: "yoo", // long 'u' as in 'unicorn'
         phonemeSpelling: "uhh",
         isVowel: true,
-        image: "https://images.unsplash.com/photo-1503594384566-461fe158e797?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1503594384566-461fe158e797?w=400&h=400&fit=crop",
+        character: {
+            name: "Uma the Unicorn",
+            emotion: "excited",
+            problem: "It's raining! I need an umbrella! What letter does Umbrella start with?",
+            celebration: "U! Umbrella starts with U! And Unicorn starts with U too! Magical!",
+            memoryTrick: "Say 'uh' like you're thinking about something! U says 'uh'!"
+        },
+        discoveryObjects: [
+            { name: "Unicorn", image: "/images/discovery/unicorn.png" },
+            { name: "Umbrella", image: "/images/discovery/umbrella.png" }
+        ],
+        wrongGuesses: [
+            "Maybe the unicorn's horn can hold the umbrella!",
+            "Maybe it's raining rainbows on the unicorn!"
+        ]
     },
     {
         letter: "V",
@@ -386,7 +551,22 @@ export const PHONICS_DATA: PhonicsItem[] = [
         color: "bg-purple-400",
         sound: "v",
         phonemeSpelling: "vvv",
-        image: "https://images.unsplash.com/photo-1527786356703-4b100091cd2c?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1527786356703-4b100091cd2c?w=400&h=400&fit=crop",
+        character: {
+            name: "Violet the Vulture",
+            emotion: "curious",
+            problem: "I want to play the violin! What letter does Violin start with?",
+            celebration: "V! Violin starts with V! And Vulture starts with V too! Beautiful music!",
+            memoryTrick: "Bite your lip gently and hum - vvv! Like a car zooming! V says 'vvv'!"
+        },
+        discoveryObjects: [
+            { name: "Violin", image: "/images/discovery/violin.png" },
+            { name: "Volcano", image: "/images/discovery/volcano.png" }
+        ],
+        wrongGuesses: [
+            "Maybe the violin is as loud as a volcano!",
+            "Maybe there's a violin concert near the volcano!"
+        ]
     },
     {
         letter: "W",
@@ -395,7 +575,22 @@ export const PHONICS_DATA: PhonicsItem[] = [
         color: "bg-orange-400",
         sound: "w",
         phonemeSpelling: "wuh",
-        image: "https://images.unsplash.com/photo-1568430462989-44163eb1752f?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1568430462989-44163eb1752f?w=400&h=400&fit=crop",
+        character: {
+            name: "Wally the Whale",
+            emotion: "excited",
+            problem: "I love swimming in the water! What letter does Water start with?",
+            celebration: "W! Water starts with W! And Whale starts with W too! Splash!",
+            memoryTrick: "Round your lips like you're blowing a kiss - wuh! W says 'wuh'!"
+        },
+        discoveryObjects: [
+            { name: "Whale", image: "/images/discovery/whale.png" },
+            { name: "Water", image: "/images/discovery/water.png" }
+        ],
+        wrongGuesses: [
+            "Maybe the whale is making a waterfall with its spout!",
+            "Maybe the whale is splashing in the water!"
+        ]
     },
     {
         letter: "X",
@@ -404,7 +599,22 @@ export const PHONICS_DATA: PhonicsItem[] = [
         color: "bg-teal-400",
         sound: "ks",
         phonemeSpelling: "ksss",
-        image: "https://images.unsplash.com/photo-1519892300165-cb5542fb47c7?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1519892300165-cb5542fb47c7?w=400&h=400&fit=crop",
+        character: {
+            name: "Xavier the Fox",
+            emotion: "curious",
+            problem: "I want to play my xylophone! What letter does Xylophone start with?",
+            celebration: "X! Xylophone starts with X! And Fox ends with X too! Ding ding!",
+            memoryTrick: "X makes a 'ks' sound like in 'box'! X says 'ks'!"
+        },
+        discoveryObjects: [
+            { name: "Xylophone", image: "/images/discovery/xylophone.png" },
+            { name: "Fox", image: "/images/discovery/fox.png" }
+        ],
+        wrongGuesses: [
+            "Maybe the fox is playing a song on the xylophone!",
+            "Maybe the fox wants to dance to the xylophone music!"
+        ]
     },
     {
         letter: "Y",
@@ -413,7 +623,22 @@ export const PHONICS_DATA: PhonicsItem[] = [
         color: "bg-indigo-400",
         sound: "j",
         phonemeSpelling: "yuh",
-        image: "https://images.unsplash.com/photo-1551069613-1904dbdcda11?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1551069613-1904dbdcda11?w=400&h=400&fit=crop",
+        character: {
+            name: "Yolanda the Yak",
+            emotion: "excited",
+            problem: "I love playing with yellow yarn! What letter does Yellow start with?",
+            celebration: "Y! Yellow starts with Y! And Yak starts with Y too! Yippee!",
+            memoryTrick: "Say 'yes yes yes!' - yuh! Y says 'yuh'!"
+        },
+        discoveryObjects: [
+            { name: "Yak", image: "/images/discovery/yak.png" },
+            { name: "Yarn", image: "/images/discovery/yarn.png" }
+        ],
+        wrongGuesses: [
+            "Maybe the yak wants to knit with the yarn!",
+            "Maybe the yarn is tangled in the yak's fur!"
+        ]
     },
     {
         letter: "Z",
@@ -422,6 +647,21 @@ export const PHONICS_DATA: PhonicsItem[] = [
         color: "bg-pink-400",
         sound: "z",
         phonemeSpelling: "zzz",
-        image: "https://images.unsplash.com/photo-1526336024174-e58f5cdd8e13?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1526336024174-e58f5cdd8e13?w=400&h=400&fit=crop",
+        character: {
+            name: "Ziggy the Zebra",
+            emotion: "excited",
+            problem: "I live at the zoo! What letter does Zoo start with?",
+            celebration: "Z! Zoo starts with Z! And Zebra starts with Z too! Stripes are cool!",
+            memoryTrick: "Buzz like a bee - zzz! Or pretend you're sleeping! Z says 'zzz'!"
+        },
+        discoveryObjects: [
+            { name: "Zebra", image: "/images/discovery/zebra.png" },
+            { name: "Zipper", image: "/images/discovery/zipper.png" }
+        ],
+        wrongGuesses: [
+            "Maybe the zebra's stripes look like a zipper!",
+            "Maybe we can zip up the zebra's pajamas!"
+        ]
     },
 ];
