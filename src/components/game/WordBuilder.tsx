@@ -81,9 +81,8 @@ export function WordBuilder({ item, onComplete }: WordBuilderProps) {
         // Prevent clicking already-used letters
         if (usedIndices.has(index)) return;
 
-        // Play sound based on mode
-        const type = mode === "phonics" ? "phonics" : "name";
-        playLetterSound(letter, type);
+        // Always play letter NAME when spelling words (not phonics sounds)
+        playLetterSound(letter, "name");
 
         // Find first empty slot
         const firstEmptyIndex = placedLetters.findIndex((l) => l === null);
@@ -156,6 +155,8 @@ export function WordBuilder({ item, onComplete }: WordBuilderProps) {
     const handleReset = () => {
         setPlacedLetters(new Array(item.letters.length).fill(null));
         setUsedIndices(new Set());
+        setIsComplete(false);
+        setShowSentence(false);
         playWordSound("tryagain");
     };
 
@@ -186,7 +187,7 @@ export function WordBuilder({ item, onComplete }: WordBuilderProps) {
     };
 
     return (
-        <div className="flex flex-col items-center gap-6 md:gap-8 w-full">
+        <div className="flex flex-col items-center gap-3 md:gap-4 w-full">
             {/* Target Word Slots */}
             <div className="flex gap-2 sm:gap-3 md:gap-4 justify-center">
                 {placedLetters.map((letter, i) => (
@@ -219,7 +220,7 @@ export function WordBuilder({ item, onComplete }: WordBuilderProps) {
             </div>
 
             {/* Feedback & Sentence Area */}
-            <div className="flex flex-col items-center justify-center gap-3 md:gap-4">
+            <div className="flex flex-col items-center justify-center gap-2 md:gap-3">
                 <AnimatePresence>
                     {isComplete && (
                         <motion.div
@@ -269,16 +270,18 @@ export function WordBuilder({ item, onComplete }: WordBuilderProps) {
             </div>
 
             {/* Available Letters Bank */}
-            <div className="bg-white/30 p-4 sm:p-5 md:p-6 rounded-2xl md:rounded-[2rem] w-full max-w-lg backdrop-blur-sm relative">
-                {/* TODDLER: Big 60px hint button */}
+            <div className="bg-white/30 p-3 sm:p-4 md:p-5 rounded-2xl md:rounded-[2rem] w-full max-w-lg backdrop-blur-sm">
+                {/* Hint button - inline at top right of letter bank */}
                 {showHints && (
-                    <button
-                        onClick={handleHint}
-                        className="absolute -top-6 sm:-top-7 md:-top-8 right-4 sm:right-6 bg-yellow-400 text-white p-4 sm:p-5 rounded-full shadow-lg hover:scale-110 transition-transform min-w-[60px] min-h-[60px] flex items-center justify-center"
-                        aria-label="Hint"
-                    >
-                        <Lightbulb className="w-8 h-8 sm:w-10 sm:h-10 fill-white" />
-                    </button>
+                    <div className="flex justify-end mb-2">
+                        <button
+                            onClick={handleHint}
+                            className="bg-yellow-400 text-white p-3 sm:p-4 rounded-full shadow-lg hover:scale-110 transition-transform min-w-[48px] min-h-[48px] flex items-center justify-center"
+                            aria-label="Hint"
+                        >
+                            <Lightbulb className="w-6 h-6 sm:w-7 sm:h-7 fill-white" />
+                        </button>
+                    </div>
                 )}
 
                 <div className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4">
@@ -317,13 +320,13 @@ export function WordBuilder({ item, onComplete }: WordBuilderProps) {
                 </div>
             </div>
 
-            {/* TODDLER: Big 60px reset button */}
+            {/* Reset button */}
             <button
                 onClick={handleReset}
-                className="text-gray-400 hover:text-gray-600 p-4 sm:p-5 rounded-full hover:bg-black/5 transition-colors min-w-[60px] min-h-[60px] flex items-center justify-center"
+                className="text-gray-400 hover:text-gray-600 p-2 sm:p-3 rounded-full hover:bg-black/5 transition-colors"
                 aria-label="Reset word"
             >
-                <RefreshCw className="w-8 h-8 sm:w-10 sm:h-10" />
+                <RefreshCw className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
         </div>
     );

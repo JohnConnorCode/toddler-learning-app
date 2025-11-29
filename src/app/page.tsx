@@ -258,15 +258,6 @@ export default function Home() {
                                 className="absolute inset-0 bg-white/10"
                             />
 
-                            {/* Badge */}
-                            <motion.div
-                                animate={{ scale: [1, 1.1, 1] }}
-                                transition={{ duration: 1, repeat: Infinity }}
-                                className="absolute top-3 right-3 bg-yellow-400 text-yellow-900 px-3 py-1.5 rounded-full font-black text-xs flex items-center gap-1.5 shadow-lg"
-                            >
-                                <Play className="w-3 h-3" />
-                                CONTINUE
-                            </motion.div>
 
                             <div className="relative flex items-center gap-4">
                                 <div className="bg-white/20 backdrop-blur-sm p-4 rounded-xl">
@@ -326,15 +317,6 @@ export default function Home() {
                                 className="absolute inset-0 bg-white/10"
                             />
 
-                            {/* Badge */}
-                            <motion.div
-                                animate={{ scale: [1, 1.05, 1] }}
-                                transition={{ duration: 2, repeat: Infinity }}
-                                className="absolute top-3 right-3 bg-white text-gray-800 px-3 py-1.5 rounded-full font-black text-xs flex items-center gap-1.5 shadow-lg"
-                            >
-                                <Lightbulb className="w-3 h-3" />
-                                RECOMMENDED
-                            </motion.div>
 
                             <div className="relative flex items-center gap-4">
                                 <div className="bg-white/20 backdrop-blur-sm p-4 rounded-xl">
@@ -463,15 +445,6 @@ export default function Home() {
                         {/* Animated background */}
                         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
 
-                        {/* Badge */}
-                        <motion.div
-                            animate={{ scale: [1, 1.05, 1] }}
-                            transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
-                            className="absolute top-4 right-4 bg-yellow-400 text-yellow-900 px-4 py-2 rounded-full font-black text-sm flex items-center gap-2 shadow-lg"
-                        >
-                            <Sparkles className="w-4 h-4" />
-                            START HERE
-                        </motion.div>
 
                         <div className="relative flex flex-col sm:flex-row items-center gap-6">
                             <div className="bg-white/20 backdrop-blur-sm p-6 rounded-2xl">

@@ -145,9 +145,8 @@ export function UnitPractice({ unitId, onExit, onComplete }: UnitPracticeProps) 
   // Handle affirmation completion - move to next letter
   const handleAffirmationComplete = useCallback(() => {
     if (currentIndex < phonicsItems.length - 1) {
+      // Move to next letter - useEffect will determine correct starting phase
       setCurrentIndex(currentIndex + 1);
-      // Reset to discovery phase for next letter
-      setTeachingPhase("discovery");
     } else {
       // All letters completed - calculate actual mastery score
       const masteredCount = Object.values(letterMastery).filter(Boolean).length;

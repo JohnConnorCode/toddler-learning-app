@@ -43,14 +43,31 @@ export function ImageWithFallback({
     setImageLoading(false);
   };
 
+  // Map common words to emojis for toddler-friendly fallback
+  const getEmoji = (text: string): string => {
+    const emojiMap: Record<string, string> = {
+      apple: "🍎", alligator: "🐊", ball: "⚽", bear: "🐻",
+      cat: "🐱", cookie: "🍪", dog: "🐕", dinosaur: "🦕",
+      elephant: "🐘", egg: "🥚", fish: "🐟", frog: "🐸",
+      monkey: "🐵", moon: "🌙", penguin: "🐧", pizza: "🍕",
+      snake: "🐍", star: "⭐", turtle: "🐢", toothbrush: "🪥"
+    };
+    return emojiMap[text.toLowerCase()] || "";
+  };
+
   if (imageError) {
+    const emoji = getEmoji(fallbackText || alt);
     return (
       <div className={cn(
-        "flex flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200",
+        "flex flex-col items-center justify-center bg-gradient-to-br from-purple-50 to-pink-50",
         className
       )}>
-        <ImageOff className="w-12 h-12 text-gray-400 mb-2" />
-        <span className="text-2xl font-black text-gray-600">
+        {emoji ? (
+          <span className="text-6xl mb-2">{emoji}</span>
+        ) : (
+          <ImageOff className="w-12 h-12 text-gray-400 mb-2" />
+        )}
+        <span className="text-lg font-black text-gray-600">
           {fallbackText || alt}
         </span>
       </div>

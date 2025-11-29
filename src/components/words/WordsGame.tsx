@@ -181,9 +181,7 @@ export function WordsGame() {
                         key={`${selectedCategory}-${currentIndex}`}
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        className={`relative w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 bg-white rounded-2xl sm:rounded-3xl shadow-lg mx-auto overflow-hidden border-4 sm:border-6 md:border-8 ${
-                            currentWordMatchesInterest ? "border-pink-300 ring-2 ring-pink-400" : "border-white"
-                        }`}
+                        className="relative w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 bg-white rounded-2xl sm:rounded-3xl shadow-lg mx-auto overflow-hidden border-4 sm:border-6 md:border-8 border-white"
                     >
                         <ImageWithFallback
                             src={filteredWords[currentIndex].image}
@@ -191,20 +189,6 @@ export function WordsGame() {
                             fallbackText={filteredWords[currentIndex].word}
                             className="w-full h-full"
                         />
-                        {/* For You badge on image */}
-                        {currentWordMatchesInterest && (
-                            <div className="absolute top-2 left-2 bg-gradient-to-r from-pink-500 to-purple-500 px-2 py-1 rounded-full shadow-lg flex items-center gap-1">
-                                <Heart className="w-3 h-3 text-white fill-white" />
-                                <span className="text-xs font-bold text-white">For You</span>
-                            </div>
-                        )}
-                        {/* Decodable badge - shows when child knows all letters */}
-                        {isWordDecodable(filteredWords[currentIndex]) && (
-                            <div className="absolute top-2 right-2 bg-gradient-to-r from-green-500 to-emerald-500 px-2 py-1 rounded-full shadow-lg flex items-center gap-1">
-                                <Sparkles className="w-3 h-3 text-white" />
-                                <span className="text-xs font-bold text-white">You can read!</span>
-                            </div>
-                        )}
                     </motion.div>
                 </div>
 

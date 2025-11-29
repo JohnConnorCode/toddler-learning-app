@@ -111,7 +111,22 @@ export const PHONICS_DATA: PhonicsItem[] = [
         color: "bg-green-400",
         sound: "d",
         phonemeSpelling: "duh",
-        image: "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=400&fit=crop",
+        character: {
+            name: "Danny the Dinosaur",
+            emotion: "excited",
+            problem: "I want to play with my friend the dog! What letter does Dog start with?",
+            celebration: "D! Dog starts with D! And Dinosaur starts with D too! Let's play!",
+            memoryTrick: "Make your hand into a D shape and stomp like a dinosaur - duh, duh, duh! D says 'duh'!"
+        },
+        discoveryObjects: [
+            { name: "Dog", image: "/images/discovery/dog.png" },
+            { name: "Dinosaur", image: "/images/discovery/dinosaur.png" }
+        ],
+        wrongGuesses: [
+            "Maybe the dinosaur wants to chase the dog!",
+            "Maybe they're playing hide and seek!"
+        ]
     },
     {
         letter: "E",
@@ -122,7 +137,22 @@ export const PHONICS_DATA: PhonicsItem[] = [
         soundVariant: "ee", // long 'e' as in 'eagle'
         phonemeSpelling: "ehh",
         isVowel: true,
-        image: "https://images.unsplash.com/photo-1564760055775-d63b17a55c44?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1564760055775-d63b17a55c44?w=400&h=400&fit=crop",
+        character: {
+            name: "Ellie the Elephant",
+            emotion: "curious",
+            problem: "I found this egg! What letter does Egg start with?",
+            celebration: "E! Egg starts with E! And Elephant starts with E too! I'm so happy!",
+            memoryTrick: "Open your mouth wide and make a short 'eh' sound - like you're about to sneeze! E says 'eh'!"
+        },
+        discoveryObjects: [
+            { name: "Elephant", image: "/images/discovery/elephant.png" },
+            { name: "Egg", image: "/images/discovery/egg.png" }
+        ],
+        wrongGuesses: [
+            "Maybe the elephant wants to sit on the egg!",
+            "Maybe the egg has a baby elephant inside!"
+        ]
     },
     {
         letter: "F",
@@ -131,7 +161,22 @@ export const PHONICS_DATA: PhonicsItem[] = [
         color: "bg-orange-400",
         sound: "f",
         phonemeSpelling: "fff",
-        image: "https://images.unsplash.com/photo-1535591273668-578e31182c4f?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1535591273668-578e31182c4f?w=400&h=400&fit=crop",
+        character: {
+            name: "Freddy the Frog",
+            emotion: "excited",
+            problem: "I love swimming with my friend the fish! What letter does Fish start with?",
+            celebration: "F! Fish starts with F! And Frog starts with F too! Splash splash!",
+            memoryTrick: "Bite your lower lip and blow air - fffff! Like the wind! F says 'fff'!"
+        },
+        discoveryObjects: [
+            { name: "Fish", image: "/images/discovery/fish.png" },
+            { name: "Frog", image: "/images/discovery/frog.png" }
+        ],
+        wrongGuesses: [
+            "Maybe the frog wants to race the fish!",
+            "Maybe they're playing in the pond!"
+        ]
     },
     {
         letter: "G",
@@ -196,7 +241,22 @@ export const PHONICS_DATA: PhonicsItem[] = [
         color: "bg-lime-400",
         sound: "m",
         phonemeSpelling: "mmm",
-        image: "https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?w=400&h=400&fit=crop",
+        character: {
+            name: "Max the Monkey",
+            emotion: "curious",
+            problem: "I see the moon up in the sky! What letter does Moon start with?",
+            celebration: "M! Moon starts with M! And Monkey starts with M too! Ooh ooh ahh ahh!",
+            memoryTrick: "Close your lips and hum - mmmm! Like something yummy! M says 'mmm'!"
+        },
+        discoveryObjects: [
+            { name: "Monkey", image: "/images/discovery/monkey.png" },
+            { name: "Moon", image: "/images/discovery/moon.png" }
+        ],
+        wrongGuesses: [
+            "Maybe the monkey wants to fly to the moon!",
+            "Maybe the monkey is making a wish on the moon!"
+        ]
     },
     {
         letter: "N",
@@ -225,7 +285,22 @@ export const PHONICS_DATA: PhonicsItem[] = [
         color: "bg-violet-400",
         sound: "p",
         phonemeSpelling: "puh",
-        image: "https://images.unsplash.com/photo-1551986782-d0169b3f8fa7?w=400&h=400&fit=crop"
+        image: "https://images.unsplash.com/photo-1551986782-d0169b3f8fa7?w=400&h=400&fit=crop",
+        character: {
+            name: "Penny the Penguin",
+            emotion: "shy",
+            problem: "I love pizza so much! What letter does Pizza start with?",
+            celebration: "P! Pizza starts with P! And Penguin starts with P too! Yummy!",
+            memoryTrick: "Pop your lips together like a bubble - puh! P says 'puh'!"
+        },
+        discoveryObjects: [
+            { name: "Penguin", image: "/images/discovery/penguin.png" },
+            { name: "Pizza", image: "/images/discovery/pizza.png" }
+        ],
+        wrongGuesses: [
+            "Maybe the penguin wants to deliver the pizza!",
+            "Maybe the penguin is having a pizza party!"
+        ]
     },
     {
         letter: "Q",
